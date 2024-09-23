@@ -1,0 +1,34 @@
+name: Load Files into Assistant
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  generate-and-load:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    - name: Generate Repo Structure
+      run: |
+        python tools/generate_repo_structure.py . > repo_structure.txt
+
+    - name: Clean current assistant and load files
+      env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      run: |
+        python tools/clean_assistant_files.py
+        python tools/load_files_assistant.py .
