@@ -1,7 +1,7 @@
 import os
 import sys
 from openai import OpenAI
-from assistant_gpt import AssistantGpt
+from utils import get_assistant_configuration
 from assistant_functions import function_tools
 
 def main():
@@ -10,10 +10,9 @@ def main():
     client = OpenAI(api_key=api_key)
 
     # Get the assistant configuration
-    assistant_gpt = AssistantGpt()
-    assistant_gpt.init_from_file("assistant_config.json")
-    assistant_id = assistant_gpt.assistant_id
-    vector_store_id = assistant_gpt.config['vector_store_id']
+    assistant_configuration = get_assistant_configuration()
+    assistant_id = assistant_configuration['assistant_id']
+    vector_store_id = assistant_configuration['vector_store_id']
 
     # Update the assistant by adding tools
     response = client.beta.assistants.update(
