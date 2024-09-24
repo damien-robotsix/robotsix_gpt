@@ -18,12 +18,9 @@ This repository provides a framework for integrating a GPT-powered AI assistant 
    ```
 
 2. **Set up the Python Environment**
-
-   Ensure Python 3.x is installed, then run:
-
    ```sh
-   python -m pip install --upgrade pip
-   pip install -r requirements.txt
+   python3 -m pip install --upgrade pip
+   pip3 install -r requirements.txt
    ```
 
 3. **Environment Variables**
@@ -39,7 +36,7 @@ This repository provides a framework for integrating a GPT-powered AI assistant 
 - **Run Assistant Script:** Use `run_assistant.py` to interact with the assistant.
 
    ```sh 
-   python tools/run_assistant.py "Your message here"
+   python3 tools/run_assistant.py "Your message here"
    ```
 
 - **GitHub Actions Workflows:**
@@ -81,3 +78,20 @@ This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENS
 - Python 3.x
 - [OpenAI Python SDK](https://pypi.org/project/openai/)
 - [Pydantic](https://pypi.org/project/pydantic/)
+
+## Example Commands
+
+- To update the vector store from your repository files:
+  ```sh
+  python tools/update_vector_store.py <repo_path>
+  ```
+- To clean the vector store:
+  ```sh
+  python tools/clean_vector_store.py
+  ```
+
+## Troubleshooting
+
+If you encounter issues, ensure that:
+- Your OpenAI API key is correctly set in your environment variables.
+- All dependencies are installed as specified in the `requirements.txt`.
