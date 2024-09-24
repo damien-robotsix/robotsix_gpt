@@ -41,9 +41,9 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-        ISSUE_TITLE="${{ fromJson(steps.get_issue.outputs.data).title }}"
-        ISSUE_BODY="${{ fromJson(steps.get_issue.outputs.data).body }}"
-        python tools/run_assistant.py "New issue created: ${ISSUE_TITLE}\nDescription: ${ISSUE_BODY}\nYou should do your best to propose a PR to this issue or, at least, generate a comment to help the issue's author."
+          ISSUE_TITLE="${{ fromJson(steps.get_issue.outputs.data).title }}"
+          ISSUE_BODY="${{ fromJson(steps.get_issue.outputs.data).body }}"
+          python tools/run_assistant.py "New issue created: ${ISSUE_TITLE}\nDescription: ${ISSUE_BODY}\nYou should do your best to propose a PR to this issue or, at least, generate a comment to help the issue's author."
 
       - name: Configure Git
         run: |
