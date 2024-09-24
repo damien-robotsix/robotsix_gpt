@@ -8,7 +8,7 @@ def clean_vector_store(vector_store_id: str):
     """
     api_key = os.environ.get("OPENAI_API_KEY", "<your OpenAI API key if not set as env var>")
     client = openai.OpenAI(api_key=api_key)
-    
+
     # Retrieve list of files in the vector store
     existing_file_list = client.beta.vector_stores.files.list(vector_store_id=vector_store_id)
 
@@ -24,5 +24,4 @@ if __name__ == "__main__":
     # Load the configuration to get the vector_store_id
     config = get_assistant_configuration()
     vector_store_id = config['vector_store_id']
-    
     clean_vector_store(vector_store_id)

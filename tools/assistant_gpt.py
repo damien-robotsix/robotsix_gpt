@@ -4,7 +4,11 @@ import json
 from typing_extensions import override
 from openai import OpenAI, AssistantEventHandler
 from assistant_functions import TaskInput
+from pydantic import BaseModel
 
+
+class StepByStepOutput(BaseModel):
+    steps: list[str]
 
 class AssistantGpt(AssistantEventHandler):
     def __init__(self, interactive = False):
@@ -90,12 +94,15 @@ class AssistantGpt(AssistantEventHandler):
         else:
             self.completed = True
 
-    def create_user_message(self, user_message):
-        self.client.beta.threads.messages.create(
-            thread_id=self.thread_id,
-            role="user",
-            content=user_message
-        )
+    def create_user_message(self, user_message, response_format=None):
+        message_data = {
+            "thread_id": self.thread_id,
+            "role": "user",
+            "content": user_message,
+        }
+        if response_format:
+            message_data["response_format"] = response_format
+        self.client.beta.threads.messages.create(**message_data)
         self.run()
 
     def continue_with_interaction(self):

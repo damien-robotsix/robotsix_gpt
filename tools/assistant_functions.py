@@ -9,7 +9,7 @@ class ShellCommandInput(BaseModel):
 class FileContentInput(BaseModel):
     file_path: str
     content: str
-    replace_existing: Optional[bool] = False
+    replace_existing: Optional[bool]
 
 class InsertLineInput(BaseModel):
     file_path: str
