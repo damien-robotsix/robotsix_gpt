@@ -46,7 +46,7 @@ jobs:
           ISSUE_TITLE="${{ fromJson(steps.get_issue.outputs.data).title }}"
           ISSUE_BODY="${{ fromJson(steps.get_issue.outputs.data).body }}"
           PROMPT="Propose a step-by-step solution for the following issue and proceed:\n\nIssue: ${ISSUE_TITLE}\nDescription: ${ISSUE_BODY}"
-          python tools/solve_by_step.py "${PROMPT}" > issue_solver_steps
+          python tools/solve_step_by_step.py "${PROMPT}" > issue_solver_steps
 
       - name: Commit the generated file
         run: |
