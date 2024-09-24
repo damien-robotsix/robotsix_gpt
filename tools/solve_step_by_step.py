@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 from openai import OpenAI
 from assistant_gpt import AssistantGpt
 
@@ -19,6 +20,10 @@ def convert_to_step_by_step(custom_message):
     else:
         return None
 
+def format_json_for_display(data):
+    # Pretty-print the JSON data
+    return json.dumps(data, indent=4, sort_keys=True)
+
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Usage: python script.py <custom_message>")
@@ -28,4 +33,4 @@ if __name__ == "__main__":
     assistant = AssistantGpt(interactive=False)
     assistant.init_from_file("assistant_config.json")
     assistant.create_user_message(custom_message)
-    print(convert_to_step_by_step(assistant.get_output()))
+    print(format_json_for_display(convert_to_step_by_step(assistant.get_output())))

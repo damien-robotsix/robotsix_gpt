@@ -39,15 +39,15 @@ class TaskInput(BaseModel):
                 file_input = FileContentInput.model_validate_json(self.parameters)
                 return self.write_file_content(file_input)
             elif self.input_type == 'InsertLineInput':
-                insert_input = InsertLineInput(**self.parameters)
+                insert_input = InsertLineInput.model_validate_json(self.parameters)
                 return self.insert_line_in_file(insert_input)
             elif self.input_type == 'ModifyLineInput':
-                modify_input = ModifyLineInput(**self.parameters)
+                modify_input = ModifyLineInput.model_validate_json(self.parameters)
                 return self.modify_line_in_file(modify_input)
             else:
                 return CommandFeedback(
                     return_code=-1,
-                    stderr=f"Unsupported task type: {self.task_type}"
+                    stderr=f"Unsupported task type: {self.input_type}"
                 )
         except Exception as e:
             return CommandFeedback(return_code=-1, stderr=str(e))
@@ -116,7 +116,7 @@ class TaskInput(BaseModel):
 
 function_tools = [
     openai.pydantic_function_tool(ShellCommandInput, description="Execute a shell command assuming the command is run in the repository root directory"),
-    openai.pydantic_function_tool(FileContentInput, description="Write content to a file. If the file exists, the content will be appended to the file unless replace_existing is set to True."),
-    openai.pydantic_function_tool(InsertLineInput, description="Insert a line into a file at a specified line number."),
-    openai.pydantic_function_tool(ModifyLineInput, description="Modify a line in a file at a specified line number.")
+    openai.pydantic_function_tool(FileContentInput, description="Write content to a file. If the file exists, the content will be appended to the file unless replace_existing is set to True. You should check the appropriate file path from repo root in repo_structure.txt before using this function."),
+    openai.pydantic_function_tool(InsertLineInput, description="Insert a line into a file at a specified line number. You should check the appropriate file path from repo root in repo_structure.txt before using this function."),
+    openai.pydantic_function_tool(ModifyLineInput, description="Modify a line in a file at a specified line number. You should check the appropriate file path from repo root in repo_structure.txt before using this function.")
 ]
