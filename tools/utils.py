@@ -15,3 +15,10 @@ def get_assistant_configuration(config_file='assistant_config.json'):
     except KeyError as e:
         print(f"{e} not found in {config_file}.")
         sys.exit(1)
+
+def save_assistant_configuration(config, config_file='assistant_config.json'):
+    """
+    Saves the assistant configuration to a JSON file.
+    """
+    with open(config_file, 'w') as f:
+        json.dump(config, f, indent=4)

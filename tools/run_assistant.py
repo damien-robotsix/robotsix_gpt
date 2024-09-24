@@ -1,7 +1,7 @@
 import argparse
 import os
 from openai import OpenAI
-from utils import get_assistant_configuration
+from utils import get_assistant_configuration, save_assistant_configuration
 from assistant_functions import (
     execute_shell_command,
     write_file_content,
@@ -64,6 +64,7 @@ def main():
     parser.add_argument('user_message', type=str, help='The user message to send to the assistant.')
     parser.add_argument("--interactive", action="store_true", default=True, help="Run in interactive mode.")
     parser.add_argument("--no-interactive", dest='interactive', action="store_false", help="Run in non-interactive mode.")
+    parser.add_argument("--reconnect", action="store_true", help="Reconnect to the last thread.")
     args = parser.parse_args()
 
     # Initialize OpenAI client
@@ -72,24 +73,30 @@ def main():
     assistant_id = configurations['assistant_id']
 
     # Create a new thread
-    thread = client.beta.threads.create()
-    create_user_message(client, thread.id, args.user_message)
+    if args.reconnect:
+        thread_id = configurations.get('last_thread_id')
+    else:
+        thread = client.beta.threads.create()
+        configurations['last_thread_id'] = thread.id
+        thread_id = thread.id
+    save_assistant_configuration(configurations)
+    create_user_message(client, thread_id, args.user_message)
 
     # Start and poll the run
     run = client.beta.threads.runs.create_and_poll(
-        thread_id=thread.id,
+        thread_id=thread_id,
         assistant_id=assistant_id
     )
     
     # Process the run status
     while True:
         if run.status == "completed":
-            messages = list(client.beta.threads.messages.list(thread_id=thread.id))
+            messages = list(client.beta.threads.messages.list(thread_id=thread_id))
             if messages:
                 print(messages[0].content[0].text.value)
             
             if args.interactive:
-                run = continue_with_interaction(client, thread.id, assistant_id)
+                run = continue_with_interaction(client, thread_id, assistant_id)
             else:
                 break
             if not run:
@@ -98,7 +105,7 @@ def main():
         if run.status == "requires_action":
             tool_outputs = handle_tool_calls(run)
             if tool_outputs:
-                run = submit_tool_outputs(client, thread.id, run.id, tool_outputs)
+                run = submit_tool_outputs(client, thread_id, run.id, tool_outputs)
             else:
                 print("No tool outputs to submit.")
 
