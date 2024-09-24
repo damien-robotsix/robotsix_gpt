@@ -1,0 +1,67 @@
+name: Run Assistant
+
+on:
+  issues:
+    types: [opened]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue Number'
+        required: true
+        type: number
+
+jobs:
+  run-assistant:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - id: get_issue  # Add an ID to reference outputs
+        name: Get issue details
+        uses: octokit/request-action@v2.x
+        with:
+          route: |
+            GET /repos/${{ github.repository }}/issues/${{ github.event.inputs.issue_number || github.event.issue.number }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Assistant Script
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+        ISSUE_TITLE="${{ fromJson(steps.get_issue.outputs.data).title }}"
+        ISSUE_BODY="${{ fromJson(steps.get_issue.outputs.data).body }}"
+        python tools/run_assistant.py "New issue created: ${ISSUE_TITLE}\nDescription: ${ISSUE_BODY}\nYou should do your best to propose a PR to this issue or, at least, generate a comment to help the issue's author."
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit and Push Changes
+        run: |
+          git checkout -b ai-update-branch
+          git add .
+          git commit -m "AI Assistant Update for Issue #${{ github.event.inputs.issue_number || github.event.issue.number }}"
+          git push origin ai-update-branch
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ai-update-branch
+          commit-message: "Created a PR for AI Assistant Update"
+          title: "AI Assistant Update for Issue #${{ github.event.inputs.issue_number || github.event.issue.number }}"
+          body: "This pull request contains the updates made by the AI assistant."

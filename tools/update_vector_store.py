@@ -47,7 +47,7 @@ def load_files_assistant(repo_path: str):
         # Process each file path
         for path in paths:
             # Check for .yaml, .sh, or files without extensions
-            if path.endswith(".yaml") or path.endswith(".sh") or "." not in os.path.basename(path):
+            if path.endswith(".yaml") or path.endswith(".sh") or "." not in os.path.basename(path) or path.endswith(".yml"):
                 # Generate a new path with .txt extension in the temp directory
                 new_path = os.path.join(temp_dir, os.path.basename(path) + ".txt")
                 # Copy the original file to the new location with the updated extension
@@ -64,9 +64,12 @@ def load_files_assistant(repo_path: str):
 
         # Delete any existing files with the same names in updated_paths
         for file in existing_file_list:
-            existing_file_name = client.files.retrieve(file.id).filename
-            if existing_file_name in updated_files:
-                client.files.delete(file.id)
+            try:
+                existing_file_name = client.files.retrieve(file.id).filename
+                if existing_file_name in updated_files:
+                    client.files.delete(file.id)
+            except Exception as e:
+                print(f"Could not delete file {file.id}. Error: {e}")
 
         # Open file streams for each updated path
         file_streams = [open(path, "rb") for path in updated_paths]
