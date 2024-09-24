@@ -20,9 +20,9 @@ def convert_to_step_by_step(custom_message):
     else:
         return None
 
-def format_json_for_display(data):
-    # Pretty-print the JSON data
-    return json.dumps(data, indent=4, sort_keys=True)
+def dump_issue_solver_step(data):
+    with open('issue_solver_step.json', 'w') as f:
+        json.dump(data, f, indent=4)
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
@@ -33,4 +33,4 @@ if __name__ == "__main__":
     assistant = AssistantGpt(interactive=False)
     assistant.init_from_file("assistant_config.json")
     assistant.create_user_message(custom_message)
-    print(format_json_for_display(convert_to_step_by_step(assistant.get_output())))
+    print(dump_issue_solver_step(convert_to_step_by_step(assistant.get_output())))

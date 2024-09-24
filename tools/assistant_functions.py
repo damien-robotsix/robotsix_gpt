@@ -2,6 +2,8 @@ from pydantic import BaseModel, Field
 from typing import Dict, Any, Optional
 import subprocess
 import openai
+import os
+import shutil
 
 class ShellCommandInput(BaseModel):
     command: str
@@ -51,6 +53,12 @@ class TaskInput(BaseModel):
                 )
         except Exception as e:
             return CommandFeedback(return_code=-1, stderr=str(e))
+        
+    
+    def backup_file(self, file_path):
+        backup_dir = '/tmp/backup'
+        os.makedirs(backup_dir, exist_ok=True)
+        shutil.copy(file_path, os.path.join(backup_dir, os.path.basename(file_path)))
 
     def execute_shell_command(self, input_data: ShellCommandInput) -> CommandFeedback:
         try:
@@ -68,6 +76,9 @@ class TaskInput(BaseModel):
 
     def write_file_content(self, input_data: FileContentInput) -> CommandFeedback:
         try:
+            # Backup the file before writing content
+            self.backup_file(input_data.file_path)
+
             # If replace_existing is False, append to the file if it exists
             mode = 'a' if not input_data.replace_existing else 'w'
 
@@ -88,6 +99,9 @@ class TaskInput(BaseModel):
 
     def insert_line_in_file(self, input_data: InsertLineInput) -> CommandFeedback:
         try:
+            # Backup the file before inserting line
+            self.backup_file(input_data.file_path)
+
             with open(input_data.file_path, 'r') as file:
                 lines = file.readlines()
 
@@ -102,6 +116,9 @@ class TaskInput(BaseModel):
 
     def modify_line_in_file(self, input_data: ModifyLineInput) -> CommandFeedback:
         try:
+            # Backup the file before modifying line
+            self.backup_file(input_data.file_path)
+
             with open(input_data.file_path, 'r') as file:
                 lines = file.readlines()
 

@@ -86,7 +86,7 @@ def load_files_assistant(repo_path: str):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: load_files_assistant <repo_path>")
+        print("Usage: update_vector_store <repo_path>")
         sys.exit(1)
 
     repo_path = sys.argv[1]
