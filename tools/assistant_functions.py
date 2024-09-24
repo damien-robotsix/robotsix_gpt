@@ -10,45 +10,50 @@ class FileContentInput(BaseModel):
     file_path: str
     content: str
 
+class InsertLineInput(BaseModel):
+    file_path: str
+    line_number: int
+    content: str
+
+class ModifyLineInput(BaseModel):
+    file_path: str
+    line_number: int
+    new_content: str
+
 class CommandFeedback(BaseModel):
     return_code: int
     stdout: Optional[str] = None
     stderr: Optional[str] = None
 
 class TaskInput(BaseModel):
-    input_type: str = Field(..., description="The type of input. E.g. ShellCommandInput, FileContentInput")
+    input_type: str = Field(..., description="The type of input. E.g. ShellCommandInput, FileContentInput, InsertLineInput, ModifyLineInput")
     parameters: Dict[str, Any] = Field(..., description="Parameters needed for the task.")
 
     def execute(self) -> CommandFeedback:
-        if self.input_type == 'ShellCommandInput':
-            try:
+        try:
+            if self.input_type == 'ShellCommandInput':
                 shell_input = ShellCommandInput.model_validate_json(self.parameters)
                 return self.execute_shell_command(shell_input)
-            except Exception as e:
-                return CommandFeedback(
-                    return_code=-1,
-                    stderr=str(e)
-                )
-        elif self.input_type == 'FileContentInput':
-            try:
+            elif self.input_type == 'FileContentInput':
                 file_input = FileContentInput.model_validate_json(self.parameters)
                 return self.write_file_content(file_input)
-            except Exception as e:
+            elif self.input_type == 'InsertLineInput':
+                insert_input = InsertLineInput(**self.parameters)
+                return self.insert_line_in_file(insert_input)
+            elif self.input_type == 'ModifyLineInput':
+                modify_input = ModifyLineInput(**self.parameters)
+                return self.modify_line_in_file(modify_input)
+            else:
                 return CommandFeedback(
                     return_code=-1,
-                    stderr=str(e)
+                    stderr=f"Unsupported task type: {self.task_type}"
                 )
-        else:
-            return CommandFeedback(
-                return_code=-1,
-                stderr=f"Unsupported task type: {self.task_type}"
-            )
+        except Exception as e:
+            return CommandFeedback(return_code=-1, stderr=str(e))
 
     def execute_shell_command(self, input_data: ShellCommandInput) -> CommandFeedback:
         try:
-            # Execute the shell command
             result = subprocess.run(input_data.command, shell=True, capture_output=True, text=True)
-            # Create the structured output
             return CommandFeedback(
                 return_code=result.returncode,
                 stdout=result.stdout if result.stdout else None,
@@ -62,10 +67,8 @@ class TaskInput(BaseModel):
 
     def write_file_content(self, input_data: FileContentInput) -> CommandFeedback:
         try:
-            # Write the content to the file
             with open(input_data.file_path, "w") as file:
                 file.write(input_data.content)
-            # Create the structured output
             return CommandFeedback(
                 return_code=0,
                 stdout=f"Content written to file: {input_data.file_path}"
@@ -76,7 +79,37 @@ class TaskInput(BaseModel):
                 stderr=str(e)
             )
 
+    def insert_line_in_file(self, input_data: InsertLineInput) -> CommandFeedback:
+        try:
+            with open(input_data.file_path, 'r') as file:
+                lines = file.readlines()
+
+            lines.insert(input_data.line_number - 1, input_data.content + '\n')
+            
+            with open(input_data.file_path, 'w') as file:
+                file.writelines(lines)
+
+            return CommandFeedback(return_code=0, stdout="Line inserted successfully.")
+        except Exception as e:
+            return CommandFeedback(return_code=-1, stderr=str(e))
+
+    def modify_line_in_file(self, input_data: ModifyLineInput) -> CommandFeedback:
+        try:
+            with open(input_data.file_path, 'r') as file:
+                lines = file.readlines()
+
+            lines[input_data.line_number - 1] = input_data.new_content + '\n'
+            
+            with open(input_data.file_path, 'w') as file:
+                file.writelines(lines)
+
+            return CommandFeedback(return_code=0, stdout="Line modified successfully.")
+        except Exception as e:
+            return CommandFeedback(return_code=-1, stderr=str(e))
+
 function_tools = [
     openai.pydantic_function_tool(ShellCommandInput, description="Execute a shell command assuming the command is run in the repository root directory"),
-    openai.pydantic_function_tool(FileContentInput, description="Write content to a file, replacing the existing content if the file already exists")
+    openai.pydantic_function_tool(FileContentInput, description="Write content to a file, replacing the existing content if the file already exists"),
+    openai.pydantic_function_tool(InsertLineInput, description="Insert a line into a file at a specified line number."),
+    openai.pydantic_function_tool(ModifyLineInput, description="Modify a line in a file at a specified line number.")
 ]
