@@ -35,10 +35,32 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run Assistant Script
+      - name: Create a new branch for the issue
+        run: |
+          git checkout -b issue-${{ github.event.inputs.issue_number }}
+
+      - name: Generate issue_solver_steps
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           ISSUE_TITLE="${{ fromJson(steps.get_issue.outputs.data).title }}"
           ISSUE_BODY="${{ fromJson(steps.get_issue.outputs.data).body }}"
-          python tools/run_assistant.py "New issue created: ${ISSUE_TITLE}\nDescription: ${ISSUE_BODY}\nYou should do your best to propose a PR to this issue or, at least, generate a comment to help the issue's author." --no-interactive
+          PROMPT="Propose a step-by-step solution for the following issue and proceed:\n\nIssue: ${ISSUE_TITLE}\nDescription: ${ISSUE_BODY}"
+          python tools/solve_by_step.py "${PROMPT}" > issue_solver_steps
+
+      - name: Commit the generated file
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add issue_solver_steps
+          git commit -m "Add issue solver steps for #${{ github.event.inputs.issue_number }}"
+          git push --set-upstream origin issue-${{ github.event.inputs.issue_number }}
+
+      - name: Comment on the issue
+        uses: octokit/request-action@v2.x
+        with:
+          route: POST /repos/${{ github.repository }}/issues/${{ github.event.inputs.issue_number }}/comments
+          body: |
+            The assistant has created a branch with proposed solutions. Please review the branch `issue-${{ github.event.inputs.issue_number }}` for details.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

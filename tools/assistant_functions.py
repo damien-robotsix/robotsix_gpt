@@ -47,7 +47,7 @@ class TaskInput(BaseModel):
             else:
                 return CommandFeedback(
                     return_code=-1,
-                    stderr=f"Unsupported task type: {self.input_type}"
+                    stderr=f"Unsupported task type: {self.input_type}, supported types are: ShellCommandInput, FileContentInput, InsertLineInput, ModifyLineInput"
                 )
         except Exception as e:
             return CommandFeedback(return_code=-1, stderr=str(e))
