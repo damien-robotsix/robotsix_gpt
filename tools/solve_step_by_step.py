@@ -21,7 +21,7 @@ def convert_to_step_by_step(custom_message):
         return None
 
 def dump_issue_solver_step(data):
-    with open('issue_solver_step.json', 'w') as f:
+    with open('issue_solver_steps.json', 'w') as f:
         json.dump(data, f, indent=4)
 
 if __name__ == "__main__":
@@ -33,4 +33,4 @@ if __name__ == "__main__":
     assistant = AssistantGpt(interactive=False)
     assistant.init_from_file("assistant_config.json")
     assistant.create_user_message(custom_message)
-    print(dump_issue_solver_step(convert_to_step_by_step(assistant.get_output())))
+    dump_issue_solver_step(convert_to_step_by_step(assistant.get_output()))
