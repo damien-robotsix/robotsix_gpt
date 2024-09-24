@@ -16,13 +16,13 @@ def convert_to_step_by_step(custom_message):
 
     messages = list(client.beta.threads.messages.list(thread_id=thread_id))
     if messages:
-        return(messages[0].content[0].text.value)
+        return(json.loads(messages[0].content[0].text.value))
     else:
         return None
 
 def dump_issue_solver_step(data):
     with open('issue_solver_steps.json', 'w') as f:
-        json.dump(data, f, indent=4, separators=(',', ': '))
+        json.dump(data, f, indent=4)
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
