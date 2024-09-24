@@ -94,14 +94,12 @@ class AssistantGpt(AssistantEventHandler):
         else:
             self.completed = True
 
-    def create_user_message(self, user_message, response_format=None):
+    def create_user_message(self, user_message):
         message_data = {
             "thread_id": self.thread_id,
             "role": "user",
             "content": user_message,
         }
-        if response_format:
-            message_data["response_format"] = response_format
         self.client.beta.threads.messages.create(**message_data)
         self.run()
 
@@ -118,6 +116,13 @@ class AssistantGpt(AssistantEventHandler):
         new_handler = AssistantGpt(self.interactive)
         new_handler.init_assistant(self.assistant_id, self.thread_id)
         return new_handler
+
+    def get_output(self):
+        messages = list(self.client.beta.threads.messages.list(thread_id=self.thread_id))
+        if messages:
+            return messages[0].content[0].text.value
+        else:
+            return None
 
     def run(self):
         with self.client.beta.threads.runs.stream(
