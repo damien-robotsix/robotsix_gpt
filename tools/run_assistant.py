@@ -63,6 +63,7 @@ def main():
     parser = argparse.ArgumentParser(description="Run assistant with a custom user message.")
     parser.add_argument('user_message', type=str, help='The user message to send to the assistant.')
     parser.add_argument("--interactive", action="store_true", default=True, help="Run in interactive mode.")
+    parser.add_argument("--no-interactive", dest='interactive', action="store_false", help="Run in non-interactive mode.")
     args = parser.parse_args()
 
     # Initialize OpenAI client
@@ -88,8 +89,11 @@ def main():
                 print(messages[0].content[0].text.value)
             
             if args.interactive:
-                continue_with_interaction(client, thread.id, assistant_id)
-            break
+                run = continue_with_interaction(client, thread.id, assistant_id)
+            else:
+                break
+            if not run:
+                break
 
         if run.status == "requires_action":
             tool_outputs = handle_tool_calls(run)
@@ -105,13 +109,12 @@ def main():
 
 def continue_with_interaction(client, thread_id, assistant_id):
     """Handle additional interaction with the user."""
-    while True:
-        interactive, new_message = prompt_next_action()
-        if not interactive:
-            break
-        
-        create_user_message(client, thread_id, new_message)
-        run = client.beta.threads.runs.create_and_poll(thread_id=thread_id, assistant_id=assistant_id)
+    interactive, new_message = prompt_next_action()
+    if not interactive:
+        return None
+
+    create_user_message(client, thread_id, new_message)
+    return client.beta.threads.runs.create_and_poll(thread_id=thread_id, assistant_id=assistant_id)
 
 if __name__ == "__main__":
     main()
