@@ -8,6 +8,10 @@ on:
         required: true
         type: number
 
+permissions:
+  contents: write
+  issues: write
+
 jobs:
   run-assistant:
     runs-on: ubuntu-latest
