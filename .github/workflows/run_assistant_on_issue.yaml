@@ -1,8 +1,12 @@
 name: Run Assistant on Issue
 
 on:
-  issues:
-    types: [opened]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue Number'
+        required: true
+        type: number
 
 jobs:
   run-assistant:
@@ -10,10 +14,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '3.x'
 
@@ -22,12 +26,19 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - id: get_issue  # Add an ID to reference outputs
+        name: Get issue details
+        uses: octokit/request-action@v2.x
+        with:
+          route: |
+            GET /repos/${{ github.repository }}/issues/${{ github.event.inputs.issue_number || github.event.issue.number }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Run Assistant Script
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           ISSUE_TITLE="${{ fromJson(steps.get_issue.outputs.data).title }}"
           ISSUE_BODY="${{ fromJson(steps.get_issue.outputs.data).body }}"
-          python tools/run_assistant.py "New issue created: ${ISSUE_TITLE}
-          Description: ${ISSUE_BODY}
-          You should do your best to propose a PR to this issue or, at least, generate a comment to help the issue's author." --no-interactive
+          python tools/run_assistant.py "New issue created: ${ISSUE_TITLE}\nDescription: ${ISSUE_BODY}\nYou should do your best to propose a PR to this issue or, at least, generate a comment to help the issue's author." --no-interactive
