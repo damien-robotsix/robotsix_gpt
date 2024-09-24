@@ -2,12 +2,7 @@ import argparse
 import os
 from openai import OpenAI
 from utils import get_assistant_configuration, save_assistant_configuration
-from assistant_functions import (
-    execute_shell_command,
-    write_file_content,
-    ShellCommandInput,
-    FileContentInput
-)
+from assistant_functions import TaskInput
 
 def initialize_openai_client():
     """Initialize OpenAI client with API key."""
@@ -25,18 +20,12 @@ def create_user_message(client, thread_id, user_message):
 def handle_tool_calls(run):
     """Process tool calls and generate outputs."""
     tool_outputs = []
-
     for tool in run.required_action.submit_tool_outputs.tool_calls:
         print(tool)
-        if tool.function.name == "ShellCommandInput":
-            argument = ShellCommandInput.model_validate_json(tool.function.arguments)
-            output = execute_shell_command(argument)
-        elif tool.function.name == "FileContentInput":
-            argument = FileContentInput.model_validate_json(tool.function.arguments)
-            output = write_file_content(argument)
-
+        task = TaskInput.model_construct(input_type=tool.function.name, parameters=tool.function.arguments)
+        output = task.execute()
+        print(output)
         tool_outputs.append({"tool_call_id": tool.id, "output": output.model_dump_json()})
-
     return tool_outputs
 
 def submit_tool_outputs(client, thread_id, run_id, tool_outputs):
