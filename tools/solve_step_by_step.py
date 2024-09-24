@@ -22,7 +22,7 @@ def convert_to_step_by_step(custom_message):
 
 def dump_issue_solver_step(data):
     with open('issue_solver_steps.json', 'w') as f:
-        json.dump(data, f, indent=4)
+        json.dumps(data, indent=4, separators=(',', ': '))
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
