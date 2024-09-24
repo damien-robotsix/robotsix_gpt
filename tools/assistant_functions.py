@@ -9,6 +9,7 @@ class ShellCommandInput(BaseModel):
 class FileContentInput(BaseModel):
     file_path: str
     content: str
+    replace_existing: Optional[bool] = False
 
 class InsertLineInput(BaseModel):
     file_path: str
@@ -67,11 +68,17 @@ class TaskInput(BaseModel):
 
     def write_file_content(self, input_data: FileContentInput) -> CommandFeedback:
         try:
-            with open(input_data.file_path, "w") as file:
+            # If replace_existing is False, append to the file if it exists
+            mode = 'a' if not input_data.replace_existing else 'w'
+
+            # Open the file in the appropriate mode (append or write)
+            with open(input_data.file_path, mode) as file:
                 file.write(input_data.content)
+            
+            operation = "appended to" if mode == 'a' else "written to"
             return CommandFeedback(
                 return_code=0,
-                stdout=f"Content written to file: {input_data.file_path}"
+                stdout=f"Content {operation} file: {input_data.file_path}"
             )
         except Exception as e:
             return CommandFeedback(
@@ -109,7 +116,7 @@ class TaskInput(BaseModel):
 
 function_tools = [
     openai.pydantic_function_tool(ShellCommandInput, description="Execute a shell command assuming the command is run in the repository root directory"),
-    openai.pydantic_function_tool(FileContentInput, description="Write content to a file, replacing the existing content if the file already exists"),
+    openai.pydantic_function_tool(FileContentInput, description="Write content to a file. If the file exists, the content will be appended to the file unless replace_existing is set to True."),
     openai.pydantic_function_tool(InsertLineInput, description="Insert a line into a file at a specified line number."),
     openai.pydantic_function_tool(ModifyLineInput, description="Modify a line in a file at a specified line number.")
 ]
