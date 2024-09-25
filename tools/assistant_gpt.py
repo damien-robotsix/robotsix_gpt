@@ -25,7 +25,7 @@ class AssistantGpt(AssistantEventHandler):
         self.assistant_id = assistant_id
         self.init_thread(thread_id)
 
-    def init_from_file(self, config_file, reconnect_thread=False):
+    def init_from_file(self, config_file):
         """
         Reads the assistant configuration from a JSON file.
         """
@@ -40,10 +40,7 @@ class AssistantGpt(AssistantEventHandler):
             print(f"{e} not found in {config_file}.")
             sys.exit(1)
         self.assistant_id = self.config['assistant_id']
-        if reconnect_thread:
-            self.init_thread(self.config['last_thread_id'])
-        else:
-            self.init_thread()
+        self.init_thread()
         if self.config['slave_assistants']:
             for assistant in self.config['slave_assistants']:
                 assistant_data = self.client.beta.assistants.retrieve(assistant['assistant_id'])
@@ -62,10 +59,6 @@ class AssistantGpt(AssistantEventHandler):
         else:
             thread = self.client.beta.threads.create()
             self.thread_id = thread.id
-            if self.config_file:
-                self.config['last_thread_id'] = thread.id
-                with open(self.config_file, 'w') as f:
-                    json.dump(self.config, f, indent=4)
 
     @override
     def on_tool_call_created(self, tool_call):
