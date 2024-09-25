@@ -1,0 +1,22 @@
+# This workflow automatically updates the ai_assistant instruction with the repository structure
+# whenever a push is made to the main branch.
+
+name: Update Assistant Instructions
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  update_instructions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Update Assistant Instructions
+        run: |
+          echo 'Updating assistant instructions...'
+          python tools/update_assistant.py
+
