@@ -1,8 +1,6 @@
-import argparse
 from pathlib import Path
 from typing import List
 from pydantic import BaseModel, DirectoryPath, ValidationError
-
 
 class RepoConfigModel(BaseModel):
     repo_path: DirectoryPath
@@ -46,31 +44,13 @@ def generate_repo_structure(config: RepoConfigModel) -> str:
             else:
                 lines.append(f"{prefix}{connector}{entry.name}")
 
-    _traverse(repo_path, lines, prefix="")
+    _traverse(repo_path, lines, "")
     return "\n".join(lines)
 
-
-def main():
-    # Argument parser to handle command-line arguments
-    parser = argparse.ArgumentParser(description="Generate repository structure.")
-    parser.add_argument(
-        "repo_path",
-        type=str,
-        help="Path to the repository directory"
-    )
-
-    args = parser.parse_args()
-
+# Optional: Add a function to generate the repo structure from a path directly
+def generate_structure_from_path(repo_path: str) -> str:
     try:
-        # Create a RepoConfigModel with the argument passed from the command-line
-        repo_config = RepoConfigModel(repo_path=args.repo_path)
-
-        # Generate and print the repository structure
-        structure = generate_repo_structure(repo_config)
-        print(structure)
-
+        config = RepoConfigModel(repo_path=repo_path)
+        return generate_repo_structure(config)
     except ValidationError as e:
-        print(f"Invalid directory path: {e}")
-
-if __name__ == "__main__":
-    main()
+        return f"Invalid directory path: {e}"

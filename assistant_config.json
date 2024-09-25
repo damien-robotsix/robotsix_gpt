@@ -4,10 +4,6 @@
     "assistant_id": "asst_eb8VshjBYgNpOFyCImMN2zFA",
     "slave_assistants": [
         {
-            "assistant_id": "asst_UeiAkZ9spHYLHayGXAQy7r8S",
-            "description": "This is an assistant to generate step by step instructions"
-        },
-        {
             "assistant_id": "asst_J5Of8UtJr9IYmJo6DBjTgCQP",
             "description": "This assistant is specialized in open AI python API"
         },
