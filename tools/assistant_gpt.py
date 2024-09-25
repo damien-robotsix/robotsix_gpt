@@ -30,6 +30,7 @@ class AssistantGpt(AssistantEventHandler):
         self.config_file = None
         self.slave_assistants = {}
         self.slave_names = {}
+        self.main_assistant = False
 
     def get_assistant_name(self, assistant_id):
         try:
@@ -47,6 +48,7 @@ class AssistantGpt(AssistantEventHandler):
         """
         Reads the assistant configuration from a JSON file.
         """
+        self.main_assistant = True
         try:
             with open(config_file, 'r') as f:
                 self.config = json.load(f)
@@ -130,7 +132,7 @@ class AssistantGpt(AssistantEventHandler):
 
     def handle_completed(self):
         messages = list(self.client.beta.threads.messages.list(thread_id=self.thread_id))
-        if messages:
+        if messages and self.main_assistant:
             print(f"Final Output:\n {messages[0].content[0].text.value}")
         if self.interactive:
             self.continue_with_interaction()
