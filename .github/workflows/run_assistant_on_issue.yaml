@@ -51,7 +51,7 @@ jobs:
           ISSUE_BODY="${{ fromJson(steps.get_issue.outputs.data).body }}"
           REPO_NAME="${{ github.repository }}"
           PROMPT="For the ${REPO_NAME} repository, propose a step-by-step solution for the following issue:\n\nIssue: ${ISSUE_TITLE}\nDescription: ${ISSUE_BODY}"
-          python tools/run_assistant.py --no-interaction "${PROMPT}"
+          python tools/run_assistant.py --no-interactive "${PROMPT}"
 
       - name: Commit the generated file
         run: |
