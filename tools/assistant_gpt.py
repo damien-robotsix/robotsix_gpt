@@ -79,7 +79,9 @@ class AssistantGpt(AssistantEventHandler):
 
     @override
     def on_tool_call_created(self, tool_call):
-        print(f"\n{Colors.OKGREEN}Assistant {self.assistant_name} > {tool_call.type}{Colors.ENDC}\n", flush=True)
+        print(f"\n{Colors.OKGREEN}Assistant {self.assistant_name} > {tool_call.type}{Colors.ENDC}", flush=True)
+        if tool_call.type == "function":
+            print(f"{Colors.OKGREEN}{tool_call.function}{Colors.ENDC}\n", flush=True)
 
     @override
     def on_event(self, event):
@@ -93,15 +95,17 @@ class AssistantGpt(AssistantEventHandler):
         """Process tool calls and generate outputs."""
         self.tool_outputs = []
         for tool in run.required_action.submit_tool_outputs.tool_calls:
-            print(f"{Colors.HEADER}Processing tool call: {tool.id}{Colors.ENDC}")
+            print(f"{Colors.HEADER}Processing function call:{Colors.ENDC}")
             if tool.function.name == "AskAssistant":
                 request = AskAssistant.model_validate_json(tool.function.arguments)
                 assistant_id = request.assistant_id
                 message = request.message
+                print(f"{Colors.OKBLUE}Message to {assistant_id} > {message}{Colors.ENDC}")
                 try:
                     slave_assistant = self.slave_assistants[assistant_id]
                     slave_assistant.create_user_message(message)
                     response = AssistantResponse(response=slave_assistant.get_output())
+                    print(f"{Colors.OKBLUE}Response: {response.response}{Colors.ENDC}")
                     self.tool_outputs.append({"tool_call_id": tool.id, "output": response.model_dump_json()})
                 except KeyError:
                     error_message = f"Assistant {assistant_id} not found. Available assistants: {self.slave_assistants.keys()}"
