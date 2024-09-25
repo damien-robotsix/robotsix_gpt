@@ -90,7 +90,6 @@ class AssistantGpt(AssistantEventHandler):
         print(f"\n{Colors.OKGREEN}Assistant {self.assistant_name} > {tool_call.type}{Colors.ENDC}", flush=True)
         if tool_call.type == "function":
             print(f"{Colors.OKGREEN}Function {tool_call.function.name}{Colors.ENDC}\n", flush=True)
-        logger.info(f"Tool call created: {json.dumps(tool_call.model_dump_json())}")
 
     @override
     def on_event(self, event):
@@ -144,6 +143,7 @@ class AssistantGpt(AssistantEventHandler):
         messages = list(self.client.beta.threads.messages.list(thread_id=self.thread_id))
         if messages and self.main_assistant:
             print(f"Final Output:\n {messages[0].content[0].text.value}")
+            logger.info(f"Final Output:\n {messages[0].content[0].text.value}")
         if self.interactive:
             self.continue_with_interaction()
         else:
@@ -155,6 +155,8 @@ class AssistantGpt(AssistantEventHandler):
             "role": "user",
             "content": user_message,
         }
+        if self.main_assistant:
+            logger.debug(f"Creating user message: {message_data}")
         self.client.beta.threads.messages.create(**message_data)
         self.run()
 
