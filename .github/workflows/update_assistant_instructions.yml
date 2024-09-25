@@ -26,6 +26,8 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Update Assistant Instructions
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           echo 'Updating assistant instructions...'
           python tools/update_assistant.py

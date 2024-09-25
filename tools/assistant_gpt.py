@@ -10,6 +10,14 @@ from pydantic import BaseModel
 class StepByStepOutput(BaseModel):
     steps: list[str]
 
+class Colors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'  # End of color
+
 class AssistantGpt(AssistantEventHandler):
     def __init__(self, interactive = False):
         super().__init__()
@@ -62,7 +70,7 @@ class AssistantGpt(AssistantEventHandler):
 
     @override
     def on_tool_call_created(self, tool_call):
-        print(f"\nassistant > {tool_call.type}\n", flush=True)
+        print(f"\n{Colors.OKGREEN}Assistant {self.assistant_id} > {tool_call.type}{Colors.ENDC}\n", flush=True)
 
     @override
     def on_event(self, event):
@@ -76,7 +84,7 @@ class AssistantGpt(AssistantEventHandler):
         """Process tool calls and generate outputs."""
         self.tool_outputs = []
         for tool in run.required_action.submit_tool_outputs.tool_calls:
-            print(tool)
+            print(f"{Colors.HEADER}Processing tool call: {tool.id}{Colors.ENDC}")
             if tool.function.name == "AskAssistant":
                 request = AskAssistant.model_validate_json(tool.function.arguments)
                 assistant_id = request.assistant_id
@@ -87,13 +95,14 @@ class AssistantGpt(AssistantEventHandler):
                     response = AssistantResponse(response=slave_assistant.get_output())
                     self.tool_outputs.append({"tool_call_id": tool.id, "output": response.model_dump_json()})
                 except KeyError:
-                    print(f"Assistant {assistant_id} not found. Available assistants: {self.slave_assistants.keys()}")
-                    response = AssistantResponse(response=f"Assistant {assistant_id} not found. Available assistants: {self.slave_assistants.keys()}")
+                    error_message = f"Assistant {assistant_id} not found. Available assistants: {self.slave_assistants.keys()}"
+                    print(f"{Colors.FAIL}{error_message}{Colors.ENDC}")
+                    response = AssistantResponse(response=error_message)
                     self.tool_outputs.append({"tool_call_id": tool.id, "output": response.model_dump_json()})
             else:
                 task = TaskInput.model_construct(input_type=tool.function.name, parameters=tool.function.arguments)
                 output = task.execute()
-                print(output)
+                print(f"{Colors.OKBLUE}Output: {output.model_dump_json()}{Colors.ENDC}")
                 self.tool_outputs.append({"tool_call_id": tool.id, "output": output.model_dump_json()})
         self.submit_tool_outputs()
 
@@ -109,7 +118,7 @@ class AssistantGpt(AssistantEventHandler):
     def handle_completed(self):
         messages = list(self.client.beta.threads.messages.list(thread_id=self.thread_id))
         if messages:
-            print(messages[0].content[0].text.value)
+            print(f"{Colors.OKBLUE}Final Output: {messages[0].content[0].text.value}{Colors.ENDC}")
         if self.interactive:
             self.continue_with_interaction()
         else:

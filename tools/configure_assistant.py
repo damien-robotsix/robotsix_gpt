@@ -18,7 +18,7 @@ def main():
     response = client.beta.assistants.update(
         assistant_id=assistant_id,
         tools=[{"type": "code_interpreter"}, {"type": "file_search"}] + repository_function_tools,
-        tool_resources={"file_search": {"repo_vector_store_ids": [vector_store_id]}})
+        tool_resources={"file_search": {"vector_store_ids": [vector_store_id]}})
 
     # Optional: Handle the response as needed
     if response.id == assistant_id:

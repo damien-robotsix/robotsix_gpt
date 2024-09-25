@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 import subprocess
 import openai
 import os
@@ -8,10 +8,9 @@ import shutil
 class ShellCommandInput(BaseModel):
     command: str = Field(..., description="The shell command to be executed in the repository root directory")
 
-class FileContentInput(BaseModel):
+class ReplaceFileContent(BaseModel):
     file_path: str = Field(..., description="The path to the file where the content should be written relative to the repository root directory")
     content: str = Field(..., description="The content to be written to the file")
-    replace_existing: Optional[bool]
 
 class CommandFeedback(BaseModel):
     return_code: int = Field(..., description="The return code of the command. 0 indicates success, non-zero indicates failure.")
@@ -26,7 +25,7 @@ class AssistantResponse(BaseModel):
     response: str = Field(..., description="The response from the assistant")
 
 class TaskInput(BaseModel):
-    input_type: str = Field(..., description="The type of input. E.g. ShellCommandInput, FileContentInput")
+    input_type: str = Field(..., description="The type of input. E.g. ShellCommandInput, ReplaceFileContent")
     parameters: Dict[str, Any] = Field(..., description="Parameters needed for the task.")
 
     def execute(self) -> CommandFeedback:
@@ -34,13 +33,13 @@ class TaskInput(BaseModel):
             if self.input_type == 'ShellCommandInput':
                 shell_input = ShellCommandInput.model_validate_json(self.parameters)
                 return self.execute_shell_command(shell_input)
-            elif self.input_type == 'FileContentInput':
-                file_input = FileContentInput.model_validate_json(self.parameters)
+            elif self.input_type == 'ReplaceFileContent':
+                file_input = ReplaceFileContent.model_validate_json(self.parameters)
                 return self.write_file_content(file_input)
             else:
                 return CommandFeedback(
                     return_code=-1,
-                    stderr=f"Unsupported task type: {self.input_type}, supported types are: ShellCommandInput, FileContentInput, InsertBlock, ReplaceBlock"
+                    stderr=f"Unsupported task type: {self.input_type}, supported types are: ShellCommandInput, ReplaceFileContent"
                 )
         except Exception as e:
             return CommandFeedback(return_code=-1, stderr=str(e))
@@ -64,7 +63,7 @@ class TaskInput(BaseModel):
                 stderr=str(e)
             )
 
-    def write_file_content(self, input_data: FileContentInput) -> CommandFeedback:
+    def write_file_content(self, input_data: ReplaceFileContent) -> CommandFeedback:
         try:
             # Check if the file exists
             if not os.path.exists(input_data.file_path):
@@ -75,17 +74,13 @@ class TaskInput(BaseModel):
             # Backup the file before writing content
             self.backup_file(input_data.file_path)
 
-            # If replace_existing is False, append to the file if it exists
-            mode = 'a' if not input_data.replace_existing else 'w'
-
             # Open the file in the appropriate mode (append or write)
-            with open(input_data.file_path, mode) as file:
+            with open(input_data.file_path, 'w') as file:
                 file.write(input_data.content)
 
-            operation = "appended to" if mode == 'a' else "written to"
             return CommandFeedback(
                 return_code=0,
-                stdout=f"Content {operation} file: {input_data.file_path}"
+                stdout=f"Content written to file: {input_data.file_path}"
             )
         except Exception as e:
             return CommandFeedback(
@@ -95,7 +90,7 @@ class TaskInput(BaseModel):
 
 repository_function_tools = [
     openai.pydantic_function_tool(ShellCommandInput, description="Execute a shell command assuming the command is run in the repository root directory"),
-    openai.pydantic_function_tool(FileContentInput, description="Write content to a file. Appends to the file if replace_existing is False otherwise overwrites the file."),
+    openai.pydantic_function_tool(ReplaceFileContent, description="Replace the content of a file in the repository root directory. The file will be fully overwritten."),
 ]
 
 def print_assistant_select():
