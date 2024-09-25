@@ -29,7 +29,6 @@ class AssistantGpt(AssistantEventHandler):
         self.completed = False
         self.config_file = None
         self.slave_assistants = {}
-        self.slave_names = {}
         self.main_assistant = False
 
     def get_assistant_name(self, assistant_id):
@@ -103,14 +102,15 @@ class AssistantGpt(AssistantEventHandler):
                 request = AskAssistant.model_validate_json(tool.function.arguments)
                 assistant_id = request.assistant_id
                 message = request.message
-                print(f"{Colors.OKBLUE}Message to {self.slave_names[assistant_id]}:\n {message}{Colors.ENDC}")
-                logger.info(f"Message to {self.slave_names[assistant_id]}: {message}")
                 try:
                     slave_assistant = self.slave_assistants[assistant_id]
+                    print(f"{Colors.OKBLUE}Message to {slave_assistant.assistant_name}:\n {message}{Colors.ENDC}")
+                    logger.info(f"Message to {slave_assistant.assistant_name}: {message}")
+
                     slave_assistant.create_user_message(message)
                     response = AssistantResponse(response=slave_assistant.get_output())
-                    print(f"{Colors.OKPINK}Response from {self.slave_names[assistant_id]}:\n {response.response}{Colors.ENDC}")
-                    logger.info(f"Response from {self.slave_names[assistant_id]}: {response.response}")
+                    print(f"{Colors.OKPINK}Response from {slave_assistant.assistant_name}:\n {response.response}{Colors.ENDC}")
+                    logger.info(f"Response from {slave_assistant.assistant_name}: {response.response}")
                     self.tool_outputs.append({"tool_call_id": tool.id, "output": response.model_dump_json()})
                 except KeyError:
                     error_message = f"Assistant {assistant_id} not found. Available assistants: {self.slave_assistants.keys()}"
@@ -166,7 +166,6 @@ class AssistantGpt(AssistantEventHandler):
         new_handler = AssistantGpt(self.interactive)
         new_handler.init_assistant(self.assistant_id, self.thread_id)
         new_handler.slave_assistants = self.slave_assistants
-        new_handler.slave_names = self.slave_names
         new_handler.main_assistant = self.main_assistant
         return new_handler
 
@@ -175,7 +174,6 @@ class AssistantGpt(AssistantEventHandler):
             new_handler = AssistantGpt(False)
             new_handler.init_assistant(assistant['assistant_id'])
             self.slave_assistants[assistant['assistant_id']] = new_handler
-            self.slave_names[assistant['assistant_id']] = self.get_assistant_name(assistant['assistant_id'])
 
     def get_output(self):
         messages = list(self.client.beta.threads.messages.list(thread_id=self.thread_id))
