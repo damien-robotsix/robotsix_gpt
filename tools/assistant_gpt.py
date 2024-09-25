@@ -1,14 +1,15 @@
 import os
 import sys
 import json
+import logging
 from typing_extensions import override
 from openai import OpenAI, AssistantEventHandler
 from assistant_functions import TaskInput, AskAssistant, AssistantResponse
-from pydantic import BaseModel
 
-class StepByStepOutput(BaseModel):
-    steps: list[str]
-
+# Set up logging
+logging.basicConfig(level=logging.DEBUG, filename='assistant_gpt.log',
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger()
 class Colors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -17,9 +18,8 @@ class Colors:
     WARNING = '\033[93m'
     FAIL = '\033[91m'
     ENDC = '\033[0m'  # End of color
-
 class AssistantGpt(AssistantEventHandler):
-    def __init__(self, interactive = False):
+    def __init__(self, interactive=False):
         super().__init__()
         api_key = os.environ.get("OPENAI_API_KEY", "<your OpenAI API key if not set as env var>")
         self.client = OpenAI(api_key=api_key)
@@ -104,20 +104,25 @@ class AssistantGpt(AssistantEventHandler):
                 assistant_id = request.assistant_id
                 message = request.message
                 print(f"{Colors.OKBLUE}Message to {self.slave_names[assistant_id]}:\n {message}{Colors.ENDC}")
+                logger.info(f"Message to {self.slave_names[assistant_id]}: {message}")
                 try:
                     slave_assistant = self.slave_assistants[assistant_id]
                     slave_assistant.create_user_message(message)
                     response = AssistantResponse(response=slave_assistant.get_output())
                     print(f"{Colors.OKPINK}Response from {self.slave_names[assistant_id]}:\n {response.response}{Colors.ENDC}")
+                    logger.info(f"Response from {self.slave_names[assistant_id]}: {response.response}")
                     self.tool_outputs.append({"tool_call_id": tool.id, "output": response.model_dump_json()})
                 except KeyError:
                     error_message = f"Assistant {assistant_id} not found. Available assistants: {self.slave_assistants.keys()}"
                     print(f"{Colors.FAIL}{error_message}{Colors.ENDC}")
+                    logger.error(f"{error_message} - Input: {message}")
                     response = AssistantResponse(response=error_message)
                     self.tool_outputs.append({"tool_call_id": tool.id, "output": response.model_dump_json()})
             else:
                 task = TaskInput.model_construct(input_type=tool.function.name, parameters=tool.function.arguments)
                 output = task.execute()
+                if output.return_code != 0:
+                    logger.error(f"Failed to execute {tool.function.name} - Input: {tool.function.arguments}, Error: {output.stderr}")
                 self.tool_outputs.append({"tool_call_id": tool.id, "output": output.model_dump_json()})
         self.submit_tool_outputs()
 
