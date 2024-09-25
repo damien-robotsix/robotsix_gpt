@@ -50,7 +50,7 @@ jobs:
           ISSUE_TITLE="${{ fromJson(steps.get_issue.outputs.data).title }}"
           ISSUE_BODY="${{ fromJson(steps.get_issue.outputs.data).body }}"
           PROMPT="Propose a step-by-step solution for the following issue:\n\nIssue: ${ISSUE_TITLE}\nDescription: ${ISSUE_BODY}"
-          python tools/run_assistant.py "${PROMPT}"
+          python tools/run_assistant.py --no-interaction "${PROMPT}"
 
       - name: Commit the generated file
         run: |
