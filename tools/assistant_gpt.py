@@ -13,6 +13,7 @@ class Colors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
     OKGREEN = '\033[92m'
+    OKPINK = '\033[95m'
     WARNING = '\033[93m'
     FAIL = '\033[91m'
     ENDC = '\033[0m'  # End of color
@@ -28,6 +29,7 @@ class AssistantGpt(AssistantEventHandler):
         self.completed = False
         self.config_file = None
         self.slave_assistants = {}
+        self.slave_names = {}
 
     def get_assistant_name(self, assistant_id):
         try:
@@ -100,12 +102,12 @@ class AssistantGpt(AssistantEventHandler):
                 request = AskAssistant.model_validate_json(tool.function.arguments)
                 assistant_id = request.assistant_id
                 message = request.message
-                print(f"{Colors.OKBLUE}Message to {assistant_id} > {message}{Colors.ENDC}")
+                print(f"{Colors.OKBLUE}Message to {self.slave_names[assistant_id]}:\n {message}{Colors.ENDC}")
                 try:
                     slave_assistant = self.slave_assistants[assistant_id]
                     slave_assistant.create_user_message(message)
                     response = AssistantResponse(response=slave_assistant.get_output())
-                    print(f"{Colors.OKBLUE}Response: {response.response}{Colors.ENDC}")
+                    print(f"{Colors.OKPINK}Response from self.slave_names[assistant_id]:\n {response.response}{Colors.ENDC}")
                     self.tool_outputs.append({"tool_call_id": tool.id, "output": response.model_dump_json()})
                 except KeyError:
                     error_message = f"Assistant {assistant_id} not found. Available assistants: {self.slave_assistants.keys()}"
@@ -159,6 +161,7 @@ class AssistantGpt(AssistantEventHandler):
         new_handler = AssistantGpt(self.interactive)
         new_handler.init_assistant(self.assistant_id, self.thread_id)
         new_handler.slave_assistants = self.slave_assistants
+        new_handler.slave_names = self.slave_names
         return new_handler
 
     def create_slave_assistants(self):
@@ -166,6 +169,7 @@ class AssistantGpt(AssistantEventHandler):
             new_handler = AssistantGpt(False)
             new_handler.init_assistant(assistant['assistant_id'])
             self.slave_assistants[assistant['assistant_id']] = new_handler
+            self.slave_names[assistant['assistant_id']] = self.get_assistant_name(assistant['assistant_id'])
 
     def get_output(self):
         messages = list(self.client.beta.threads.messages.list(thread_id=self.thread_id))
