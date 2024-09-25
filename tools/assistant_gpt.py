@@ -162,6 +162,7 @@ class AssistantGpt(AssistantEventHandler):
         new_handler.init_assistant(self.assistant_id, self.thread_id)
         new_handler.slave_assistants = self.slave_assistants
         new_handler.slave_names = self.slave_names
+        new_handler.main_assistant = self.main_assistant
         return new_handler
 
     def create_slave_assistants(self):
