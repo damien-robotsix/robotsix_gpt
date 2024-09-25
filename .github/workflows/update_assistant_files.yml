@@ -23,14 +23,8 @@ jobs:
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-    - name: Clean Vector Store
+    - name: Clean and Update Vector Store
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       run: |
-        python tools/clean_vector_store.py
-
-    - name: Update Vector Store
-      env:
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      run: |
-        python tools/update_vector_store.py .
+        python tools/clean_up_vector_store.py .

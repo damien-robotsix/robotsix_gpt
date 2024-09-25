@@ -100,6 +100,12 @@ class TaskInput(BaseModel):
 
     def write_file_content(self, input_data: FileContentInput) -> CommandFeedback:
         try:
+            # Check if the file exists
+            if not os.path.exists(input_data.file_path):
+                # Create the file if it does not exist
+                with open(input_data.file_path, 'w') as f:
+                    pass  # Just create an empty file
+
             # Backup the file before writing content
             self.backup_file(input_data.file_path)
 
