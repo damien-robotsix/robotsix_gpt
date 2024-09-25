@@ -60,26 +60,27 @@ def load_files_assistant(repo_path: str):
     paths = get_all_files(repo_path)
 
     with tempfile.TemporaryDirectory() as temp_dir:
-        updated_paths = []
-
         for path in paths:
-            if path.endswith(".yaml") or path.endswith(".sh") or "." not in os.path.basename(path) or path.endswith(".yml"):
-                new_path = os.path.join(temp_dir, os.path.basename(path) + ".txt")
-                shutil.copy(path, new_path)
-                updated_paths.append(new_path)
-            else:
-                updated_paths.append(path)
-
-        # Upload the files one by one
-        for path in updated_paths:
             try:
                 with open(path, "rb") as file_stream:
                     client.beta.vector_stores.file_batches.upload_and_poll(
                         vector_store_id=vector_store_id, files=[file_stream]
                     )
             except Exception as e:
-                print(f"Failed to upload file {path}. Error: {e}")
-
+                if 'Invalid extensions typed' in str(e):
+                    # We check that the file is not a binary file
+                    with open(path, 'rb') as f:
+                        if f.read(1024).find(b'\0') == -1:
+                            print(f"Could not upload file {path}. Error: {e}")
+                    new_path = os.path.join(temp_dir, os.path.basename(path) + ".txt")
+                    shutil.copy(path, new_path)
+                    with open(new_path, "rb") as file_stream:
+                        try:
+                            client.beta.vector_stores.file_batches.upload_and_poll(
+                                vector_store_id=vector_store_id, files=[file_stream]
+                            )
+                        except Exception as e:
+                            print(f"Could not upload file {path}. Error: {e}")
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
