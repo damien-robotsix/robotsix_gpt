@@ -104,6 +104,7 @@ class AssistantGpt(AssistantEventHandler):
         """Process tool calls and generate outputs."""
         self.tool_outputs = []
         for tool in run.required_action.submit_tool_outputs.tool_calls:
+            logger.debug(f"Processing tool call: {tool.model_dump_json()}")
             if tool.function.name == "AskAssistant":
                 request = AskAssistant.model_validate_json(tool.function.arguments)
                 assistant_id = request.assistant_id
@@ -111,17 +112,14 @@ class AssistantGpt(AssistantEventHandler):
                 try:
                     slave_assistant = self.slave_assistants[assistant_id]
                     print(f"{Colors.OKBLUE}Message to {slave_assistant.assistant_name}:\n {message}{Colors.ENDC}")
-                    logger.info(f"Message to {slave_assistant.assistant_name}: {message}")
 
                     slave_assistant.create_user_message(message)
                     response = AssistantResponse(response=slave_assistant.get_output())
                     print(f"{Colors.OKPINK}Response from {slave_assistant.assistant_name}:\n {response.response}{Colors.ENDC}")
-                    logger.info(f"Response from {slave_assistant.assistant_name}: {response.response}")
                     self.tool_outputs.append({"tool_call_id": tool.id, "output": response.model_dump_json()})
                 except KeyError:
                     error_message = f"Assistant {assistant_id} not found. Available assistants: {self.slave_assistants.keys()}"
                     print(f"{Colors.FAIL}{error_message}{Colors.ENDC}")
-                    logger.error(f"{error_message} - Input: {message}")
                     response = AssistantResponse(response=error_message)
                     self.tool_outputs.append({"tool_call_id": tool.id, "output": response.model_dump_json()})
             else:
@@ -130,6 +128,7 @@ class AssistantGpt(AssistantEventHandler):
                 if output.return_code != 0:
                     logger.error(f"Failed to execute {tool.function.name} - Input: {tool.function.arguments}, Error: {output.stderr}")
                 self.tool_outputs.append({"tool_call_id": tool.id, "output": output.model_dump_json()})
+        logger.debug(f"Submitting tool outputs: {json.dumps(self.tool_outputs)}")
         self.submit_tool_outputs()
 
     def submit_tool_outputs(self):
