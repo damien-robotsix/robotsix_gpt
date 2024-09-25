@@ -106,4 +106,5 @@ dmypy.json
 .env.development
 
 # local configuration
-config/settings/local.py
+config/settings/local.py# Ignore assistant_config.json
+assistant_config.json
