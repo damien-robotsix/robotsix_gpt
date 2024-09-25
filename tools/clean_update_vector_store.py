@@ -52,7 +52,7 @@ def load_files_assistant(repo_path: str):
     client = openai.OpenAI(api_key=api_key)
 
     assistant_configuration = get_assistant_configuration()
-    vector_store_id = assistant_configuration['vector_store_id']
+    vector_store_id = assistant_configuration['repo_vector_store_id']
 
     # Clean the vector store before loading new files
     clean_vector_store(vector_store_id)

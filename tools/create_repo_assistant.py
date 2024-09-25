@@ -3,22 +3,21 @@ import json
 import sys
 from openai import OpenAI
 
-# Get the repository name from command-line arguments or environment variables
+# Get the repository name from command-line arguments
 if len(sys.argv) > 1:
     repo_name = sys.argv[1]
 else:
-    # Attempt to get the repository name from the GITHUB_REPOSITORY environment variable
-    repo_full_name = os.getenv('GITHUB_REPOSITORY', 'Unknown/Unknown')
-    repo_name = repo_full_name.split('/')[-1]  # Extract the repo name
+    print("Usage: python script.py <repo_name>")
+    sys.exit(1)
 
 # Set your OpenAI API key
 api_key = os.environ.get("OPENAI_API_KEY", "<your OpenAI API key if not set as env var>")
 client = OpenAI(api_key=api_key)
 
 # Define the assistant's name and instructions
-name = f"Repository Assistant for {repo_name}"
+name = f"{repo_name} repository agent"
 instructions = """
-You are an AI assistant integrated into this repository to assist with development and maintenance tasks. You have access to file contents in your database and the structure via repo_structure.txt.
+Your role is to perform development and maintenance tasks for the repository ai_assistant. You have access to a set of repository tools that allow you to execute shell commands in the repository root and manage file contents.
 """
 
 # Create the assistant
@@ -39,8 +38,8 @@ vector_store_id = vector_store.id
 
 # Save the assistant ID to a JSON configuration file
 config = {
-    "assistant_id": assistant_id,
-    "vector_store_id": vector_store_id,
+    "repo_assistant_id": assistant_id,
+    "repo_vector_store_id": vector_store_id,
 }
 
 with open('assistant_config.json', 'w') as f:
