@@ -90,6 +90,7 @@ class AssistantGpt(AssistantEventHandler):
         print(f"\n{Colors.OKGREEN}Assistant {self.assistant_name} > {tool_call.type}{Colors.ENDC}", flush=True)
         if tool_call.type == "function":
             print(f"{Colors.OKGREEN}Function {tool_call.function.name}{Colors.ENDC}\n", flush=True)
+        logger.info(f"Tool call created: {json.dumps(tool_call.model_dump_json())}")
 
     @override
     def on_event(self, event):
