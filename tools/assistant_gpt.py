@@ -6,7 +6,6 @@ from openai import OpenAI, AssistantEventHandler
 from assistant_functions import TaskInput, AskAssistant, AssistantResponse
 from pydantic import BaseModel
 
-
 class StepByStepOutput(BaseModel):
     steps: list[str]
 
@@ -25,12 +24,21 @@ class AssistantGpt(AssistantEventHandler):
         self.client = OpenAI(api_key=api_key)
         self.interactive = interactive
         self.assistant_id = ""
+        self.assistant_name = ""
         self.completed = False
         self.config_file = None
         self.slave_assistants = {}
 
+    def get_assistant_name(self, assistant_id):
+        try:
+            assistant_data = self.client.beta.assistants.retrieve(assistant_id)
+            self.assistant_name = assistant_data.name
+        except Exception as e:
+            print(f"Error fetching assistant name: {e}")
+
     def init_assistant(self, assistant_id, thread_id = None):
         self.assistant_id = assistant_id
+        self.get_assistant_name(assistant_id)
         self.init_thread(thread_id)
 
     def init_from_file(self, config_file):
@@ -48,6 +56,7 @@ class AssistantGpt(AssistantEventHandler):
             print(f"{e} not found in {config_file}.")
             sys.exit(1)
         self.assistant_id = self.config['assistant_id']
+        self.get_assistant_name(self.assistant_id)
         self.init_thread()
         if self.config['slave_assistants']:
             for assistant in self.config['slave_assistants']:
@@ -70,7 +79,7 @@ class AssistantGpt(AssistantEventHandler):
 
     @override
     def on_tool_call_created(self, tool_call):
-        print(f"\n{Colors.OKGREEN}Assistant {self.assistant_id} > {tool_call.type}{Colors.ENDC}\n", flush=True)
+        print(f"\n{Colors.OKGREEN}Assistant {self.assistant_name} > {tool_call.type}{Colors.ENDC}\n", flush=True)
 
     @override
     def on_event(self, event):
