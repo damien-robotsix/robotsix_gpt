@@ -2,7 +2,7 @@ import os
 import sys
 from openai import OpenAI
 from utils import get_assistant_configuration
-from assistant_functions import function_tools
+from assistant_functions import repository_function_tools
 
 def main():
     # Set your OpenAI API key
@@ -11,13 +11,13 @@ def main():
 
     # Get the assistant configuration
     assistant_configuration = get_assistant_configuration()
-    assistant_id = assistant_configuration['assistant_id']
+    assistant_id = "asst_AsCNCsv10ukjPK90DWBWNxUq"
     vector_store_id = assistant_configuration['vector_store_id']
 
     # Update the assistant by adding tools
     response = client.beta.assistants.update(
         assistant_id=assistant_id,
-        tools=[{"type": "code_interpreter"}, {"type": "file_search"}] + function_tools,
+        tools=[{"type": "code_interpreter"}, {"type": "file_search"}] + repository_function_tools,
         tool_resources={"file_search": {"vector_store_ids": [vector_store_id]}})
 
     # Optional: Handle the response as needed

@@ -6,20 +6,20 @@ import os
 import shutil
 
 class ShellCommandInput(BaseModel):
-    command: str
+    command: str = Field(..., description="The shell command to be executed in the repository root directory")
 
 class FileContentInput(BaseModel):
-    file_path: str = Field(..., description="The path to the file where the content should be written (absolute or relative to the repository root directory)")
+    file_path: str = Field(..., description="The path to the file where the content should be written relative to the repository root directory")
     content: str = Field(..., description="The content to be written to the file")
     replace_existing: Optional[bool]
 
-class InsertBlockInput(BaseModel):
-    file_path: str = Field(..., description="The path to the file where the content should be written (absolute or relative to the repository root directory)")
+class InsertBlock(BaseModel):
+    file_path: str = Field(..., description="The path to the file where the content should be written relative to the repository root directory")
     after_content: List[str] = Field(..., description="The block of text (without indentation) after which the new content should be inserted")
     content: str = Field(..., description="The content to be inserted (with indentation)")
 
-class ReplaceBlockInput(BaseModel):
-    file_path: str = Field(..., description="The path to the file where the content should be written (absolute or relative to the repository root directory)")
+class ReplaceBlock(BaseModel):
+    file_path: str = Field(..., description="The path to the file where the content should be written relative to the repository root directory")
     replaced_block: List[str] = Field(..., description="The block of text (without indentation) to be replaced")
     new_content: str = Field(..., description="The new content to replace the block (with indentation)")
 
@@ -27,6 +27,13 @@ class CommandFeedback(BaseModel):
     return_code: int = Field(..., description="The return code of the command. 0 indicates success, non-zero indicates failure.")
     stdout: Optional[str] = None
     stderr: Optional[str] = None
+
+class AskAssistant(BaseModel):
+    assistant_id: str = Field(..., description="The ID of the assistant to ask")
+    message: str = Field(..., description="The prompt to send to the assistant")
+
+class AssistantResponse(BaseModel):
+    response: str = Field(..., description="The response from the assistant")
 
 class TaskInput(BaseModel):
     input_type: str = Field(..., description="The type of input. E.g. ShellCommandInput, FileContentInput, InsertBlockInput, ReplaceBlockInput")
@@ -41,10 +48,10 @@ class TaskInput(BaseModel):
                 file_input = FileContentInput.model_validate_json(self.parameters)
                 return self.write_file_content(file_input)
             elif self.input_type == "InsertBlockInput":
-                insert_input = InsertBlockInput.model_validate_json(self.parameters)
+                insert_input = InsertBlock.model_validate_json(self.parameters)
                 return self.insert_block_in_file(insert_input)
             elif self.input_type == 'ReplaceBlockInput':
-                modify_input = ReplaceBlockInput.model_validate_json(self.parameters)
+                modify_input = ReplaceBlock.model_validate_json(self.parameters)
                 return self.modify_block_in_file(modify_input)
             else:
                 return CommandFeedback(
@@ -127,7 +134,7 @@ class TaskInput(BaseModel):
                 stderr=str(e)
             )
 
-    def insert_block_in_file(self, input_data: InsertBlockInput) -> CommandFeedback:
+    def insert_block_in_file(self, input_data: InsertBlock) -> CommandFeedback:
         try:
             # Backup the file before inserting line
             self.backup_file(input_data.file_path)
@@ -147,7 +154,7 @@ class TaskInput(BaseModel):
         except Exception as e:
             return CommandFeedback(return_code=-1, stderr=str(e))
 
-    def modify_block_in_file(self, input_data: ReplaceBlockInput) -> CommandFeedback:
+    def modify_block_in_file(self, input_data: ReplaceBlock) -> CommandFeedback:
         try:
             # Backup the file before modifying line
             self.backup_file(input_data.file_path)
@@ -166,9 +173,12 @@ class TaskInput(BaseModel):
         except Exception as e:
             return CommandFeedback(return_code=-1, stderr=str(e))
 
-function_tools = [
+repository_function_tools = [
     openai.pydantic_function_tool(ShellCommandInput, description="Execute a shell command assuming the command is run in the repository root directory"),
     openai.pydantic_function_tool(FileContentInput, description="Write content to a file. Appends to the file if replace_existing is False otherwise overwrites the file."),
-    openai.pydantic_function_tool(InsertBlockInput, description="Insert a string into a file after the specified block of text."),
-    openai.pydantic_function_tool(ReplaceBlockInput, description="Replace a consecutive block of text in a file with a new string.")
+    openai.pydantic_function_tool(InsertBlock, description="Insert a string into a file after the specified block of text."),
+    openai.pydantic_function_tool(ReplaceBlock, description="Replace a consecutive block of text in a file with a new string.")
 ]
+
+def print_assistant_select():
+    print(openai.pydantic_function_tool(AskAssistant, description="Ask a question to the assistant with the specified ID"))

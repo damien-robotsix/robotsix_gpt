@@ -3,7 +3,7 @@ import sys
 import json
 from typing_extensions import override
 from openai import OpenAI, AssistantEventHandler
-from assistant_functions import TaskInput
+from assistant_functions import TaskInput, AskAssistant, AssistantResponse
 from pydantic import BaseModel
 
 
@@ -18,6 +18,8 @@ class AssistantGpt(AssistantEventHandler):
         self.interactive = interactive
         self.assistant_id = ""
         self.completed = False
+        self.config_file = None
+        self.slave_assistants = {}
 
     def init_assistant(self, assistant_id, thread_id = None):
         self.assistant_id = assistant_id
@@ -42,16 +44,28 @@ class AssistantGpt(AssistantEventHandler):
             self.init_thread(self.config['last_thread_id'])
         else:
             self.init_thread()
+        if self.config['slave_assistants']:
+            for assistant in self.config['slave_assistants']:
+                assistant_data = self.client.beta.assistants.retrieve(assistant['assistant_id'])
+                assistant['instructions'] = assistant_data.instructions
+            message_data = {
+            "thread_id": self.thread_id,
+            "role": "user",
+            "content": json.dumps(self.config['slave_assistants']),
+            }
+            self.client.beta.threads.messages.create(**message_data)
+            self.create_slave_assistants()
 
     def init_thread(self, thread_id = None):
         if thread_id:
             self.thread_id = thread_id
         else:
             thread = self.client.beta.threads.create()
-            self.config['last_thread_id'] = thread.id
             self.thread_id = thread.id
-            with open(self.config_file, 'w') as f:
-                json.dump(self.config, f, indent=4)
+            if self.config_file:
+                self.config['last_thread_id'] = thread.id
+                with open(self.config_file, 'w') as f:
+                    json.dump(self.config, f, indent=4)
 
     @override
     def on_tool_call_created(self, tool_call):
@@ -70,10 +84,24 @@ class AssistantGpt(AssistantEventHandler):
         self.tool_outputs = []
         for tool in run.required_action.submit_tool_outputs.tool_calls:
             print(tool)
-            task = TaskInput.model_construct(input_type=tool.function.name, parameters=tool.function.arguments)
-            output = task.execute()
-            print(output)
-            self.tool_outputs.append({"tool_call_id": tool.id, "output": output.model_dump_json()})
+            if tool.function.name == "AskAssistant":
+                request = AskAssistant.model_validate_json(tool.function.arguments)
+                assistant_id = request.assistant_id
+                message = request.message
+                try:
+                    slave_assistant = self.slave_assistants[assistant_id]
+                    slave_assistant.create_user_message(message)
+                    response = AssistantResponse(response=slave_assistant.get_output())
+                    self.tool_outputs.append({"tool_call_id": tool.id, "output": response.model_dump_json()})
+                except KeyError:
+                    print(f"Assistant {assistant_id} not found. Available assistants: {self.slave_assistants.keys()}")
+                    response = AssistantResponse(response=f"Assistant {assistant_id} not found. Available assistants: {self.slave_assistants.keys()}")
+                    self.tool_outputs.append({"tool_call_id": tool.id, "output": response.model_dump_json()})
+            else:
+                task = TaskInput.model_construct(input_type=tool.function.name, parameters=tool.function.arguments)
+                output = task.execute()
+                print(output)
+                self.tool_outputs.append({"tool_call_id": tool.id, "output": output.model_dump_json()})
         self.submit_tool_outputs()
 
     def submit_tool_outputs(self):
@@ -115,7 +143,14 @@ class AssistantGpt(AssistantEventHandler):
     def create_event_handler(self):
         new_handler = AssistantGpt(self.interactive)
         new_handler.init_assistant(self.assistant_id, self.thread_id)
+        new_handler.slave_assistants = self.slave_assistants
         return new_handler
+
+    def create_slave_assistants(self):
+        for assistant in self.config['slave_assistants']:
+            new_handler = AssistantGpt(False)
+            new_handler.init_assistant(assistant['assistant_id'])
+            self.slave_assistants[assistant['assistant_id']] = new_handler
 
     def get_output(self):
         messages = list(self.client.beta.threads.messages.list(thread_id=self.thread_id))
