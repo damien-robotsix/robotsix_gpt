@@ -70,16 +70,16 @@ def load_files_assistant(repo_path: str):
             else:
                 updated_paths.append(path)
 
-        # Upload the files
-        file_streams = [open(path, "rb") for path in updated_paths]
-        
-        try:
-            client.beta.vector_stores.file_batches.upload_and_poll(
-                vector_store_id=vector_store_id, files=file_streams
-            )
-        finally:
-            for stream in file_streams:
-                stream.close()
+        # Upload the files one by one
+        for path in updated_paths:
+            try:
+                with open(path, "rb") as file_stream:
+                    client.beta.vector_stores.file_batches.upload_and_poll(
+                        vector_store_id=vector_store_id, files=[file_stream]
+                    )
+            except Exception as e:
+                print(f"Failed to upload file {path}. Error: {e}")
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
