@@ -8,12 +8,12 @@ from assistant_functions import TaskInput, AskAssistant, AssistantResponse
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG, filename='assistant_gpt.log',
-                    format='%(asctime)s - %(levelname)s - %(message)s')
+                    format='%(name)s: %(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger()
 
-# Set OpenAI logging to WARNING to suppress debug/info logs
-openai_logger = logging.getLogger("openai")
-openai_logger.setLevel(logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+logging.getLogger("openai").setLevel(logging.WARNING)
 
 class Colors:
     HEADER = '\033[95m'
