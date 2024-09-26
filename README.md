@@ -35,7 +35,7 @@ This repository provides a framework for integrating a GPT-powered AI assistant 
 
 - **Run Assistant Script:** Use `run_assistant.py` to interact with the assistant.
 
-   ```sh 
+   ```sh
    python3 tools/run_assistant.py "Your message here"
    ```
 

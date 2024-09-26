@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Any
 import subprocess
 import os
 import shutil
@@ -34,11 +34,18 @@ class AskAssistant(BaseModel):
 class AssistantResponse(BaseModel):
     response: str = Field(..., description="The response from the assistant")
 
+# New class to load file content
+class LoadFileInput(BaseModel):
+    path: str = Field(..., description="The path of the file to load")
+
+class LoadFileOutput(BaseModel):
+    content: str = Field(..., description="The content of the file")
+
 class TaskInput(BaseModel):
-    input_type: str = Field(..., description="The type of input. E.g. ShellCommandInput, CreateFileInput, ModifyFileInput")
+    input_type: str = Field(..., description="The type of input. E.g. ShellCommandInput, CreateFileInput, ModifyFileInput, LoadFileInput")
     parameters: Dict[str, Any] = Field(..., description="Parameters needed for the task.")
 
-    def execute(self) -> CommandFeedback:
+    def execute(self) -> Any:
         try:
             if self.input_type == 'ShellCommandInput':
                 print(self.parameters)
@@ -50,10 +57,13 @@ class TaskInput(BaseModel):
             elif self.input_type == 'ModifyFileInput':
                 modify_input = ModifyFileInput.model_validate_json(self.parameters)
                 return self.modify_file(modify_input)
+            elif self.input_type == 'LoadFileInput':
+                load_input = LoadFileInput.model_validate_json(self.parameters)
+                return self.load_file(load_input)
             else:
                 return CommandFeedback(
                     return_code=-1,
-                    stderr=f"Unsupported task type: {self.input_type}. Supported types are: ShellCommandInput, CreateFileInput, ModifyFileInput"
+                    stderr=f"Unsupported task type: {self.input_type}. Supported types are: ShellCommandInput, CreateFileInput, ModifyFileInput, LoadFileInput"
                 )
         except Exception as e:
             return CommandFeedback(return_code=-1, stderr=str(e))
@@ -152,9 +162,25 @@ class TaskInput(BaseModel):
             print(f"Failed to modify file: {e}")
             return CommandFeedback(return_code=-1, stderr=str(e))
 
+    # New method to load file content
+    def load_file(self, input_data: LoadFileInput) -> Any:
+        try:
+            print(f"Loading file content from path: {input_data.path}")
+            if not os.path.exists(input_data.path):
+                return CommandFeedback(return_code=-1, stderr=f"File not found: {input_data.path}")
+            with open(input_data.path, 'r') as f:
+                content = f.read()
+            print(f"File content loaded successfully from {input_data.path}")
+            return LoadFileOutput(content=content)
+        except Exception as e:
+            print(f"Failed to load file: {e}")
+            return CommandFeedback(return_code=-1, stderr=str(e))
+
+# Updated repository_function_tools with the new function
 repository_function_tools = [
     openai.pydantic_function_tool(ShellCommandInput, description="Execute a shell command"),
     openai.pydantic_function_tool(CreateFileInput, description="Create a file at the specified path with the provided content."),
     openai.pydantic_function_tool(ModifyFileInput, description="Modify a file at the specified path according to the provided instructions."),
-    openai.pydantic_function_tool(AskAssistant, description="Ask a question to the assistant with the specified ID")
+    openai.pydantic_function_tool(AskAssistant, description="Ask a question to the assistant with the specified ID"),
+    openai.pydantic_function_tool(LoadFileInput, description="Load the content of a file given its path.")
 ]
