@@ -43,28 +43,6 @@ This repository provides a framework for integrating a GPT-powered AI assistant 
   - Use the `Load Files into Assistant` action to update the files in your assistant's vector store.
   - The `Run Assistant on Issue` workflow triggers the assistant whenever a new issue is created.
 
-## Repository Structure
-
-```plaintext
-├── .github/
-│   └── workflows/
-│       ├── assistant-load-file.yaml
-│       ├── create_gpt_assistant.yaml
-│       └── run_assistant_on_issue.yaml
-├── tools/
-│   ├── assistant_functions.py
-│   ├── clean_assistant_files.py
-│   ├── configure_assistant.py
-│   ├── create_assistant.py
-│   ├── generate_repo_structure.py
-│   ├── load_files_assistant.py
-│   ├── run_assistant.py
-│   └── utils.py
-├── assistant_config.json
-├── repo_structure.txt
-└── requirements.txt
-```
-
 ## Contributing
 
 Contributions are welcome! Please create a pull request to propose any changes or improvements.
