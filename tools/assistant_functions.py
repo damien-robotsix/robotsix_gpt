@@ -50,8 +50,15 @@ class TaskInput(BaseModel):
         shutil.copy(file_path, os.path.join(backup_dir, os.path.basename(file_path)))
 
     def execute_shell_command(self, input_data: ShellCommandInput) -> CommandFeedback:
+        print(f"Executing command: {input_data.command}")
         try:
             result = subprocess.run(input_data.command, shell=True, capture_output=True, text=True)
+            if result.returncode != 0:
+                print(f"Command failed with return code: {result.returncode}")
+            if result.stdout:
+                print(f"Command output: {result.stdout}")
+            if result.stderr:
+                print(f"Command error: {result.stderr}")
             return CommandFeedback(
                 return_code=result.returncode,
                 stdout=result.stdout if result.stdout else None,
@@ -64,6 +71,7 @@ class TaskInput(BaseModel):
             )
 
     def write_file_content(self, input_data: ReplaceFileContent) -> CommandFeedback:
+        print(f"Writing content to file: {input_data.file_path}")
         try:
             # Check if the file exists
             if not os.path.exists(input_data.file_path):

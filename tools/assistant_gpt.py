@@ -71,6 +71,7 @@ class AssistantGpt(AssistantEventHandler):
             role="user",
             content="Current directory: " + os.getcwd()
         )
+        logger.debug(f"Message to assistant {self.assistant_name}: Current directory: {os.getcwd()}")
         if self.config['slave_assistants']:
             for assistant in self.config['slave_assistants']:
                 assistant_data = self.client.beta.assistants.retrieve(assistant['assistant_id'])
@@ -81,6 +82,7 @@ class AssistantGpt(AssistantEventHandler):
             "content": json.dumps(self.config['slave_assistants']),
             }
             self.client.beta.threads.messages.create(**message_data)
+            logger.debug(f"Message to assistant {self.assistant_name}: {json.dumps(self.config['slave_assistants'])}")
             self.create_slave_assistants()
 
     def init_thread(self, thread_id = None):
