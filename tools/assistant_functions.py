@@ -38,14 +38,11 @@ class AssistantResponse(BaseModel):
 class LoadFileInput(BaseModel):
     path: str = Field(..., description="The path of the file to load")
 
-class LoadFileOutput(BaseModel):
-    content: str = Field(..., description="The content of the file")
-
 class TaskInput(BaseModel):
     input_type: str = Field(..., description="The type of input. E.g. ShellCommandInput, CreateFileInput, ModifyFileInput, LoadFileInput")
     parameters: Dict[str, Any] = Field(..., description="Parameters needed for the task.")
 
-    def execute(self) -> Any:
+    def execute(self) -> CommandFeedback:
         try:
             if self.input_type == 'ShellCommandInput':
                 print(self.parameters)
@@ -171,7 +168,7 @@ class TaskInput(BaseModel):
             with open(input_data.path, 'r') as f:
                 content = f.read()
             print(f"File content loaded successfully from {input_data.path}")
-            return LoadFileOutput(content=content)
+            return CommandFeedback(return_code=0, stdout=content)
         except Exception as e:
             print(f"Failed to load file: {e}")
             return CommandFeedback(return_code=-1, stderr=str(e))
