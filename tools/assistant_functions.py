@@ -1,16 +1,16 @@
 from pydantic import BaseModel, Field
 from typing import Dict, Any, Optional
 import subprocess
-import openai
 import os
 import shutil
-import tempfile
+import openai
 
 class ShellCommandInput(BaseModel):
     command: str = Field(..., description="The shell command to be executed in the repository root directory")
 
-class ApplyGitDiff(BaseModel):
-    diff_content: str = Field(..., description="The git diff content to be applied to the repository")
+class CreateFileInput(BaseModel):
+    path: str = Field(..., description="The path of the file to create")
+    content: str = Field(..., description="The content to write to the file")
 
 class CommandFeedback(BaseModel):
     return_code: int = Field(..., description="The return code of the command. 0 indicates success, non-zero indicates failure.")
@@ -25,7 +25,7 @@ class AssistantResponse(BaseModel):
     response: str = Field(..., description="The response from the assistant")
 
 class TaskInput(BaseModel):
-    input_type: str = Field(..., description="The type of input. E.g. ShellCommandInput, ApplyGitDiff")
+    input_type: str = Field(..., description="The type of input. E.g. ShellCommandInput, CreateFileInput")
     parameters: Dict[str, Any] = Field(..., description="Parameters needed for the task.")
 
     def execute(self) -> CommandFeedback:
@@ -33,13 +33,13 @@ class TaskInput(BaseModel):
             if self.input_type == 'ShellCommandInput':
                 shell_input = ShellCommandInput.model_validate_json(self.parameters)
                 return self.execute_shell_command(shell_input)
-            elif self.input_type == 'ApplyGitDiff':
-                diff_input = ApplyGitDiff.model_validate_json(self.parameters)
-                return self.apply_git_diff(diff_input)
+            elif self.input_type == 'CreateFileInput':
+                file_input = CreateFileInput.model_validate_json(self.parameters)
+                return self.create_file(file_input)
             else:
                 return CommandFeedback(
                     return_code=-1,
-                    stderr=f"Unsupported task type: {self.input_type}, supported types are: ShellCommandInput, ApplyGitDiff"
+                    stderr=f"Unsupported task type: {self.input_type}. Supported types are: ShellCommandInput, CreateFileInput"
                 )
         except Exception as e:
             return CommandFeedback(return_code=-1, stderr=str(e))
@@ -71,42 +71,22 @@ class TaskInput(BaseModel):
                 stderr=str(e)
             )
 
-    def apply_git_diff(self, input_data: ApplyGitDiff) -> CommandFeedback:
-        print("Applying git diff")
+    def create_file(self, input_data: CreateFileInput) -> CommandFeedback:
         try:
-            # Backup the repository before applying the diff
-            self.backup_repository()
-
-            # Write the diff content to a temporary file
-            with tempfile.NamedTemporaryFile(mode='w+', delete=False) as temp_diff_file:
-                temp_diff_file.write(input_data.diff_content)
-                temp_diff_file_path = temp_diff_file.name
-
-            # Apply the diff using git apply
-            result = subprocess.run(['git', 'apply', temp_diff_file_path], capture_output=True, text=True)
-
-            # Clean up the temporary diff file
-            os.remove(temp_diff_file_path)
-
-            if result.returncode != 0:
-                print(f"git apply failed with return code: {result.returncode}")
-                print(f"Error output: {result.stderr}")
-            else:
-                print("git diff applied successfully.")
-
-            return CommandFeedback(
-                return_code=result.returncode,
-                stdout=result.stdout if result.stdout else None,
-                stderr=result.stderr if result.stderr else None
-            )
+            print(f"Creating file at path: {input_data.path}")
+            # Ensure the directory exists
+            os.makedirs(os.path.dirname(input_data.path), exist_ok=True)
+            # Write the content to the file
+            with open(input_data.path, 'w') as f:
+                f.write(input_data.content)
+            print(f"File created successfully at {input_data.path}")
+            return CommandFeedback(return_code=0)
         except Exception as e:
-            return CommandFeedback(
-                return_code=-1,
-                stderr=str(e)
-            )
+            print(f"Failed to create file: {e}")
+            return CommandFeedback(return_code=-1, stderr=str(e))
 
 repository_function_tools = [
     openai.pydantic_function_tool(ShellCommandInput, description="Execute a shell command"),
-    openai.pydantic_function_tool(ApplyGitDiff, description="Apply a git diff to modify files in the repository. The diff should be in unified diff format."),
+    openai.pydantic_function_tool(CreateFileInput, description="Create a file at the specified path with the provided content."),
     openai.pydantic_function_tool(AskAssistant, description="Ask a question to the assistant with the specified ID")
 ]
