@@ -89,9 +89,7 @@ class TaskInput(BaseModel):
             )
 
 repository_function_tools = [
-    openai.pydantic_function_tool(ShellCommandInput, description="Execute a shell command assuming the command is run in the repository root directory"),
-    openai.pydantic_function_tool(ReplaceFileContent, description="Replace the content of a file in the repository root directory. The file will be fully overwritten."),
+    openai.pydantic_function_tool(ShellCommandInput, description="Execute a shell command"),
+    openai.pydantic_function_tool(ReplaceFileContent, description="Replace the content of a file. The file will be fully overwritten so you should provide the full file. You should check the path to the file before executing this tool."),
+    openai.pydantic_function_tool(AskAssistant, description="Ask a question to the assistant with the specified ID")
 ]
-
-def print_assistant_select():
-    print(openai.pydantic_function_tool(AskAssistant, description="Ask a question to the assistant with the specified ID"))

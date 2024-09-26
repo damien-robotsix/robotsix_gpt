@@ -66,6 +66,11 @@ class AssistantGpt(AssistantEventHandler):
         self.assistant_id = self.config['assistant_id']
         self.get_assistant_name(self.assistant_id)
         self.init_thread()
+        self.client.beta.threads.messages.create(
+            thread_id=self.thread_id,
+            role="user",
+            content="Current directory: " + os.getcwd()
+        )
         if self.config['slave_assistants']:
             for assistant in self.config['slave_assistants']:
                 assistant_data = self.client.beta.assistants.retrieve(assistant['assistant_id'])
