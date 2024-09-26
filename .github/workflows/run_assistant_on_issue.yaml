@@ -59,6 +59,8 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add .
           git commit -m "Assistant: Proposed solutions for issue ${{ github.event.inputs.issue_number }}"
+          # Push using AI_TOKEN
+          git remote set-url origin "https://${{ secrets.AI_TOKEN }}@github.com/${{ github.repository }}"
           git push --set-upstream origin issue-${{ github.event.inputs.issue_number }}
 
       - name: Comment on the issue
