@@ -54,6 +54,7 @@ jobs:
           python tools/run_assistant.py --no-interactive "${PROMPT}"
 
       - name: Commit the generated files
+        github_token: ${{ secrets.AI_TOKEN }}
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
