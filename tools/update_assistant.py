@@ -19,8 +19,11 @@ with open(config_file) as f:
     config = json.load(f)
 assistant_id = config.get("repo_assistant_id")
 
+# Get the directory name
+repo_name = os.path.basename(repo_path)
+
 # Prepare the update for the assistant's instructions
-new_instructions = f"Your role is to perform development and maintenance tasks for the repository ai_assistant. You have access to a set of repository tools that allow you to execute shell commands in the repository root and manage file contents.\nRepository structure :\n{structure}"
+new_instructions = f"Your role is to perform answer question about the {repo_name}. You have access to all the files available in the repository.\nRepository structure :\n{structure}"
 
 response = client.beta.assistants.update(
     assistant_id=assistant_id,
