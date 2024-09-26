@@ -11,7 +11,7 @@ on:
 permissions:
   contents: write
   issues: write
-  workflows: write
+  branches: write
 
 jobs:
   run-assistant:
