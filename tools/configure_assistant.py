@@ -17,7 +17,7 @@ def main():
     # Update the assistant by adding tools
     response = client.beta.assistants.update(
         assistant_id=assistant_id,
-        tools=[{"type": "code_interpreter"}, {"type": "file_search"}] + repository_function_tools,
+        tools=[{"type": "code_interpreter"}] + repository_function_tools,
     )
 
     # Optional: Handle the response as needed

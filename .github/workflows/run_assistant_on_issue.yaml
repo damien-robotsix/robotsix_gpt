@@ -50,7 +50,7 @@ jobs:
           ISSUE_TITLE="${{ fromJson(steps.get_issue.outputs.data).title }}"
           ISSUE_BODY="${{ fromJson(steps.get_issue.outputs.data).body }}"
           REPO_NAME="${{ github.repository }}"
-          PROMPT="Try to solve as much as you can the following issue. You should proceed with file implementation in the current repository to obtain the desired result.\n\nIssue: ${ISSUE_TITLE}\nDescription: ${ISSUE_BODY}"
+          PROMPT="Try to solve as much as you can the following issue. You should not ask the user for prompt.\n\nIssue: ${ISSUE_TITLE}\nDescription: ${ISSUE_BODY}"
           python tools/run_assistant.py --no-interactive "${PROMPT}"
 
       - name: Commit the generated files
