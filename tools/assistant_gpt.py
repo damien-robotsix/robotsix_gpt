@@ -36,6 +36,15 @@ class AssistantGpt(AssistantEventHandler):
         self.slave_assistants = {}
         self.main_assistant = False
 
+    def find_git_root(slef, path):
+        """Traverse up the directory tree to find the .git folder."""
+        previous, current = None, os.path.abspath(path)
+        while current != previous:
+            if os.path.isdir(os.path.join(current, ".git")):
+                return current
+            previous, current = current, os.path.abspath(os.path.join(current, os.pardir))
+        return None
+
     def get_assistant_name(self, assistant_id):
         try:
             assistant_data = self.client.beta.assistants.retrieve(assistant_id)
@@ -51,18 +60,31 @@ class AssistantGpt(AssistantEventHandler):
     def init_from_file(self, config_file):
         """
         Reads the assistant configuration from a JSON file.
+        Also checks if the current directory is a git repository and get the specific assistant for the repository.
         """
-        self.main_assistant = True
-        try:
-            with open(config_file, 'r') as f:
-                self.config = json.load(f)
-                self.config_file = config_file
-        except FileNotFoundError:
+        git_root = self.find_git_root(os.getcwd())
+        if git_root is None:
+            print("Not inside a git repository.")
+            sys.exit(1)
+
+        # Check for repo_assistant_config.json in the git root
+        repo_config_file = os.path.join(git_root, 'repo_assistant_config.json')
+
+        if not os.path.exists(config_file):
             print(f"Configuration file {config_file} not found.")
             sys.exit(1)
-        except KeyError as e:
-            print(f"{e} not found in {config_file}.")
-            sys.exit(1)
+
+        self.main_assistant = True
+        with open(config_file, 'r') as f:
+            self.config = json.load(f)
+            self.config_file = config_file
+        
+        # If a repo_config_file exists, complete the slave assistants with the assistant in the file
+        if os.path.exists(repo_config_file):
+            with open(repo_config_file, 'r') as f:
+                repo_config = json.load(f)
+                self.config['slave_assistants'].append({'assistant_id':repo_config['repo_assistant_id']})
+
         self.assistant_id = self.config['assistant_id']
         self.get_assistant_name(self.assistant_id)
         self.init_thread()
@@ -71,11 +93,13 @@ class AssistantGpt(AssistantEventHandler):
             role="user",
             content="Current directory: " + os.getcwd()
         )
+
         logger.debug(f"Message to assistant {self.assistant_name}: Current directory: {os.getcwd()}")
         if self.config['slave_assistants']:
             for assistant in self.config['slave_assistants']:
                 assistant_data = self.client.beta.assistants.retrieve(assistant['assistant_id'])
                 assistant['instructions'] = assistant_data.instructions
+                
             message_data = {
             "thread_id": self.thread_id,
             "role": "user",

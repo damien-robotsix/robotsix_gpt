@@ -25,11 +25,10 @@ jobs:
 
     - name: Get Assistant and Vector Store IDs
       run: |
-        run: |
-          REPO_NAME=${{ github.repository }}
-          BRANCH=${{ github.event.ref }}
-          BRANCH_NAME="${BRANCH##*/}"
-          python3 tools/fetch_ids_from_names.py --repository "$REPO_NAME" --branch "$BRANCH_NAME"
+        REPO_NAME=${{ github.repository }}
+        BRANCH=${{ github.event.ref }}
+        BRANCH_NAME="${BRANCH##*/}"
+        python3 tools/fetch_ids_from_names.py --repository "$REPO_NAME" --branch "$BRANCH_NAME"
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 

@@ -229,7 +229,3 @@ master_function_tools = [
     openai.pydantic_function_tool(AskAssistant, description="Ask a question to the assistant with the specified ID"),
     openai.pydantic_function_tool(LoadFileInput, description="Load the content of a file given its path. Returns the content with line numbers.")
 ]
-
-repository_assistant_tools = [
-        openai.pydantic_function_tool(LoadFileInput, description="Load the content of a file given its path. Returns the content with line numbers.")
-]
