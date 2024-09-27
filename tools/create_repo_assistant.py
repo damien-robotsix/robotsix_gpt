@@ -28,7 +28,7 @@ name = f"{repo_name}-{branch_name} repository agent"
 response = client.beta.assistants.create(
     name=name,
     model="gpt-4o-mini-2024-07-18",
-    tools={"type:file_search"},
+    tools={"type":"file_search"},
     tool_resources={"file_search": {"vector_store_ids": [vector_store_id]}}
 )
 
