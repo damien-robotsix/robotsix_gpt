@@ -49,14 +49,12 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          PROMPT=$(cat <<EOF
-                  Try to solve as much as you can the following issue in ${{ github.repository }} repository. You should not ask the user for prompt.
+          python tools/run_assistant.py - <<EOF
+              Try to solve as much as you can the following issue in ${{ github.repository }} repository. You should not ask the user for prompt.
 
-                  Issue: ${{ fromJson(steps.get_issue.outputs.data).title }}
-                  Description: ${{ fromJson(steps.get_issue.outputs.data).body }}
-                  EOF
-                  )
-          python tools/run_assistant.py - "${PROMPT}"
+              Issue: ${{ fromJson(steps.get_issue.outputs.data).title }}
+              Description: ${{ fromJson(steps.get_issue.outputs.data).body }}
+              EOF
 
       - name: Commit the generated files
         run: |
