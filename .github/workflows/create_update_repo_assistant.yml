@@ -5,6 +5,9 @@ on:
     branches:
       - '**'
 
+permissions:
+  contents: write
+
 jobs:
   create_update_repo_assistant:
     runs-on: ubuntu-latest
