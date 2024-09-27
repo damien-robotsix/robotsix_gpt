@@ -1,11 +1,18 @@
+import argparse
 import os
 import openai
 
 # Initialize OpenAI API client
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
-repo_name = os.getenv('REPO_NAME')
-branch_name = os.getenv('BRANCH_NAME')
+# Set up argument parser
+parser = argparse.ArgumentParser(description='Fetch assistant and vector store IDs by repo and branch names.')
+parser.add_argument('--repository', required=True, help='The name of the repository')
+parser.add_argument('--branch', required=True, help='The name of the branch')
+args = parser.parse_args()
+
+repo_name = args.repository
+branch_name = args.branch
 
 tag_to_find = f"{repo_name}-{branch_name}"
 
