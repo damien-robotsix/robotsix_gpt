@@ -38,3 +38,11 @@ jobs:
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       run: python tools/clean_update_vector_store.py $(pwd)
+
+    - name: Commit and Push Changes
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add .
+        git commit -m "Update Assistant for ${{ env.branch_name }}"
+        git push origin ${{ env.branch_name }}
