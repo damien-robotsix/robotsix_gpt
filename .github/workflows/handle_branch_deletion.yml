@@ -2,8 +2,6 @@ name: Handle Branch Deletion
 
 on:
   push:
-    branches:
-      - '**'
 
 jobs:
   handleDeletion:
