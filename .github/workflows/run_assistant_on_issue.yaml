@@ -52,6 +52,16 @@ jobs:
           python tools/run_assistant.py - << 'EOF'
               Try to solve as much as you can the following issue in ${{ github.repository }} repository. You should not ask the user for prompt.
 
+            if: github.event.action == 'created'
+            run: |
+              echo "Reconnecting to the thread with the new comment..."
+              python tools/run_assistant.py - << 'EOF'
+                Reconnect to thread and process new comment:
+
+                New Comment: ${{ github.event.comment.body }}
+                'EOF'
+
+
               Issue: ${{ fromJson(steps.get_issue.outputs.data).title }}
               Description: ${{ fromJson(steps.get_issue.outputs.data).body }}
               'EOF'
@@ -71,5 +81,8 @@ jobs:
           body: |
              The assistant has created a branch with proposed solutions. Please review the branch `issue-${{ github.event.inputs.issue_number }}` for details. Here is the last assistant output:
              $(cat /tmp/assistant_output.txt)
+
+  issue_comment:
+    types: [created]
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
