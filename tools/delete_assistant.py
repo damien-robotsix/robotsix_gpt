@@ -28,12 +28,18 @@ client = OpenAI(api_key=api_key)
 repo_path = os.getcwd()
 
 # Path to the config file storing assistant and vector store IDs
-if len(sys.argv) < 3:
-    print("Usage: delete_assistant.py <repo_assistant_id> <repo_vector_store_id>")
+# Read assistant and vector store IDs from the output file
+output_file = 'ids_output.txt'
+try:
+    with open(output_file, 'r') as file:
+        for line in file:
+            if 'repo_assistant_id' in line:
+                assistant_id = line.strip().split('=')[1]
+            elif 'repo_vector_store_id' in line:
+                vector_store_id = line.strip().split('=')[1]
+except FileNotFoundError:
+    print(f"Output file {output_file} not found.")
     sys.exit(1)
-
-assistant_id = sys.argv[1]
-vector_store_id = sys.argv[2]
 
 # Delete all files in the vector store
 clean_vector_store(vector_store_id)

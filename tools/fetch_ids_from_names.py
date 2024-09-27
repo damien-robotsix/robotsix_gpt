@@ -36,10 +36,11 @@ def get_vector_store_id_by_name():
 assistant_id = get_assistant_id_by_name()
 vector_store_id = get_vector_store_id_by_name()
 
-# Set IDs to environment variables or print them for use in GitHub Actions
-env_file_path = os.getenv('GITHUB_ENV')
-with open(env_file_path, 'a') as env_file:
+# Write IDs to an output file
+output_file = 'ids_output.txt'
+with open(output_file, 'w') as file:
     if assistant_id:
-        env_file.write(f"repo_assistant_id={assistant_id}\n")
+        file.write(f"repo_assistant_id={assistant_id}\n")
     if vector_store_id:
-        env_file.write(f"repo_vector_store_id={vector_store_id}\n")
+        file.write(f"repo_vector_store_id={vector_store_id}\n")
+print(f"Output written to {output_file}")
