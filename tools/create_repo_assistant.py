@@ -16,7 +16,7 @@ api_key = os.environ.get("OPENAI_API_KEY", "<your OpenAI API key if not set as e
 client = OpenAI(api_key=api_key)
 
 # Create a vector store for the repository files
-vector_store = client.beta.vector_stores.create(name=f"{repo_name} Files")
+vector_store = client.beta.vector_stores.create(name=f"{repo_name}-{branch_name} files")
 
 # Extract the vector store ID
 vector_store_id = vector_store.id
