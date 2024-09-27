@@ -42,5 +42,5 @@ config = {
     "repo_vector_store_id": vector_store_id,
 }
 
-with open('assistant_config.json', 'w') as f:
+with open('repo_assistant_config.json', 'w') as f:
     json.dump(config, f, indent=4)

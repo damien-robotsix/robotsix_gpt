@@ -23,7 +23,7 @@ assistant_id = config.get("repo_assistant_id")
 repo_name = os.path.basename(repo_path)
 
 # Prepare the update for the assistant's instructions
-new_instructions = f"Your role is to perform answer question about the {repo_name}. You have access to all the files available in the repository.\nRepository structure :\n{structure}"
+new_instructions = f"Your role is to perform answer question about the {repo_name} repository. You have access to all the files available in the repository.\nRepository structure :\n{structure}"
 
 response = client.beta.assistants.update(
     assistant_id=assistant_id,

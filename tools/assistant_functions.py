@@ -89,8 +89,10 @@ class TaskInput(BaseModel):
     def create_file(self, input_data: CreateFileInput) -> CommandFeedback:
         try:
             print(f"Creating file at path: {input_data.path}")
-            # Ensure the directory exists
-            os.makedirs(os.path.dirname(input_data.path), exist_ok=True)
+            dirpath = os.path.dirname(input_data.path)
+            # Ensure the directory exists if a directory is specified
+            if dirpath:
+                os.makedirs(dirpath, exist_ok=True)
             # Write the content to the file
             with open(input_data.path, 'w') as f:
                 f.write(input_data.content)

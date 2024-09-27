@@ -1,6 +1,14 @@
 import json
 import sys
 
+
+def get_repo_assistant_configuration(config_path: str):
+    """
+    Loads the repository-specific assistant configuration from the specified JSON file
+    """
+    with open(config_path) as config_file:
+        return json.load(config_file)
+
 def get_assistant_configuration(config_file='assistant_config.json'):
     """
     Reads the assistant configuration from a JSON file.
