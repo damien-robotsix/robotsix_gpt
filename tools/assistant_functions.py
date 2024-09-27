@@ -120,6 +120,10 @@ class TaskInput(BaseModel):
                 action = instruction.action.lower()
                 start_line = instruction.start_line - 1  # Convert to 0-based index
 
+                # Ensure that content ends with a newline
+                if instruction.content and not instruction.content.endswith('\n'):
+                    instruction.content += '\n'
+
                 if action == 'insert':
                     # For insert, end_line is not used
                     if start_line < 0 or start_line > len(lines):
