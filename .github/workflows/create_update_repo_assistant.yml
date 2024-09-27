@@ -1,0 +1,40 @@
+name: Create and Update Repo Assistant on Branch Creation
+
+on:
+  create:
+    branches:
+      - '**'
+
+jobs:
+  create_update_repo_assistant:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Install Dependencies
+      run: pip install -r requirements.txt
+
+    - name: Extract Branch Name
+      id: extractbranch
+      run: echo "branch_name=${GITHUB_REF##*/}" >> $GITHUB_ENV
+
+    - name: Create Repo Assistant
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      run: python tools/create_repo_assistant.py ${{ github.repository }} ${{ env.branch_name }}
+
+    - name: Update Assistant Instructions
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      run: python tools/update_assistant.py ${{ env.branch_name }}
+
+    - name: Clean and Update Vector Store
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      run: python tools/clean_update_vector_store.py $(pwd)
