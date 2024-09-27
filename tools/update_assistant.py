@@ -14,7 +14,7 @@ repo_path = os.getcwd()
 structure = generate_structure_from_path(repo_path)
 
 # Load assistant ID from the assistant_config.json file
-config_file = os.path.join(repo_path, "assistant_config.json")
+config_file = os.path.join(repo_path, "repo_assistant_config.json")
 with open(config_file) as f:
     config = json.load(f)
 assistant_id = config.get("repo_assistant_id")
