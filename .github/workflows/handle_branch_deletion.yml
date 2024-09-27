@@ -12,8 +12,6 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
-      with:
-        ref: ${{ github.event.before }}
 
     - name: Set up Python
       uses: actions/setup-python@v2
@@ -29,8 +27,9 @@ jobs:
       run: |
         run: |
           REPO_NAME=${{ github.repository }}
-          BRANCH=${{ github.ref_name }}
-          python3 tools/fetch_ids_from_names.py --repository "$REPO_NAME" --branch "$BRANCH"
+          BRANCH=${{ github.event.ref }}
+          BRANCH_NAME="${BRANCH##*/}"
+          python3 tools/fetch_ids_from_names.py --repository "$REPO_NAME" --branch "$BRANCH_NAME"
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
