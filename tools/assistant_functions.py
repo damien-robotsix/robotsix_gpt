@@ -159,19 +159,22 @@ class TaskInput(BaseModel):
             print(f"Failed to modify file: {e}")
             return CommandFeedback(return_code=-1, stderr=str(e))
 
-    # New method to load file content
-    def load_file(self, input_data: LoadFileInput) -> Any:
+    def load_file(self, input_data: LoadFileInput) -> CommandFeedback:
         try:
             print(f"Loading file content from path: {input_data.path}")
             if not os.path.exists(input_data.path):
                 return CommandFeedback(return_code=-1, stderr=f"File not found: {input_data.path}")
             with open(input_data.path, 'r') as f:
-                content = f.read()
+                lines = f.readlines()
+            # Add line numbers to each line
+            numbered_lines = [f"{idx + 1}: {line}" for idx, line in enumerate(lines)]
+            content_with_line_numbers = ''.join(numbered_lines)
             print(f"File content loaded successfully from {input_data.path}")
-            return CommandFeedback(return_code=0, stdout=content)
+            return CommandFeedback(return_code=0, stdout=content_with_line_numbers)
         except Exception as e:
             print(f"Failed to load file: {e}")
             return CommandFeedback(return_code=-1, stderr=str(e))
+
 
 # Updated repository_function_tools with the new function
 repository_function_tools = [
@@ -179,5 +182,5 @@ repository_function_tools = [
     openai.pydantic_function_tool(CreateFileInput, description="Create a file at the specified path with the provided content."),
     openai.pydantic_function_tool(ModifyFileInput, description="Modify a file at the specified path according to the provided instructions."),
     openai.pydantic_function_tool(AskAssistant, description="Ask a question to the assistant with the specified ID"),
-    openai.pydantic_function_tool(LoadFileInput, description="Load the content of a file given its path.")
+    openai.pydantic_function_tool(LoadFileInput, description="Load the content of a file given its path. Returns the content with line numbers.")
 ]
