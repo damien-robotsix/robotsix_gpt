@@ -29,3 +29,5 @@ jobs:
 
     - name: Delete Assistant and Vector Store
       run: python tools/delete_assistant.py ${{ steps.extractbranch.outputs.branch }}
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
