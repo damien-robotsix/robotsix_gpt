@@ -68,6 +68,7 @@ jobs:
         with:
           route: POST /repos/${{ github.repository }}/issues/${{ github.event.inputs.issue_number }}/comments
           body: |
-            The assistant has created a branch with proposed solutions. Please review the branch `issue-${{ github.event.inputs.issue_number }}` for details.
+             The assistant has created a branch with proposed solutions. Please review the branch `issue-${{ github.event.inputs.issue_number }}` for details. Here is the last assistant output:
+             $(cat /tmp/assistant_output.txt)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
