@@ -99,7 +99,7 @@ class AssistantGpt(AssistantEventHandler):
             for assistant in self.config['slave_assistants']:
                 assistant_data = self.client.beta.assistants.retrieve(assistant['assistant_id'])
                 assistant['instructions'] = assistant_data.instructions
-                
+                print(f"Assistant {assistant_data.name} added.")
             message_data = {
             "thread_id": self.thread_id,
             "role": "user",
