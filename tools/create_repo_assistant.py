@@ -6,6 +6,7 @@ from openai import OpenAI
 # Get the repository name from command-line arguments
 if len(sys.argv) > 1:
     repo_name = sys.argv[1]
+    branch_name = sys.argv[2] if len(sys.argv) > 2 else "main"
 else:
     print("Usage: python script.py <repo_name>")
     sys.exit(1)
@@ -15,15 +16,11 @@ api_key = os.environ.get("OPENAI_API_KEY", "<your OpenAI API key if not set as e
 client = OpenAI(api_key=api_key)
 
 # Define the assistant's name and instructions
-name = f"{repo_name} repository agent"
-instructions = """
-Your role is to perform development and maintenance tasks for the repository ai_assistant. You have access to a set of repository tools that allow you to execute shell commands in the repository root and manage file contents.
-"""
+name = f"{repo_name}-{branch_name} repository agent"
 
 # Create the assistant
 response = client.beta.assistants.create(
     name=name,
-    instructions=instructions,
     model="gpt-4o-mini-2024-07-18",
 )
 

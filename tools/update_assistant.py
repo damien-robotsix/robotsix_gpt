@@ -1,5 +1,6 @@
 import os
 import json
+import sys
 from openai import OpenAI
 from generate_repo_structure import generate_structure_from_path
 
@@ -20,10 +21,11 @@ with open(config_file) as f:
 assistant_id = config.get("repo_assistant_id")
 
 # Get the directory name
+branch_name = sys.argv[1] if len(sys.argv) > 1 else "main"
 repo_name = os.path.basename(repo_path)
 
 # Prepare the update for the assistant's instructions
-new_instructions = f"Your role is to perform answer question about the {repo_name} repository. You have access to all the files available in the repository.\nRepository structure :\n{structure}"
+new_instructions = f"Your role is to perform answer question about the {repo_name} repository on branch {branch_name}. You have access to all the files available in the repository.\nRepository structure :\n{structure}"
 
 response = client.beta.assistants.update(
     assistant_id=assistant_id,
