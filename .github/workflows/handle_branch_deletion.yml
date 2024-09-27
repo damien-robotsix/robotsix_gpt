@@ -13,8 +13,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
-    with:
-    ref: ${{ github.event.before }}
+      with:
+        ref: ${{ github.event.before }}
 
     - name: Set up Python
       uses: actions/setup-python@v2
