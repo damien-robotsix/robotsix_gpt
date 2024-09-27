@@ -1,17 +1,20 @@
 name: Handle Branch Deletion
 
 on:
-  delete:
+  push:
     branches:
       - '**'
 
 jobs:
   handleDeletion:
+    if: github.event.deleted == true
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
+    with:
+    ref: ${{ github.event.before }}
 
     - name: Set up Python
       uses: actions/setup-python@v2
@@ -23,11 +26,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Extract branch name
-      id: extractbranch
-      run: echo "::set-output name=branch::${GITHUB_REF##*/}"
-
     - name: Delete Assistant and Vector Store
-      run: python tools/delete_assistant.py ${{ steps.extractbranch.outputs.branch }}
+      run: python tools/delete_assistant.py
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

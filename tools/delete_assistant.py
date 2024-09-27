@@ -7,19 +7,13 @@ from openai import OpenAI
 api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=api_key)
 
-if len(sys.argv) > 1:
-    branch_name = sys.argv[1]
-else:
-    print("Usage: python delete_assistant.py <branch_name>")
-    sys.exit(1)
-
 # Repository root path
 repo_path = os.getcwd()
 
 # Path to the config file storing assistant and vector store IDs
-config_file = os.path.join(repo_path, f"repo_assistant_config_{branch_name}.json")
+config_file = os.path.join(repo_path, "repo_assistant_config.json")
 if not os.path.exists(config_file):
-    print(f"No configuration exists for branch: {branch_name}")
+    print(f"Missing configuration file: {config_file}")
     sys.exit(0)
 
 with open(config_file) as f:
