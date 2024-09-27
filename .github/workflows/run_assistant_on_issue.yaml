@@ -39,7 +39,7 @@ jobs:
           route: |
             GET /repos/${{ github.repository }}/issues/${{ github.event.inputs.issue_number || github.event.issue.number }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.AI_TOKEN }}
 
       - name: Create a new branch for the issue
         run: |
@@ -74,15 +74,19 @@ jobs:
           git commit -m "Assistant: Proposed solutions for issue ${{ github.event.inputs.issue_number }}"
           git push --set-upstream origin issue-${{ github.event.inputs.issue_number }}
 
+      - name: Read assistant output
+        id: read_output
+        run: echo "output=$(cat /tmp/assistant_output.txt)" >> $GITHUB_ENV
+
       - name: Comment on the issue
         uses: octokit/request-action@v2.x
         with:
           route: POST /repos/${{ github.repository }}/issues/${{ github.event.inputs.issue_number }}/comments
           body: |
-             The assistant has created a branch with proposed solutions. Please review the branch `issue-${{ github.event.inputs.issue_number }}` for details. Here is the last assistant output:
-             $(cat /tmp/assistant_output.txt)
+            The assistant has created a branch with proposed solutions. Please review the branch `issue-${{ github.event.inputs.issue_number }}` for details. Here is the last assistant output:
+            ${{ env.output }}
 
   issue_comment:
     types: [created]
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.AI_TOKEN }}
