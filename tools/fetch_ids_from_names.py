@@ -40,6 +40,6 @@ vector_store_id = get_vector_store_id_by_name()
 env_file_path = os.getenv('GITHUB_ENV')
 with open(env_file_path, 'a') as env_file:
     if assistant_id:
-        env_file.write(f"assistant_id={assistant_id}\n")
+        env_file.write(f"repo_assistant_id={assistant_id}\n")
     if vector_store_id:
-        env_file.write(f"vector_store_id={vector_store_id}\n")
+        env_file.write(f"repo_vector_store_id={vector_store_id}\n")
