@@ -28,6 +28,8 @@ jobs:
     - name: Get Assistant and Vector Store IDs
       run: |
         python3 tools/fetch_ids_from_names.py --repository "${{ github.repository }}" --branch "${{ github.ref }}"
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
     - name: Delete Assistant and Vector Store
       run: python tools/delete_assistant.py
