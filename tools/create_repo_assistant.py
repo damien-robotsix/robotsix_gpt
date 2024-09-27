@@ -15,6 +15,12 @@ else:
 api_key = os.environ.get("OPENAI_API_KEY", "<your OpenAI API key if not set as env var>")
 client = OpenAI(api_key=api_key)
 
+# Create a vector store for the repository files
+vector_store = client.beta.vector_stores.create(name=f"{repo_name} Files")
+
+# Extract the vector store ID
+vector_store_id = vector_store.id
+
 # Define the assistant's name and instructions
 name = f"{repo_name}-{branch_name} repository agent"
 
@@ -22,16 +28,12 @@ name = f"{repo_name}-{branch_name} repository agent"
 response = client.beta.assistants.create(
     name=name,
     model="gpt-4o-mini-2024-07-18",
+    tools={"type:file_search"},
+    tool_resources={"file_search": {"vector_store_ids": [vector_store_id]}}
 )
 
 # Extract the assistant ID
 assistant_id = response.id
-
-# Create a vector store for the repository files
-vector_store = client.beta.vector_stores.create(name=f"{repo_name} Files")
-
-# Extract the vector store ID
-vector_store_id = vector_store.id
 
 # Save the assistant ID to a JSON configuration file
 config = {
