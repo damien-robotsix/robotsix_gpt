@@ -222,11 +222,14 @@ class TaskInput(BaseModel):
             return CommandFeedback(return_code=-1, stderr=str(e))
 
 
-# Updated repository_function_tools with the new function
-repository_function_tools = [
+master_function_tools = [
     openai.pydantic_function_tool(ShellCommandInput, description="Execute a shell command"),
     openai.pydantic_function_tool(CreateFileInput, description="Create a file at the specified path with the provided content."),
     openai.pydantic_function_tool(ModifyFileInput, description="Modify a file at the specified path according to the provided instructions with no overlaps."),
     openai.pydantic_function_tool(AskAssistant, description="Ask a question to the assistant with the specified ID"),
     openai.pydantic_function_tool(LoadFileInput, description="Load the content of a file given its path. Returns the content with line numbers.")
+]
+
+repository_assistant_tools = [
+        openai.pydantic_function_tool(LoadFileInput, description="Load the content of a file given its path. Returns the content with line numbers.")
 ]

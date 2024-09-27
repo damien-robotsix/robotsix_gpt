@@ -2,7 +2,7 @@ import os
 import sys
 from openai import OpenAI
 from utils import get_assistant_configuration
-from assistant_functions import repository_function_tools
+from assistant_functions import master_function_tools
 
 def main():
     # Set your OpenAI API key
@@ -17,7 +17,7 @@ def main():
     # Update the assistant by adding tools
     response = client.beta.assistants.update(
         assistant_id=assistant_id,
-        tools=[{"type": "code_interpreter"}] + repository_function_tools,
+        tools=[{"type": "code_interpreter"}] + master_function_tools,
     )
 
     # Optional: Handle the response as needed
