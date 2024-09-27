@@ -117,41 +117,79 @@ class TaskInput(BaseModel):
             shutil.copyfile(input_data.path, backup_path)
             print(f"Backup created at {backup_path}")
 
-            # Apply modifications in reverse order to avoid line number changes
-            for instruction in reversed(input_data.modifications):
-                action = instruction.action.lower()
-                start_line = instruction.start_line - 1  # Convert to 0-based index
+            # First, sort modifications by start_line and end_line in descending order
+            sorted_modifications = sorted(
+                input_data.modifications,
+                key=lambda instr: (
+                    instr.start_line,
+                    instr.end_line if instr.end_line is not None else instr.start_line
+                ),
+                reverse=True
+            )
 
-                # Ensure that content ends with a newline
+            # Initialize lists for different types of modifications
+            insert_positions = set()
+            delete_replace_ranges = []
+
+            # Now, check for overlaps and collect modifications
+            for instruction in sorted_modifications:
+                action = instruction.action.lower()
+                start_line = instruction.start_line
+                end_line = instruction.end_line if instruction.end_line is not None else start_line
+
+                if action == 'insert':
+                    # Check if we already have an insert at this position
+                    if start_line in insert_positions:
+                        return CommandFeedback(
+                            return_code=-1,
+                            stderr=f"Overlapping insert modifications detected at line {start_line}."
+                        )
+                    insert_positions.add(start_line)
+                elif action in ['delete', 'replace']:
+                    # Check for overlapping ranges with previous delete/replace modifications
+                    for covered_start, covered_end in delete_replace_ranges:
+                        if not (end_line < covered_start or start_line > covered_end):
+                            return CommandFeedback(
+                                return_code=-1,
+                                stderr=f"Overlapping modifications detected between lines {start_line}-{end_line} and {covered_start}-{covered_end}."
+                            )
+                    delete_replace_ranges.append((start_line, end_line))
+                else:
+                    print(f"Unknown action: {instruction.action}")
+                    return CommandFeedback(return_code=-1, stderr=f"Unknown action: {instruction.action}")
+
+            # Now that we have verified there are no overlaps, apply the modifications
+            for instruction in sorted_modifications:
+                action = instruction.action.lower()
+                start_idx = instruction.start_line - 1  # Convert to 0-based index
+                end_idx = (instruction.end_line - 1) if instruction.end_line is not None else start_idx
+
+                # Validate line numbers
+                if start_idx < 0 or start_idx > len(lines):
+                    return CommandFeedback(return_code=-1, stderr=f"Invalid start_line: {instruction.start_line}")
+                if action in ['delete', 'replace']:
+                    if end_idx < start_idx or end_idx >= len(lines):
+                        return CommandFeedback(return_code=-1, stderr=f"Invalid end_line: {instruction.end_line}")
+
+                # Ensure content ends with a newline
                 if instruction.content and not instruction.content.endswith('\n'):
                     instruction.content += '\n'
 
                 if action == 'insert':
-                    # For insert, end_line is not used
-                    if start_line < 0 or start_line > len(lines):
-                        return CommandFeedback(return_code=-1, stderr=f"Invalid start_line: {instruction.start_line}")
                     if instruction.content is None:
                         return CommandFeedback(return_code=-1, stderr="Content is required for insert action")
                     content_lines = instruction.content.splitlines(keepends=True)
-                    lines[start_line:start_line] = content_lines
+                    lines[start_idx:start_idx] = content_lines
                     print(f"Inserted content at line {instruction.start_line}")
-                elif action in ['delete', 'replace']:
-                    if instruction.end_line is None:
-                        return CommandFeedback(return_code=-1, stderr="end_line is required for delete and replace actions")
-                    end_line = instruction.end_line - 1
-                    if start_line < 0 or start_line >= len(lines):
-                        return CommandFeedback(return_code=-1, stderr=f"Invalid start_line: {instruction.start_line}")
-                    if end_line < start_line or end_line >= len(lines):
-                        return CommandFeedback(return_code=-1, stderr=f"Invalid end_line: {instruction.end_line}")
-                    if action == 'delete':
-                        del lines[start_line:end_line+1]
-                        print(f"Deleted lines from {instruction.start_line} to {instruction.end_line}")
-                    elif action == 'replace':
-                        if instruction.content is None:
-                            return CommandFeedback(return_code=-1, stderr="Content is required for replace action")
-                        content_lines = instruction.content.splitlines(keepends=True)
-                        lines[start_line:end_line+1] = content_lines
-                        print(f"Replaced lines from {instruction.start_line} to {instruction.end_line}")
+                elif action == 'delete':
+                    del lines[start_idx:end_idx + 1]
+                    print(f"Deleted lines from {instruction.start_line} to {instruction.end_line}")
+                elif action == 'replace':
+                    if instruction.content is None:
+                        return CommandFeedback(return_code=-1, stderr="Content is required for replace action")
+                    content_lines = instruction.content.splitlines(keepends=True)
+                    lines[start_idx:end_idx + 1] = content_lines
+                    print(f"Replaced lines from {instruction.start_line} to {instruction.end_line}")
                 else:
                     print(f"Unknown action: {instruction.action}")
                     return CommandFeedback(return_code=-1, stderr=f"Unknown action: {instruction.action}")
@@ -163,6 +201,8 @@ class TaskInput(BaseModel):
             return CommandFeedback(return_code=0)
         except Exception as e:
             print(f"Failed to modify file: {e}")
+            # Restore the original file from backup in case of exception
+            shutil.move(backup_path, input_data.path)
             return CommandFeedback(return_code=-1, stderr=str(e))
 
     def load_file(self, input_data: LoadFileInput) -> CommandFeedback:
@@ -186,7 +226,7 @@ class TaskInput(BaseModel):
 repository_function_tools = [
     openai.pydantic_function_tool(ShellCommandInput, description="Execute a shell command"),
     openai.pydantic_function_tool(CreateFileInput, description="Create a file at the specified path with the provided content."),
-    openai.pydantic_function_tool(ModifyFileInput, description="Modify a file at the specified path according to the provided instructions."),
+    openai.pydantic_function_tool(ModifyFileInput, description="Modify a file at the specified path according to the provided instructions with no overlaps."),
     openai.pydantic_function_tool(AskAssistant, description="Ask a question to the assistant with the specified ID"),
     openai.pydantic_function_tool(LoadFileInput, description="Load the content of a file given its path. Returns the content with line numbers.")
 ]

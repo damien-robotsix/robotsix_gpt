@@ -1,11 +1,12 @@
 name: Handle Branch Deletion
 
 on:
-  push:
+  delete:
+    branches:
+      - '**'
 
 jobs:
   handleDeletion:
-    if: github.event.deleted == true
     runs-on: ubuntu-latest
 
     steps:
@@ -24,7 +25,11 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+    - name: Get Assistant and Vector Store IDs
+      run: |
+        python3 tools/fetch_ids_from_names.py
+
     - name: Delete Assistant and Vector Store
-      run: python tools/delete_assistant.py
+      run: python tools/delete_assistant.py $repo_assistant_id $repo_vector_store_id
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

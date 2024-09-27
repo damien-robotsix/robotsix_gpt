@@ -133,6 +133,7 @@ class AssistantGpt(AssistantEventHandler):
                 output = task.execute()
                 if output.return_code != 0:
                     logger.error(f"Failed to execute {tool.function.name} - Input: {tool.function.arguments}, Error: {output.stderr}")
+                    print(f"{Colors.FAIL}Failed to execute {tool.function.name}{Colors.ENDC}")
                 self.tool_outputs.append({"tool_call_id": tool.id, "output": output.model_dump_json()})
         logger.debug(f"Submitting tool outputs: {json.dumps(self.tool_outputs)}")
         self.submit_tool_outputs()
