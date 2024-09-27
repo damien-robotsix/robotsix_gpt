@@ -49,14 +49,11 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          ISSUE_TITLE="${{ fromJson(steps.get_issue.outputs.data).title }}"
-          ISSUE_BODY="${{ fromJson(steps.get_issue.outputs.data).body }}"
-          REPO_NAME="${{ github.repository }}"
           PROMPT=$(cat <<EOF
-                  Try to solve as much as you can the following issue. You should not ask the user for prompt.
-                  
-                  Issue: ${ISSUE_TITLE}
-                  Description: ${ISSUE_BODY}
+                  Try to solve as much as you can the following issue in ${{ github.repository }} repository. You should not ask the user for prompt.
+
+                  Issue: ${{ fromJson(steps.get_issue.outputs.data).title }}
+                  Description: ${{ fromJson(steps.get_issue.outputs.data).body }}
                   EOF
                   )
           python tools/run_assistant.py - "${PROMPT}"
