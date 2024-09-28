@@ -1,6 +1,6 @@
-name: Run Assistant on Issue
-
 on:
+  issue_comment:
+    types: [created]  # Trigger on new comments
   workflow_dispatch:
     inputs:
       issue_number:
