@@ -1,5 +1,3 @@
-name: Run Assistant on Issue
-
 on:
   workflow_dispatch:
     inputs:
@@ -58,22 +56,19 @@ jobs:
 
       - name: Commit the generated files
         run: |
+          cp tmp/assistant_output.txt assistant_issue_comment.txt
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add .
-          git commit -m "Assistant: Proposed solutions for issue ${{ github.event.inputs.issue_number }}"
+          # Commit the changes, handling the case where there are no changes
+          git commit -m "Assistant: Proposed solutions for issue ${{ github.event.inputs.issue_number }}" || echo "No changes to commit"
           git push --set-upstream origin issue-${{ github.event.inputs.issue_number }}
-
-      - name: Read assistant output
-        id: read_output
-        run: echo "output=$(cat /tmp/assistant_output.txt)" >> $GITHUB_ENV
 
       - name: Comment on the issue
         uses: octokit/request-action@v2.x
         with:
           route: POST /repos/${{ github.repository }}/issues/${{ github.event.inputs.issue_number }}/comments
           body: |
-            The assistant has created a branch with proposed solutions. Please review the branch `issue-${{ github.event.inputs.issue_number }}` for details. Here is the last assistant output:
-            ${{ env.output }}
+            The assistant has created a branch with proposed solutions. Please review the branch `issue-${{ github.event.inputs.issue_number }}` for details.
         env:
           GITHUB_TOKEN: ${{ secrets.AI_TOKEN }}
