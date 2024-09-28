@@ -2,6 +2,7 @@
 
 import argparse
 from assistant_gpt import AssistantGpt
+import json
 
 def main():
     # Parse command-line arguments

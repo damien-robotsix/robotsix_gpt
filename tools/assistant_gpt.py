@@ -109,9 +109,10 @@ class AssistantGpt(AssistantEventHandler):
             logger.debug(f"Message to assistant {self.assistant_name}: {json.dumps(self.config['slave_assistants'])}")
             self.create_slave_assistants()
 
-def save_thread_id(self):
-        with open('thread_id.json', 'w') as f:
-            json.dump({"thread_id": self.thread_id}, f)
+    def save_thread_id(self):
+            with open('thread_id.json', 'w') as f:
+                json.dump({"thread_id": self.thread_id}, f)
+
     def init_thread(self, thread_id = None):
         if thread_id:
             self.thread_id = thread_id
@@ -165,17 +166,18 @@ def save_thread_id(self):
         logger.debug(f"Submitting tool outputs: {json.dumps(self.tool_outputs)}")
         self.submit_tool_outputs()
 
-def submit_tool_outputs(self):
-        if not self.tool_outputs:  # Check if there's nothing to output
-            print("No changes to commit, skipping.")
-            return  # Skip submitting tool outputs
-        with self.client.beta.threads.runs.submit_tool_outputs_stream(
-            thread_id=self.current_run.thread_id,
-            run_id=self.current_run.id,
-            tool_outputs=self.tool_outputs,
-            event_handler=self.create_event_handler(),
-        ) as stream:
-            stream.until_done()
+    def submit_tool_outputs(self):
+            if not self.tool_outputs:  # Check if there's nothing to output
+                print("No changes to commit, skipping.")
+                return  # Skip submitting tool outputs
+            with self.client.beta.threads.runs.submit_tool_outputs_stream(
+                thread_id=self.current_run.thread_id,
+                run_id=self.current_run.id,
+                tool_outputs=self.tool_outputs,
+                event_handler=self.create_event_handler(),
+            ) as stream:
+                stream.until_done()
+
     def handle_completed(self):
         messages = list(self.client.beta.threads.messages.list(thread_id=self.thread_id))
         if messages and self.main_assistant:
