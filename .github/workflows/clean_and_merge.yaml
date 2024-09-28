@@ -20,6 +20,7 @@ jobs:
 
       - name: Run Cleaning Script
         run: |
+          git fetch origin main
           git checkout main -- repo_assistant_config.json
           rm thread_id || echo "No thread_id file to remove"
           rm assistant_issue_comment.txt || echo "No assistant_issue_comment file to remove"
