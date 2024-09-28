@@ -78,7 +78,7 @@ class AssistantGpt(AssistantEventHandler):
         with open(config_file, 'r') as f:
             self.config = json.load(f)
             self.config_file = config_file
-        
+
         # If a repo_config_file exists, complete the slave assistants with the assistant in the file
         if os.path.exists(repo_config_file):
             with open(repo_config_file, 'r') as f:
@@ -87,7 +87,15 @@ class AssistantGpt(AssistantEventHandler):
 
         self.assistant_id = self.config['assistant_id']
         self.get_assistant_name(self.assistant_id)
-        self.init_thread()
+
+        try:
+            with open('thread_id.json') as f:
+                data = json.load(f)
+                thread_id = data['thread_id']
+        except FileNotFoundError:
+            thread_id = None  # Handle case where there's no previous thread
+
+        self.init_thread(thread_id)
         self.client.beta.threads.messages.create(
             thread_id=self.thread_id,
             role="user",
@@ -167,16 +175,13 @@ class AssistantGpt(AssistantEventHandler):
         self.submit_tool_outputs()
 
     def submit_tool_outputs(self):
-            if not self.tool_outputs:  # Check if there's nothing to output
-                print("No changes to commit, skipping.")
-                return  # Skip submitting tool outputs
-            with self.client.beta.threads.runs.submit_tool_outputs_stream(
-                thread_id=self.current_run.thread_id,
-                run_id=self.current_run.id,
-                tool_outputs=self.tool_outputs,
-                event_handler=self.create_event_handler(),
-            ) as stream:
-                stream.until_done()
+        with self.client.beta.threads.runs.submit_tool_outputs_stream(
+            thread_id=self.current_run.thread_id,
+            run_id=self.current_run.id,
+            tool_outputs=self.tool_outputs,
+            event_handler=self.create_event_handler(),
+        ) as stream:
+            stream.until_done()
 
     def handle_completed(self):
         messages = list(self.client.beta.threads.messages.list(thread_id=self.thread_id))

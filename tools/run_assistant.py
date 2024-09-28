@@ -18,15 +18,6 @@ def main():
         args.interactive = False
     assistant = AssistantGpt(interactive=args.interactive)
     assistant.init_from_file("assistant_config.json")
-    try:
-        with open('thread_id.json') as f:
-            data = json.load(f)
-            thread_id = data['thread_id']
-    except FileNotFoundError:
-        thread_id = None  # Handle case where there's no previous thread
-
-    assistant.init_thread(thread_id)
-    assistant.save_thread_id()
     assistant.create_user_message(args.user_message)
     with open('/tmp/assistant_output.txt', 'w') as f:
         f.write(assistant.get_output() or "No output available")
