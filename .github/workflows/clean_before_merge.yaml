@@ -1,4 +1,4 @@
-name: Clean and Merge
+name: Clean before Merge
 
 on:
   pull_request:
@@ -35,13 +35,3 @@ jobs:
       - name: Push Changes
         run: git push origin HEAD:${{ github.event.pull_request.head.ref }}
 
-      - name: Merge Pull Request
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            await github.pulls.merge({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.payload.pull_request.number,
-            })
