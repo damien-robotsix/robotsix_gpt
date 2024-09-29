@@ -1,5 +1,5 @@
 {
-    "master": {
+    "asst_eb8VshjBYgNpOFyCImMN2zFA": {
         "id": "asst_eb8VshjBYgNpOFyCImMN2zFA",
         "created_at": 1727286138,
         "description": null,
@@ -66,87 +66,6 @@
             },
             {
                 "function": {
-                    "name": "ModifyFileInput",
-                    "description": "Modify a file at the specified path according to the provided instructions with no overlaps.",
-                    "parameters": {
-                        "$defs": {
-                            "ModificationInstruction": {
-                                "properties": {
-                                    "action": {
-                                        "description": "The modification action to perform. Must be one of: insert, delete, replace",
-                                        "title": "Action",
-                                        "type": "string"
-                                    },
-                                    "start_line": {
-                                        "description": "The starting line number (1-based index)",
-                                        "title": "Start Line",
-                                        "type": "integer"
-                                    },
-                                    "end_line": {
-                                        "anyOf": [
-                                            {
-                                                "type": "integer"
-                                            },
-                                            {
-                                                "type": "null"
-                                            }
-                                        ],
-                                        "description": "The ending line number (inclusive) for delete and replace actions",
-                                        "title": "End Line"
-                                    },
-                                    "content": {
-                                        "anyOf": [
-                                            {
-                                                "type": "string"
-                                            },
-                                            {
-                                                "type": "null"
-                                            }
-                                        ],
-                                        "description": "The content to insert or replace",
-                                        "title": "Content"
-                                    }
-                                },
-                                "required": [
-                                    "action",
-                                    "start_line",
-                                    "end_line",
-                                    "content"
-                                ],
-                                "title": "ModificationInstruction",
-                                "type": "object",
-                                "additionalProperties": false
-                            }
-                        },
-                        "properties": {
-                            "path": {
-                                "description": "The path of the file to modify",
-                                "title": "Path",
-                                "type": "string"
-                            },
-                            "modifications": {
-                                "description": "A list of modification instructions to apply to the file",
-                                "items": {
-                                    "$ref": "#/$defs/ModificationInstruction"
-                                },
-                                "title": "Modifications",
-                                "type": "array"
-                            }
-                        },
-                        "required": [
-                            "path",
-                            "modifications"
-                        ],
-                        "title": "ModifyFileInput",
-                        "type": "object",
-                        "additionalProperties": false
-                    },
-                    "strict": true
-                },
-                "type": "function"
-            },
-            {
-                "function": {
                     "name": "AskAssistant",
                     "description": "Ask a question to the assistant with the specified ID",
                     "parameters": {
@@ -196,6 +115,35 @@
                     "strict": true
                 },
                 "type": "function"
+            },
+            {
+                "function": {
+                    "name": "OverwriteFileInput",
+                    "description": "Overwrite a file at the specified path with the provided content.",
+                    "parameters": {
+                        "properties": {
+                            "path": {
+                                "description": "The path of the file to overwrite",
+                                "title": "Path",
+                                "type": "string"
+                            },
+                            "content": {
+                                "description": "The content to write to the file",
+                                "title": "Content",
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "path",
+                            "content"
+                        ],
+                        "title": "OverwriteFileInput",
+                        "type": "object",
+                        "additionalProperties": false
+                    },
+                    "strict": true
+                },
+                "type": "function"
             }
         ],
         "response_format": {
@@ -209,62 +157,66 @@
         },
         "top_p": 1.0
     },
-    "slaves": [
-        {
-            "id": "asst_J5Of8UtJr9IYmJo6DBjTgCQP",
-            "created_at": 1727252879,
-            "description": null,
-            "instructions": "Your role is to be a specialist on python API for OpenAI. You database contains the API files and examples to help the user with its query.",
-            "metadata": {},
-            "model": "gpt-4o-mini-2024-07-18",
-            "name": "open ai python API agent",
-            "object": "assistant",
-            "tools": [
-                {
-                    "type": "file_search",
-                    "file_search": {
-                        "ranking_options": {
-                            "score_threshold": 0.0,
-                            "ranker": "default_2024_08_21"
-                        }
-                    }
-                },
-                {
-                    "function": {
-                        "name": "LoadFileInput",
-                        "description": "Load the content of a file given its path. Returns the content with line numbers.",
-                        "parameters": {
-                            "properties": {
-                                "path": {
-                                    "description": "The path of the file to load",
-                                    "title": "Path",
-                                    "type": "string"
-                                }
-                            },
-                            "required": [
-                                "path"
-                            ],
-                            "title": "LoadFileInput",
-                            "type": "object",
-                            "additionalProperties": false
+    "asst_MoHjFNWCAIKokAVOgEbPJrpM": {
+        "id": "asst_MoHjFNWCAIKokAVOgEbPJrpM",
+        "created_at": 1727637913,
+        "description": null,
+        "instructions": "You are an AI assistant. Your role is to :\n- Use 'git status' to check the current state of the repository. \n- Check the individual files either with git diff --staged for modified files or checking new files content.\n- If available ask the repository assistant some insight on the commit. \n- Provide a detailed commit following the conventional commit format.",
+        "metadata": {},
+        "model": "gpt-4o-2024-08-06",
+        "name": "Commit Assistant",
+        "object": "assistant",
+        "tools": [
+            {
+                "function": {
+                    "name": "ShellCommandInput",
+                    "description": "Execute a shell command",
+                    "parameters": {
+                        "properties": {
+                            "command": {
+                                "description": "The shell command to be executed in the repository root directory",
+                                "title": "Command",
+                                "type": "string"
+                            }
                         },
-                        "strict": true
+                        "required": [
+                            "command"
+                        ],
+                        "title": "ShellCommandInput",
+                        "type": "object",
+                        "additionalProperties": false
                     },
-                    "type": "function"
-                }
-            ],
-            "response_format": {
-                "type": "text"
+                    "strict": true
+                },
+                "type": "function"
+            }
+        ],
+        "response_format": {
+            "json_schema": {
+                "name": "commit",
+                "description": null,
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "subject": {
+                            "type": "string"
+                        },
+                        "body": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "subject",
+                        "body"
+                    ],
+                    "additionalProperties": false
+                },
+                "strict": true
             },
-            "temperature": 1.0,
-            "tool_resources": {
-                "file_search": {
-                    "vector_store_ids": [
-                        "vs_LjQWQELQnE7Jq849N2E3fuB3"
-                    ]
-                }
-            },
-            "top_p": 1.0
-        }
-    ]
+            "type": "json_schema"
+        },
+        "temperature": 1.0,
+        "tool_resources": {},
+        "top_p": 1.0
+    }
 }
