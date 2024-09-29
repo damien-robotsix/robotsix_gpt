@@ -57,7 +57,7 @@ class AssistantGpt(AssistantEventHandler):
         self.get_assistant_name(assistant_id)
         self.init_thread(thread_id)
 
-    def init_from_file(self, config_file, thread_id = None):
+    def init_from_file(self, config_file, thread_id = None, assistant_name = "main"):
         """
         Reads the assistant configuration from a JSON file.
         Also checks if the current directory is a git repository and get the specific assistant for the repository.
@@ -77,7 +77,11 @@ class AssistantGpt(AssistantEventHandler):
         self.main_assistant = True
         with open(config_file, 'r') as f:
             self.config = json.load(f)
+            self.config = self.config[assistant_name]
             self.config_file = config_file
+
+        if "slave_assistants" not in self.config:
+            self.config['slave_assistants'] = []
 
         # If a repo_config_file exists, complete the slave assistants with the assistant in the file
         if os.path.exists(repo_config_file):

@@ -1,9 +1,17 @@
 {
-    "assistant_id": "asst_eb8VshjBYgNpOFyCImMN2zFA",
-    "slave_assistants": [
-        {
-            "assistant_id": "asst_J5Of8UtJr9IYmJo6DBjTgCQP",
-            "description": "This assistant is specialized in open AI python API"
+    "main" : {
+            "assistant_id": "asst_eb8VshjBYgNpOFyCImMN2zFA",
+            "description": "This assistant is designed to help with general queries",
+            "slave_assistants": [
+                {
+                    "assistant_id": "asst_J5Of8UtJr9IYmJo6DBjTgCQP",
+                    "description": "This assistant is specialized in open AI python API"
+                }
+            ]
+        },
+    "commit": {
+            "name": "commit",
+            "assistant_id": "asst_MoHjFNWCAIKokAVOgEbPJrpM",
+            "description": "This assistant is specialized in generating commit messages"
         }
-    ]
 }

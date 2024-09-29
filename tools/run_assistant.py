@@ -11,6 +11,7 @@ def main():
     parser.add_argument('--save-thread-id', type=str, help='Path to save the thread id.')
     parser.add_argument('--load-thread-id', type=str, help='Path to load the thread id.')
     parser.add_argument("--no-interactive", dest='interactive', action="store_false", help="Run in non-interactive mode.")
+    parser.add_argument("--assistant", type=str, default="main", help="The assistant to use.")
     args = parser.parse_args()
 
     if args.user_message == '-':
@@ -26,7 +27,7 @@ def main():
             print(f"File {args.load_thread_id} not found. Proceeding without loading thread id.")
 
     assistant = AssistantGpt(interactive=args.interactive)
-    assistant.init_from_file("assistant_config.json", thread_id=thread_id)
+    assistant.init_from_file("assistant_config.json", thread_id=thread_id, assistant_name=args.assistant)
     assistant.create_user_message(args.user_message)
     with open('/tmp/assistant_output.txt', 'w') as f:
         f.write(assistant.get_output() or "No output available")
