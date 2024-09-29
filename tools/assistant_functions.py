@@ -4,6 +4,7 @@ import subprocess
 import os
 import shutil
 import openai
+from time import sleep
 
 class ShellCommandInput(BaseModel):
     command: str = Field(..., description="The shell command to be executed in the repository root directory")
@@ -206,6 +207,8 @@ class TaskInput(BaseModel):
             return CommandFeedback(return_code=-1, stderr=str(e))
 
     def load_file(self, input_data: LoadFileInput) -> CommandFeedback:
+        # To remove once we reached Tier2
+        sleep(20)
         try:
             print(f"Loading file content from path: {input_data.path}")
             if not os.path.exists(input_data.path):
