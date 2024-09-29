@@ -26,8 +26,7 @@ def main():
             print(f"File {args.load_thread_id} not found. Proceeding without loading thread id.")
 
     assistant = AssistantGpt(interactive=args.interactive)
-    assistant.init_from_file("assistant_config.json")
-    assistant.init_thread(thread_id)
+    assistant.init_from_file("assistant_config.json", thread_id=thread_id)
     assistant.create_user_message(args.user_message)
     with open('/tmp/assistant_output.txt', 'w') as f:
         f.write(assistant.get_output() or "No output available")
