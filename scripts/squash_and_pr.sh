@@ -17,7 +17,7 @@ squash_commits() {
   # Perform non-interactive squash of commits
   git fetch origin
   git reset --soft origin/main
-  git commit -m "$COMMIT_MESSAGE"
+  git commit -F /tmp/assistant_output.txt
 }
 
 # Create a pull request
