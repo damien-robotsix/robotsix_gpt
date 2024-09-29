@@ -23,6 +23,10 @@ class ModifyFileInput(BaseModel):
     path: str = Field(..., description="The path of the file to modify")
     modifications: List[ModificationInstruction] = Field(..., description="A list of modification instructions to apply to the file")
 
+class OverwriteFileInput(BaseModel):
+    path: str = Field(..., description="The path of the file to overwrite")
+    content: str = Field(..., description="The content to write to the file")
+
 class CommandFeedback(BaseModel):
     return_code: int = Field(..., description="The return code of the command. 0 indicates success, non-zero indicates failure.")
     stdout: Optional[str] = None
@@ -58,10 +62,13 @@ class TaskInput(BaseModel):
             elif self.input_type == 'LoadFileInput':
                 load_input = LoadFileInput.model_validate_json(self.parameters)
                 return self.load_file(load_input)
+            elif self.input_type == 'OverwriteFileInput':
+                overwrite_input = OverwriteFileInput.model_validate_json(self.parameters)
+                return self.create_file(CreateFileInput(path=overwrite_input.path, content=overwrite_input.content))
             else:
                 return CommandFeedback(
                     return_code=-1,
-                    stderr=f"Unsupported task type: {self.input_type}. Supported types are: ShellCommandInput, CreateFileInput, ModifyFileInput, LoadFileInput"
+                    stderr=f"Unsupported task type: {self.input_type}. Supported types are: ShellCommandInput, CreateFileInput, ModifyFileInput, LoadFileInput, OverwriteFileInput"
                 )
         except Exception as e:
             return CommandFeedback(return_code=-1, stderr=str(e))
@@ -104,6 +111,7 @@ class TaskInput(BaseModel):
             return CommandFeedback(return_code=-1, stderr=str(e))
 
     def modify_file(self, input_data: ModifyFileInput) -> CommandFeedback:
+        sleep(20)
         try:
             print(f"Modifying file at path: {input_data.path}")
             if not os.path.exists(input_data.path):
@@ -199,7 +207,8 @@ class TaskInput(BaseModel):
             with open(input_data.path, 'w') as f:
                 f.writelines(lines)
             print(f"File modified successfully at {input_data.path}")
-            return CommandFeedback(return_code=0)
+            # Return the modified content
+            return self.load_file(LoadFileInput(path=input_data.path))
         except Exception as e:
             print(f"Failed to modify file: {e}")
             # Restore the original file from backup in case of exception
@@ -228,7 +237,7 @@ class TaskInput(BaseModel):
 master_function_tools = [
     openai.pydantic_function_tool(ShellCommandInput, description="Execute a shell command"),
     openai.pydantic_function_tool(CreateFileInput, description="Create a file at the specified path with the provided content."),
-    openai.pydantic_function_tool(ModifyFileInput, description="Modify a file at the specified path according to the provided instructions with no overlaps."),
     openai.pydantic_function_tool(AskAssistant, description="Ask a question to the assistant with the specified ID"),
-    openai.pydantic_function_tool(LoadFileInput, description="Load the content of a file given its path. Returns the content with line numbers.")
+    openai.pydantic_function_tool(LoadFileInput, description="Load the content of a file given its path. Returns the content with line numbers."),
+    openai.pydantic_function_tool(OverwriteFileInput, description="Overwrite a file at the specified path with the provided content.")
 ]
