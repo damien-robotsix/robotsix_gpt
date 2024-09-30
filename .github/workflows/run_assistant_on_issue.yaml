@@ -1,3 +1,5 @@
+name: Run Assistant on Issue
+
 on:
   workflow_dispatch:
     inputs:
