@@ -1,8 +1,9 @@
 import os
 import sys
 from openai import OpenAI
-from utils import get_assistant_configuration
-from assistant_functions import master_function_tools
+from user_utility.utils import get_assistant_configuration
+from user_utility.assistant_functions import master_function_tools
+
 
 def main():
     """

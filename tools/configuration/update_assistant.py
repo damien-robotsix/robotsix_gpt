@@ -2,7 +2,7 @@ import os
 import json
 import sys
 from openai import OpenAI
-from generate_repo_structure import generate_structure_from_path
+from user_utility.generate_repo_structure import generate_structure_from_path
 
 
 def main():
@@ -41,6 +41,7 @@ def main():
         print("Assistant instructions updated successfully.")
     else:
         print("Failed to update the assistant.")
+
 
 if __name__ == "__main__":
     main()

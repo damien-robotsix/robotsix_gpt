@@ -4,7 +4,7 @@ import tempfile
 import shutil
 from typing import List
 import openai
-from utils import get_repo_assistant_configuration
+from user_utility.utils import get_repo_assistant_configuration
 
 
 def clean_vector_store(vector_store_id: str):

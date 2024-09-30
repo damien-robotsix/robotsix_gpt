@@ -7,7 +7,7 @@ git add .
 echo "Running AI assistant to generate commit message..."
 
 # Run AI Assistant to generate a commit message
-python3 tools/run_assistant.py "commit" --no-interactive --assistant "commit"
+python3 tools/user_utility/run_assistant.py "commit" --no-interactive --assistant "commit"
 
 # Path to the JSON file containing assistant's output
 JSON_FILE="/tmp/assistant_output.txt"
