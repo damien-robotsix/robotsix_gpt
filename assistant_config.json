@@ -13,5 +13,10 @@
             "name": "commit",
             "assistant_id": "asst_MoHjFNWCAIKokAVOgEbPJrpM",
             "description": "This assistant is specialized in generating commit messages"
+        },
+    "commit_squash": {
+            "name": "commit_squash",
+            "assistant_id": "asst_eMpwfrbqkU4VEkCL2DS2d7CW",
+            "description": "This assistant is specialized in generating commit messages for squash"
         }
 }

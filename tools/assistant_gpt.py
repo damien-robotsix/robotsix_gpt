@@ -143,7 +143,7 @@ class AssistantGpt(AssistantEventHandler):
             if tool.function.name == "AskAssistant":
                 request = AskAssistant.model_validate_json(tool.function.arguments)
                 assistant_id = request.assistant_id
-                message = request.message
+                message = request.message + "\n" + "ADDITIONAL CONTEXT: " + request.additional_context
                 try:
                     slave_assistant = self.slave_assistants[assistant_id]
                     print(f"{Colors.OKBLUE}Message to {slave_assistant.assistant_name}:\n {message}{Colors.ENDC}")
