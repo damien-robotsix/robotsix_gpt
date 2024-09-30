@@ -2,7 +2,7 @@ import os
 import json
 import sys
 from openai import OpenAI
-from user_utility.generate_repo_structure import generate_structure_from_path
+from generate_repo_structure import generate_structure_from_path
 
 
 def main():
