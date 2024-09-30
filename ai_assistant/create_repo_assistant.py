@@ -4,14 +4,11 @@ import sys
 from openai import OpenAI
 
 # Main function to initialize the repo assistant
+
 def main():
-    # Get the repository name from command-line arguments
-    if len(sys.argv) > 1:
-        repo_name = sys.argv[1]
-        branch_name = sys.argv[2] if len(sys.argv) > 2 else "main"
-    else:
-        print("Usage: ai_init_repo <repo_name> [branch_name]")
-        sys.exit(1)
+    # Get the repository name from the current directory
+    repo_name = os.path.basename(os.getcwd())
+    branch_name = "main"
 
     # Set your OpenAI API key
     api_key = os.environ.get("OPENAI_API_KEY", "<your OpenAI API key if not set as env var>")
