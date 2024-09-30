@@ -61,10 +61,9 @@ class AskAssistant(BaseModel):
     Represents a request to query an assistant.
     """
     assistant_id: str = Field(..., description="The ID of the assistant to ask")
-    instance: int = Field(..., description="The instance of the assistant to ask")
+    instance: int = Field(..., description="The instance of the assistant to ask. Default is 0.")
     message: str = Field(..., description="The prompt to send to the assistant")
     additional_context: str = Field(None, description="Additional context to provide to the assistant (file content, etc.)")
-
 
 class CreateNewInstance(BaseModel):
     """

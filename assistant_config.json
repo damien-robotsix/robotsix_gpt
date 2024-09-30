@@ -18,16 +18,5 @@
         "name": "commit_squash",
         "assistant_id": "asst_eMpwfrbqkU4VEkCL2DS2d7CW",
         "description": "This assistant is specialized in generating commit messages for squash"
-    },
-    "complex_tasks": {
-        "name": "complex_tasks",
-        "assistant_id": "asst_7EYNEiYFJnFIjV3fnvzVheZB",
-        "description": "This assistant is specialized in complex tasks by managing multiple assistants",
-        "slave_assistants": [
-            {
-                "assistant_id": "asst_eb8VshjBYgNpOFyCImMN2zFA",
-                "description": "This assistant is designed to help with general queries"
-            }
-        ]
     }
 }
