@@ -181,7 +181,7 @@ class AssistantGpt(AssistantEventHandler):
                     message += "ADDITIONAL CONTEXT: "
                     message += request.additional_context
                 try:
-                    slave_assistant = self.slave_assistants[assistant_id][request.instance]
+                    slave_assistant = self.slave_assistants[assistant_id][str(request.instance)]
                     print(f"{Colors.OKBLUE}Message to {slave_assistant.assistant_name}, instance {slave_assistant.instance}:\n {message}{Colors.ENDC}")
 
                     slave_assistant.create_user_message(message)
