@@ -57,6 +57,8 @@ jobs:
               'EOF'
 
       - name: Commit the generated files
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           cp /tmp/assistant_output.txt assistant_issue_comment.txt
           git config --global user.name "github-actions[bot]"
