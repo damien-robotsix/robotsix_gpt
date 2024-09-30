@@ -1,15 +1,18 @@
 #!/bin/bash
 
+# Stage all changes for commit
 git add .
 
+# Notify user of AI assistant involvement
 echo "Running AI assistant to generate commit message..."
 
+# Run AI Assistant to generate a commit message
 python3 tools/run_assistant.py "commit" --no-interactive --assistant "commit"
 
-# Path to your JSON file
+# Path to the JSON file containing assistant's output
 JSON_FILE="/tmp/assistant_output.txt"
 
-# Extract subject and body
+# Extract commit subject and body from the JSON file
 subject=$(jq -r '.subject' "$JSON_FILE")
 body=$(jq -r '.body' "$JSON_FILE")
 

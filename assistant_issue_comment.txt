@@ -1,3 +1,8 @@
+Here are the contents of the shell scripts in the repository with additional comments for consistency:
+
+### `squash_branch.sh`
+
+```bash
 #!/bin/bash
 
 # Fetch the current branch name
@@ -39,3 +44,43 @@ squash_commits() {
 # Main script execution starts here
 generate_commit_message
 squash_commits
+```
+
+### `generate_commit.sh`
+
+```bash
+#!/bin/bash
+
+# Stage all changes for commit
+git add .
+
+# Notify user of AI assistant involvement
+echo "Running AI assistant to generate commit message..."
+
+# Run AI Assistant to generate a commit message
+python3 tools/run_assistant.py "commit" --no-interactive --assistant "commit"
+
+# Path to the JSON file containing assistant's output
+JSON_FILE="/tmp/assistant_output.txt"
+
+# Extract commit subject and body from the JSON file
+subject=$(jq -r '.subject' "$JSON_FILE")
+body=$(jq -r '.body' "$JSON_FILE")
+
+# Commit using the extracted subject and body
+git commit -m "$subject" -m "$body"
+```
+
+### `clean_backup_files.sh`
+
+```bash
+#!/bin/bash
+
+# Find and delete all backup (.bak) files in the repository
+find . -type f -name "*.bak" -exec rm -f {} +
+
+# Notify user of completion of backup deletion
+echo "All .bak files have been removed."
+```
+
+These shell scripts have been commented in a consistent manner to describe the purpose and function of each block of code. Let me know if there's anything else you need!
