@@ -4,7 +4,7 @@ import json
 import logging
 from typing_extensions import override
 from openai import OpenAI, AssistantEventHandler
-from assistant_functions import TaskInput, AskAssistant, AssistantResponse
+from assistant_functions import TaskInput, AskAssistant, AssistantResponse, CreateNewInstance, CommandFeedback
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG, filename='assistant_gpt.log',
@@ -35,6 +35,7 @@ class AssistantGpt(AssistantEventHandler):
         self.config_file = None
         self.slave_assistants = {}
         self.main_assistant = False
+        self.instance = 0
 
     def find_git_root(slef, path):
         """Traverse up the directory tree to find the .git folder."""
@@ -112,7 +113,7 @@ class AssistantGpt(AssistantEventHandler):
             }
             self.client.beta.threads.messages.create(**message_data)
             logger.debug(f"Message to assistant {self.assistant_name}: {json.dumps(self.config['slave_assistants'])}")
-            self.create_slave_assistants()
+            self.create_all_slave_assistants()
 
     def init_thread(self, thread_id = None):
         if thread_id:
@@ -140,20 +141,31 @@ class AssistantGpt(AssistantEventHandler):
         self.tool_outputs = []
         for tool in run.required_action.submit_tool_outputs.tool_calls:
             logger.debug(f"Processing tool call: {tool.model_dump_json()}")
-            if tool.function.name == "AskAssistant":
+            if tool.function.name == "CreateNewInstance":
+                request = CreateNewInstance.model_validate_json(tool.function.arguments)
+                new_assistant_instance = self.create_slave_assistant(request.assistant_id)
+                response = CommandFeedback(return_code=0, stdout=f"Instance {new_assistant_instance.instance} for assistant {new_assistant_instance.assistant_id} created.")
+                print(f"{Colors.OKGREEN} Instance {new_assistant_instance.instance} for assistant {new_assistant_instance.assistant_id} created.{Colors.ENDC}")
+                self.tool_outputs.append({"tool_call_id": tool.id, "output": response.model_dump_json()})
+
+            elif tool.function.name == "AskAssistant":
                 request = AskAssistant.model_validate_json(tool.function.arguments)
                 assistant_id = request.assistant_id
-                message = request.message + "\n" + "ADDITIONAL CONTEXT: " + request.additional_context
+                message = request.message + "\n"
+                if request.additional_context:
+                    message += "ADDITIONAL CONTEXT: "
+                    message += request.additional_context
                 try:
-                    slave_assistant = self.slave_assistants[assistant_id]
-                    print(f"{Colors.OKBLUE}Message to {slave_assistant.assistant_name}:\n {message}{Colors.ENDC}")
+                    assistant_key = assistant_id + "_INSTANCE" + str(request.instance)
+                    slave_assistant = self.slave_assistants[assistant_key]
+                    print(f"{Colors.OKBLUE}Message to {slave_assistant.assistant_name}, instance {slave_assistant.instance}:\n {message}{Colors.ENDC}")
 
                     slave_assistant.create_user_message(message)
                     response = AssistantResponse(response=slave_assistant.get_output())
                     print(f"{Colors.OKPINK}Response from {slave_assistant.assistant_name}:\n {response.response}{Colors.ENDC}")
                     self.tool_outputs.append({"tool_call_id": tool.id, "output": response.model_dump_json()})
                 except KeyError:
-                    error_message = f"Assistant {assistant_id} not found. Available assistants: {self.slave_assistants.keys()}"
+                    error_message = f"Assistant {assistant_id} not found with instance {request.instance}. Available assistants: {self.slave_assistants.keys()}"
                     print(f"{Colors.FAIL}{error_message}{Colors.ENDC}")
                     response = AssistantResponse(response=error_message)
                     self.tool_outputs.append({"tool_call_id": tool.id, "output": response.model_dump_json()})
@@ -213,11 +225,21 @@ class AssistantGpt(AssistantEventHandler):
         new_handler.main_assistant = self.main_assistant
         return new_handler
 
-    def create_slave_assistants(self):
+
+    def create_slave_assistant(self, assistant_id):
+        new_handler = AssistantGpt(False)
+        new_handler.init_assistant(assistant_id)
+        i = 0
+        while assistant_id + "_INSTANCE" + str(i) in self.slave_assistants:
+            i += 1
+        new_id = assistant_id + "_INSTANCE" + str(i)
+        new_handler.instance = i
+        self.slave_assistants[new_id] = new_handler
+        return new_handler
+
+    def create_all_slave_assistants(self):
         for assistant in self.config['slave_assistants']:
-            new_handler = AssistantGpt(False)
-            new_handler.init_assistant(assistant['assistant_id'])
-            self.slave_assistants[assistant['assistant_id']] = new_handler
+            self.create_slave_assistant(assistant['assistant_id'])
 
     def get_output(self):
         messages = list(self.client.beta.threads.messages.list(thread_id=self.thread_id))

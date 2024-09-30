@@ -34,8 +34,12 @@ class CommandFeedback(BaseModel):
 
 class AskAssistant(BaseModel):
     assistant_id: str = Field(..., description="The ID of the assistant to ask")
+    instance: int = Field(..., description="The instance of the assistant to ask")
     message: str = Field(..., description="The prompt to send to the assistant")
     additional_context: str = Field(None, description="Additional context to provide to the assistant (file content, etc.)")
+
+class CreateNewInstance(BaseModel):
+    assistant_id: str = Field(..., description="The ID of the assistant instance to create")
 
 class AssistantResponse(BaseModel):
     response: str = Field(..., description="The response from the assistant")
@@ -239,6 +243,7 @@ master_function_tools = [
     openai.pydantic_function_tool(ShellCommandInput, description="Execute a shell command"),
     openai.pydantic_function_tool(CreateFileInput, description="Create a file at the specified path with the provided content."),
     openai.pydantic_function_tool(AskAssistant, description="Ask a question to the assistant with the specified ID"),
+    openai.pydantic_function_tool(CreateNewInstance, description="Create a new instance of the assistant with the specified ID"),
     openai.pydantic_function_tool(LoadFileInput, description="Load the content of a file given its path. Returns the content with line numbers."),
     openai.pydantic_function_tool(OverwriteFileInput, description="Overwrite a file at the specified path with the provided content.")
 ]
