@@ -1,58 +1,104 @@
 from pydantic import BaseModel, Field
-from typing import Dict, Any, Optional, List, Any
+from typing import Dict, Any, Optional, List
 import subprocess
 import os
 import shutil
 import openai
-from time import sleep
+
 
 class ShellCommandInput(BaseModel):
+    """
+    Represents a shell command input for execution.
+    """
     command: str = Field(..., description="The shell command to be executed in the repository root directory")
 
+
 class CreateFileInput(BaseModel):
+    """
+    Represents a request to create a new file.
+    """
     path: str = Field(..., description="The path of the file to create")
     content: str = Field(..., description="The content to write to the file")
 
+
 class ModificationInstruction(BaseModel):
+    """
+    Represents an instruction to modify a file: insert, delete, or replace.
+    """
     action: str = Field(..., description="The modification action to perform. Must be one of: insert, delete, replace")
     start_line: int = Field(..., description="The starting line number (1-based index)")
     end_line: Optional[int] = Field(None, description="The ending line number (inclusive) for delete and replace actions")
     content: Optional[str] = Field(None, description="The content to insert or replace")
 
+
 class ModifyFileInput(BaseModel):
+    """
+    Represents the request to modify a file using specified modification instructions.
+    """
     path: str = Field(..., description="The path of the file to modify")
     modifications: List[ModificationInstruction] = Field(..., description="A list of modification instructions to apply to the file")
 
+
 class OverwriteFileInput(BaseModel):
+    """
+    Represents a request to overwrite an existing file with new content.
+    """
     path: str = Field(..., description="The path of the file to overwrite")
     content: str = Field(..., description="The content to write to the file")
 
+
 class CommandFeedback(BaseModel):
+    """
+    Represents feedback from executing a command.
+    """
     return_code: int = Field(..., description="The return code of the command. 0 indicates success, non-zero indicates failure.")
     stdout: Optional[str] = None
     stderr: Optional[str] = None
 
+
 class AskAssistant(BaseModel):
+    """
+    Represents a request to query an assistant.
+    """
     assistant_id: str = Field(..., description="The ID of the assistant to ask")
     instance: int = Field(..., description="The instance of the assistant to ask")
     message: str = Field(..., description="The prompt to send to the assistant")
     additional_context: str = Field(None, description="Additional context to provide to the assistant (file content, etc.)")
 
+
 class CreateNewInstance(BaseModel):
+    """
+    Represents a request to create a new instance of an assistant.
+    """
     assistant_id: str = Field(..., description="The ID of the assistant instance to create")
 
+
 class AssistantResponse(BaseModel):
+    """
+    Represents a response from an assistant.
+    """
     response: str = Field(..., description="The response from the assistant")
+
 
 # New class to load file content
 class LoadFileInput(BaseModel):
+    """
+    Represents a request to load the content of a file.
+    """
     path: str = Field(..., description="The path of the file to load")
 
+
 class TaskInput(BaseModel):
+    """
+    Represents a task input containing the input type and necessary parameters.
+    """
     input_type: str = Field(..., description="The type of input. E.g. ShellCommandInput, CreateFileInput, ModifyFileInput, LoadFileInput")
     parameters: Dict[str, Any] = Field(..., description="Parameters needed for the task.")
 
     def execute(self) -> CommandFeedback:
+        """
+        Executes the task based on the input type.
+        """
         try:
             if self.input_type == 'ShellCommandInput':
                 print(self.parameters)
@@ -79,6 +125,9 @@ class TaskInput(BaseModel):
             return CommandFeedback(return_code=-1, stderr=str(e))
 
     def execute_shell_command(self, input_data: ShellCommandInput) -> CommandFeedback:
+        """
+        Executes a shell command and returns its feedback.
+        """
         print(f"Executing command: {input_data.command}")
         try:
             result = subprocess.run(input_data.command, shell=True, capture_output=True, text=True)
@@ -100,6 +149,9 @@ class TaskInput(BaseModel):
             )
 
     def create_file(self, input_data: CreateFileInput) -> CommandFeedback:
+        """
+        Creates a file at the given path with the specified content.
+        """
         try:
             print(f"Creating file at path: {input_data.path}")
             dirpath = os.path.dirname(input_data.path)
@@ -116,7 +168,9 @@ class TaskInput(BaseModel):
             return CommandFeedback(return_code=-1, stderr=str(e))
 
     def modify_file(self, input_data: ModifyFileInput) -> CommandFeedback:
-        sleep(20)
+        """
+        Modifies the specified file based on provided modification instructions.
+        """
         try:
             print(f"Modifying file at path: {input_data.path}")
             if not os.path.exists(input_data.path):
@@ -152,7 +206,6 @@ class TaskInput(BaseModel):
                 end_line = instruction.end_line if instruction.end_line is not None else start_line
 
                 if action == 'insert':
-                    # Check if we already have an insert at this position
                     if start_line in insert_positions:
                         return CommandFeedback(
                             return_code=-1,
@@ -160,7 +213,6 @@ class TaskInput(BaseModel):
                         )
                     insert_positions.add(start_line)
                 elif action in ['delete', 'replace']:
-                    # Check for overlapping ranges with previous delete/replace modifications
                     for covered_start, covered_end in delete_replace_ranges:
                         if not (end_line < covered_start or start_line > covered_end):
                             return CommandFeedback(
@@ -221,8 +273,9 @@ class TaskInput(BaseModel):
             return CommandFeedback(return_code=-1, stderr=str(e))
 
     def load_file(self, input_data: LoadFileInput) -> CommandFeedback:
-        # To remove once we reached Tier2
-        sleep(20)
+        """
+        Loads the content of a file and returns it with line numbers.
+        """
         try:
             print(f"Loading file content from path: {input_data.path}")
             if not os.path.exists(input_data.path):

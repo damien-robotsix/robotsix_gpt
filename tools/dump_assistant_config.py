@@ -1,6 +1,6 @@
-import openai
-import json
 import os
+import json
+import openai
 import argparse
 
 api_key = os.environ.get("OPENAI_API_KEY", "<your OpenAI API key if not set as env var>")
@@ -8,6 +8,9 @@ openai.api_key = api_key
 client = openai.OpenAI(api_key=api_key)
 
 def get_assistant_configuration(assistant_id):
+    """
+    Fetches and returns the assistant configuration by ID.
+    """
     try:
         assistant = client.beta.assistants.retrieve(assistant_id)
         return assistant.to_dict()
@@ -17,6 +20,9 @@ def get_assistant_configuration(assistant_id):
 
 
 def main(output_file):
+    """
+    Dumps the configuration of all assistants into a specified file.
+    """
     with open('assistant_config.json', 'r') as f:
         config = json.load(f)
 
@@ -38,6 +44,7 @@ def main(output_file):
         json.dump(all_assistant_configs, f, indent=4)
 
     print(f"Assistant configurations have been dumped into {output_file}")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Dump assistant configurations to a file.')

@@ -1,6 +1,7 @@
 import os
 import openai
 
+
 def initialize_openai_client():
     """
     Initializes the OpenAI client using the API key provided in the environment variables.
@@ -9,6 +10,7 @@ def initialize_openai_client():
     if not api_key:
         raise ValueError("Please set the OPENAI_API_KEY environment variable.")
     return openai.OpenAI(api_key=api_key)
+
 
 def delete_all_files(client):
     """
@@ -26,9 +28,14 @@ def delete_all_files(client):
     except Exception as e:
         print(f"Error while listing files: {e}")
 
+
 def main():
+    """
+    Main function that initializes the client and deletes files.
+    """
     client = initialize_openai_client()
     delete_all_files(client)
+
 
 if __name__ == "__main__":
     main()

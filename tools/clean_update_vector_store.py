@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import os
 import sys
 import tempfile
@@ -7,6 +5,7 @@ import shutil
 from typing import List
 import openai
 from utils import get_repo_assistant_configuration
+
 
 def clean_vector_store(vector_store_id: str):
     """
@@ -26,6 +25,7 @@ def clean_vector_store(vector_store_id: str):
         except Exception as e:
             print(f"Could not delete file {file.id}. Error: {e}")
 
+
 def get_all_files(repo_path: str, exclude_dirs: List[str] = None) -> List[str]:
     """
     Traverses the repository directory and collects all file paths,
@@ -43,6 +43,7 @@ def get_all_files(repo_path: str, exclude_dirs: List[str] = None) -> List[str]:
             if not file_path.endswith(('.gitignore')):
                 file_paths.append(file_path)
     return file_paths
+
 
 def load_files_assistant(repo_path: str):
     """
@@ -81,6 +82,7 @@ def load_files_assistant(repo_path: str):
                             )
                         except Exception as e:
                             print(f"Could not upload file {path}. Error: {e}")
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

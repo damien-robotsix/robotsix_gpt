@@ -15,6 +15,7 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("httpcore").setLevel(logging.WARNING)
 logging.getLogger("openai").setLevel(logging.WARNING)
 
+
 class Colors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -23,7 +24,12 @@ class Colors:
     WARNING = '\033[93m'
     FAIL = '\033[91m'
     ENDC = '\033[0m'  # End of color
+
+
 class AssistantGpt(AssistantEventHandler):
+    """
+    Represents the main assistant capable of handling tasks and responses from OpenAI.
+    """
     def __init__(self, interactive=False):
         super().__init__()
         api_key = os.environ.get("OPENAI_API_KEY", "<your OpenAI API key if not set as env var>")
@@ -37,8 +43,10 @@ class AssistantGpt(AssistantEventHandler):
         self.main_assistant = False
         self.instance = 0
 
-    def find_git_root(slef, path):
-        """Traverse up the directory tree to find the .git folder."""
+    def find_git_root(self, path):
+        """
+        Traverse up the directory tree to find the .git folder.
+        """
         previous, current = None, os.path.abspath(path)
         while current != previous:
             if os.path.isdir(os.path.join(current, ".git")):
@@ -47,21 +55,27 @@ class AssistantGpt(AssistantEventHandler):
         return None
 
     def get_assistant_name(self, assistant_id):
+        """
+        Fetches the assistant's name based on the assistant ID.
+        """
         try:
             assistant_data = self.client.beta.assistants.retrieve(assistant_id)
             self.assistant_name = assistant_data.name
         except Exception as e:
             print(f"Error fetching assistant name: {e}")
 
-    def init_assistant(self, assistant_id, thread_id = None):
+    def init_assistant(self, assistant_id, thread_id=None):
+        """
+        Initializes the assistant properties and settings with a given thread ID.
+        """
         self.assistant_id = assistant_id
         self.get_assistant_name(assistant_id)
         self.init_thread(thread_id)
 
-    def init_from_file(self, config_file, thread_id = None, assistant_name = "main"):
+    def init_from_file(self, config_file, thread_id=None, assistant_name="main"):
         """
-        Reads the assistant configuration from a JSON file.
-        Also checks if the current directory is a git repository and get the specific assistant for the repository.
+        Reads the assistant configuration from a JSON file and initializes it.
+        Checks for the current directory as a Git repository.
         """
         git_root = self.find_git_root(os.getcwd())
         if git_root is None:
@@ -88,7 +102,7 @@ class AssistantGpt(AssistantEventHandler):
         if os.path.exists(repo_config_file):
             with open(repo_config_file, 'r') as f:
                 repo_config = json.load(f)
-                self.config['slave_assistants'].append({'assistant_id':repo_config['repo_assistant_id']})
+                self.config['slave_assistants'].append({'assistant_id': repo_config['repo_assistant_id']})
 
         self.assistant_id = self.config['assistant_id']
         self.get_assistant_name(self.assistant_id)
@@ -115,7 +129,10 @@ class AssistantGpt(AssistantEventHandler):
             logger.debug(f"Message to assistant {self.assistant_name}: {json.dumps(self.config['slave_assistants'])}")
             self.create_all_slave_assistants()
 
-    def init_thread(self, thread_id = None):
+    def init_thread(self, thread_id=None):
+        """
+        Initializes a thread for the assistant conversation, either by loading an existing one or creating a new one.
+        """
         if thread_id:
             self.thread_id = thread_id
         else:
@@ -124,12 +141,18 @@ class AssistantGpt(AssistantEventHandler):
 
     @override
     def on_tool_call_created(self, tool_call):
+        """
+        Handles the creation of tool calls made by the assistant.
+        """
         print(f"\n{Colors.OKGREEN}Assistant {self.assistant_name} > {tool_call.type}{Colors.ENDC}", flush=True)
         if tool_call.type == "function":
             print(f"{Colors.OKGREEN}Function {tool_call.function.name}{Colors.ENDC}\n", flush=True)
 
     @override
     def on_event(self, event):
+        """
+        Responds to events related to the assistant's execution and output.
+        """
         self.run_id = event.data.id
         if event.event == 'thread.run.requires_action':
             self.handle_requires_action(event.data)
@@ -137,7 +160,9 @@ class AssistantGpt(AssistantEventHandler):
             self.handle_completed()
 
     def handle_requires_action(self, run):
-        """Process tool calls and generate outputs."""
+        """
+        Processes tool calls when the assistant requires user input or action.
+        """
         self.tool_outputs = []
         for tool in run.required_action.submit_tool_outputs.tool_calls:
             logger.debug(f"Processing tool call: {tool.model_dump_json()}")
@@ -165,7 +190,10 @@ class AssistantGpt(AssistantEventHandler):
                     print(f"{Colors.OKPINK}Response from {slave_assistant.assistant_name}:\n {response.response}{Colors.ENDC}")
                     self.tool_outputs.append({"tool_call_id": tool.id, "output": response.model_dump_json()})
                 except KeyError:
-                    error_message = f"Assistant {assistant_id} not found with instance {request.instance}. Available assistants: {self.slave_assistants.keys()}"
+                    if assistant_id not in self.slave_assistants:
+                        error_message = f"Assistant {assistant_id} not found. Available assistants: {list(self.slave_assistants.keys())}"
+                    elif request.instance not in self.slave_assistants[assistant_id]:
+                        error_message = f"Instance {request.instance} not found for assistant {assistant_id}. Available instances: {list(self.slave_assistants[assistant_id].keys())}"
                     print(f"{Colors.FAIL}{error_message}{Colors.ENDC}")
                     response = AssistantResponse(response=error_message)
                     self.tool_outputs.append({"tool_call_id": tool.id, "output": response.model_dump_json()})
@@ -180,6 +208,9 @@ class AssistantGpt(AssistantEventHandler):
         self.submit_tool_outputs()
 
     def submit_tool_outputs(self):
+        """
+        Submits the collected tool outputs to the assistant's thread.
+        """
         with self.client.beta.threads.runs.submit_tool_outputs_stream(
             thread_id=self.current_run.thread_id,
             run_id=self.current_run.id,
@@ -189,6 +220,9 @@ class AssistantGpt(AssistantEventHandler):
             stream.until_done()
 
     def handle_completed(self):
+        """
+        Processes the final output once the assistant has completed execution.
+        """
         messages = list(self.client.beta.threads.messages.list(thread_id=self.thread_id))
         if messages and self.main_assistant:
             print(f"Final Output:\n {messages[0].content[0].text.value}")
@@ -199,6 +233,9 @@ class AssistantGpt(AssistantEventHandler):
             self.completed = True
 
     def create_user_message(self, user_message):
+        """
+        Sends a user message to the assistant thread.
+        """
         message_data = {
             "thread_id": self.thread_id,
             "role": "user",
@@ -210,6 +247,9 @@ class AssistantGpt(AssistantEventHandler):
         self.run()
 
     def continue_with_interaction(self):
+        """
+        Prompts the user for further input to continue the interaction.
+        """
         new_message = input("Enter next message or 'exit' to end: ")
         if new_message.strip().lower() == "exit":
             self.interactive = False
@@ -219,29 +259,44 @@ class AssistantGpt(AssistantEventHandler):
             self.create_user_message(new_message)
 
     def create_event_handler(self):
+        """
+        Creates and returns a new event handler for assistant responses.
+        """
         new_handler = AssistantGpt(self.interactive)
         new_handler.init_assistant(self.assistant_id, self.thread_id)
         new_handler.slave_assistants = self.slave_assistants
         new_handler.main_assistant = self.main_assistant
         return new_handler
 
-
     def create_slave_assistant(self, assistant_id):
+        """
+        Creates a new slave assistant instance, managing its ID and association.
+        """
         new_handler = AssistantGpt(False)
         new_handler.init_assistant(assistant_id)
+        if assistant_id not in self.slave_assistants:
+            self.slave_assistants[assistant_id] = {}
+            new_handler.instance = 0
+            self.slave_assistants[assistant_id]["0"] = new_handler
+            return new_handler
         i = 0
-        while assistant_id + "_INSTANCE" + str(i) in self.slave_assistants:
+        while str(i) in self.slave_assistants[assistant_id]:
             i += 1
-        new_id = assistant_id + "_INSTANCE" + str(i)
         new_handler.instance = i
-        self.slave_assistants[new_id] = new_handler
+        self.slave_assistants[assistant_id][str(i)] = new_handler
         return new_handler
 
     def create_all_slave_assistants(self):
+        """
+        Initializes all slave assistants defined in the configuration.
+        """
         for assistant in self.config['slave_assistants']:
             self.create_slave_assistant(assistant['assistant_id'])
 
     def get_output(self):
+        """
+        Retrieves the latest output from the assistant thread.
+        """
         messages = list(self.client.beta.threads.messages.list(thread_id=self.thread_id))
         if messages:
             return messages[0].content[0].text.value
@@ -249,6 +304,9 @@ class AssistantGpt(AssistantEventHandler):
             return None
 
     def run(self):
+        """
+        Starts the assistant's execution and listens for events.
+        """
         with self.client.beta.threads.runs.stream(
                 thread_id=self.thread_id,
                 assistant_id=self.assistant_id,

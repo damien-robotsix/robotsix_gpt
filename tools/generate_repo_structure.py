@@ -2,7 +2,11 @@ from pathlib import Path
 from typing import List
 from pydantic import BaseModel, DirectoryPath, ValidationError
 
+
 class RepoConfigModel(BaseModel):
+    """
+    Model for repository configuration containing the repository path.
+    """
     repo_path: DirectoryPath
 
 
@@ -13,7 +17,6 @@ def generate_repo_structure(config: RepoConfigModel) -> str:
     :param config: Pydantic model containing the repository path.
     :return: String representation of the repository structure.
     """
-
     repo_path = config.repo_path.resolve()
     lines = []
 
@@ -47,7 +50,9 @@ def generate_repo_structure(config: RepoConfigModel) -> str:
     _traverse(repo_path, lines, "")
     return "\n".join(lines)
 
+
 # Optional: Add a function to generate the repo structure from a path directly
+
 def generate_structure_from_path(repo_path: str) -> str:
     try:
         config = RepoConfigModel(repo_path=repo_path)

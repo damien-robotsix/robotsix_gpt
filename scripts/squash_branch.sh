@@ -39,3 +39,5 @@ squash_commits() {
 # Main script execution starts here
 generate_commit_message
 squash_commits
+
+# This script fetches commits, generates a consolidated commit message using an AI assistant, and squashes the commits.

@@ -18,3 +18,5 @@ body=$(jq -r '.body' "$JSON_FILE")
 
 # Commit using the extracted subject and body
 git commit -m "$subject" -m "$body"
+
+# This script automates the process of staging changes, generating a commit message with AI, and then making the commit.

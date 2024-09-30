@@ -3,7 +3,11 @@
 import argparse
 from assistant_gpt import AssistantGpt
 
+
 def main():
+    """
+    Main function to run the assistant with user-defined messages.
+    """
     # Parse command-line arguments
     parser = argparse.ArgumentParser(description="Run assistant with a custom user message.")
     parser.add_argument('user_message', type=str, nargs='?', default='-', help='The user message to send to the assistant. Use - to read from stdin.')
@@ -35,6 +39,7 @@ def main():
     if args.save_thread_id:
         with open(args.save_thread_id, 'w') as f:
             f.write(assistant.thread_id)
+
 
 if __name__ == "__main__":
     main()

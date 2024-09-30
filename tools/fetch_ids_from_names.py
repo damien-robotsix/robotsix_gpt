@@ -17,8 +17,11 @@ branch_name = args.branch
 tag_to_find = f"{repo_name}-{branch_name}"
 
 # Function to fetch assistant_id using the assistant name
+
 def get_assistant_id_by_name():
-    # Example pattern to retrieve assistant by name
+    """
+    Fetches the assistant ID based on the assistant name pattern.
+    """
     assistants = openai.beta.assistants.list()
     for assistant in assistants:
         if tag_to_find in assistant.name:
@@ -29,8 +32,11 @@ def get_assistant_id_by_name():
     return None
 
 # Function to fetch vector_store_id using the vector store name
+
 def get_vector_store_id_by_name():
-    # Example pattern to retrieve vector store by name
+    """
+    Fetches the vector store ID based on the naming convention.
+    """
     vector_stores = openai.beta.vector_stores.list()
     for vector_store in vector_stores:
         if tag_to_find in vector_store.name:
