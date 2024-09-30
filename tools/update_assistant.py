@@ -30,7 +30,7 @@ def main():
     repo_name = os.path.basename(repo_path)
 
     # Prepare the update for the assistant's instructions
-    new_instructions = f"Your role is to perform answer question about the {repo_name} repository on branch {branch_name}. You have access to all the files available in the repository in your database.\nRepository structure :\n{structure}"
+    new_instructions = f"Your role is to perform answer question about the {repo_name} repository on branch {branch_name}. You have access to all the files available in the repository in your database. When asked a question you MUST look in your database to answer precisely the question.\nRepository structure :\n{structure}"
 
     response = client.beta.assistants.update(
         assistant_id=assistant_id,
@@ -41,3 +41,6 @@ def main():
         print("Assistant instructions updated successfully.")
     else:
         print("Failed to update the assistant.")
+
+if __name__ == "__main__":
+    main()
