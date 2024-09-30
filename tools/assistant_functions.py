@@ -35,6 +35,7 @@ class CommandFeedback(BaseModel):
 class AskAssistant(BaseModel):
     assistant_id: str = Field(..., description="The ID of the assistant to ask")
     message: str = Field(..., description="The prompt to send to the assistant")
+    additional_context: str = Field(None, description="Additional context to provide to the assistant (file content, etc.)")
 
 class AssistantResponse(BaseModel):
     response: str = Field(..., description="The response from the assistant")

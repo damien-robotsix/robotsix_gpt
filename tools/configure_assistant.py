@@ -11,7 +11,7 @@ def main():
 
     # Get the assistant configuration
     assistant_configuration = get_assistant_configuration()
-    assistant_id = assistant_configuration['assistant_id']
+    assistant_id = assistant_configuration['main']['assistant_id']
 
 
     # Update the assistant by adding tools
