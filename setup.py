@@ -9,6 +9,7 @@ setup(
             'ai_assistant=ai_assistant.run_assistant:main',
             'ai_commit=ai_assistant.generate_commit:main',
             'ai_squash=ai_assistant.squash_branch:main',
+            'ai_init_repo=ai_assistant.create_repo_assistant:main',  # Added CLI command
         ],
     },
     install_requires=[
