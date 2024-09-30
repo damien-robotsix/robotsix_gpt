@@ -4,7 +4,7 @@ import json
 import logging
 from typing_extensions import override
 from openai import OpenAI, AssistantEventHandler
-from assistant_functions import TaskInput, AskAssistant, AssistantResponse, CreateNewInstance, CommandFeedback
+from ai_assistant.assistant_functions import TaskInput, AskAssistant, AssistantResponse, CreateNewInstance, CommandFeedback
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG, filename='assistant_gpt.log',

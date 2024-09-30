@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 import argparse
-from assistant_gpt import AssistantGpt
+from ai_assistant.assistant_gpt import AssistantGpt
+import sys
 
 
 def main():
@@ -19,7 +20,6 @@ def main():
     args = parser.parse_args()
 
     if args.user_message == '-':
-        import sys
         args.user_message = sys.stdin.read().strip()
         args.interactive = False
     thread_id = None

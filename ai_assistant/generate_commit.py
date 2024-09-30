@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 import subprocess
 import json
-
-def run_assistant(command):
-    result = subprocess.run(command, shell=True, capture_output=True)
-    return result.stdout.decode('utf-8')
+import sys
+import ai_assistant.run_assistant
 
 def main():
     # Stage all changes for commit
@@ -12,7 +10,8 @@ def main():
     print("Running AI assistant to generate commit message...")
     
     # Run AI Assistant to generate a commit message
-    run_assistant("python3 tools/user_utility/run_assistant.py 'commit' --no-interactive --assistant 'commit'")
+    sys.argv = ["run_assistant.py", "commit", "--no-interactive", "--assistant", "commit"]
+    ai_assistant.run_assistant.main()
     
     # Path to the JSON file containing assistant's output
     json_file = "/tmp/assistant_output.txt"
