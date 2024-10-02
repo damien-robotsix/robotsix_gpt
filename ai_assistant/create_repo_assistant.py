@@ -1,7 +1,29 @@
 import os
 import json
-import sys
 from openai import OpenAI
+
+# Function to ensure entries in .gitignore
+
+def ensure_gitignore_entries(entries):
+    gitignore_path = '.gitignore'
+    # Read the current contents of .gitignore
+    if os.path.exists(gitignore_path):
+        with open(gitignore_path, 'r') as file:
+            gitignore_contents = file.read()
+    else:
+        gitignore_contents = ''
+
+    # Split by lines
+    gitignore_lines = gitignore_contents.split('\n')
+
+    # Check and add missing entries
+    for entry in entries:
+        if entry not in gitignore_lines:
+            gitignore_lines.append(entry)
+
+    # Write back the updated contents
+    with open(gitignore_path, 'w') as file:
+        file.write('\n'.join(gitignore_lines) + '\n')
 
 # Main function to initialize the repo assistant
 
@@ -42,6 +64,9 @@ def main():
 
     with open('repo_assistant_config.json', 'w') as f:
         json.dump(config, f, indent=4)
+
+    # Ensure .gitignore contains required entries
+    ensure_gitignore_entries(['assistant_gpt.log', 'repo_assistant_config.json'])
 
 if __name__ == "__main__":
     main()
