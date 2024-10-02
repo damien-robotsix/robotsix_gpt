@@ -18,7 +18,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.ref }}
 
-      - name: Run Cleaning Script
+      - name: Cleaning repo
         run: |
           git fetch origin main
           git checkout origin/main -- repo_assistant_config.json

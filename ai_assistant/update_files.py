@@ -4,7 +4,7 @@ import tempfile
 import shutil
 from typing import List
 import openai
-from utils import get_repo_assistant_configuration
+from ai_assistant.utils.utils import get_assistant_configuration
 
 
 def clean_vector_store(vector_store_id: str):
@@ -52,7 +52,7 @@ def load_files_assistant(repo_path: str):
     api_key = os.environ.get("OPENAI_API_KEY", "<your OpenAI API key if not set as env var>")
     client = openai.OpenAI(api_key=api_key)
 
-    assistant_configuration = get_repo_assistant_configuration('repo_assistant_config.json')
+    assistant_configuration = get_assistant_configuration('repo_assistant_config.json')
     vector_store_id = assistant_configuration['repo_vector_store_id']
 
     # Clean the vector store before loading new files
@@ -83,11 +83,14 @@ def load_files_assistant(repo_path: str):
                         except Exception as e:
                             print(f"Could not upload file {path}. Error: {e}")
 
-
-if __name__ == "__main__":
+def main():
     if len(sys.argv) < 2:
         print("Usage: update_vector_store <repo_path>")
         sys.exit(1)
 
     repo_path = sys.argv[1]
     load_files_assistant(repo_path)
+
+
+if __name__ == "__main__":
+    main()

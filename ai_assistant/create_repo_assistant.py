@@ -1,6 +1,7 @@
 import os
 import json
 from openai import OpenAI
+import subprocess
 
 # Function to ensure entries in .gitignore
 
@@ -64,6 +65,10 @@ def main():
 
     with open('repo_assistant_config.json', 'w') as f:
         json.dump(config, f, indent=4)
+
+    # Call `clean_update_vector_store.py` at the repository root
+    subprocess.call(['ai_update_files', os.getcwd()])
+    subprocess.call(['ai_update_assistant', os.getcwd()])
 
     # Ensure .gitignore contains required entries
     ensure_gitignore_entries(['assistant_gpt.log', 'repo_assistant_config.json'])
