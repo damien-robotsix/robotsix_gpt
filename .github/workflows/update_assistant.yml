@@ -1,7 +1,7 @@
 # This workflow automatically updates the ai_assistant instruction with the repository structure
 # whenever a push is made to the main branch.
 
-name: Update Assistant Instructions
+name: Update Assistant
 
 on:
   push:
@@ -29,6 +29,6 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          echo 'Updating assistant instructions...'
-          python ai_assistant/update_assistant.py
+          pip install ai-assistant
+          ai_update_assistant .
 
