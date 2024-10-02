@@ -29,6 +29,6 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          pip install ai-assistant
+          pip install ai_assistant
           ai_update_assistant .
 
