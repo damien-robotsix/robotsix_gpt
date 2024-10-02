@@ -23,14 +23,12 @@ jobs:
     - name: Install Dependencies
       run: pip install -r requirements.txt
 
-    - name: Extract Branch Name
-      id: extractbranch
-      run: echo "branch_name=${GITHUB_REF##*/}" >> $GITHUB_ENV
-
     - name: Create Repo Assistant
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      run: python tools/create_repo_assistant.py ${{ github.repository }} ${{ env.branch_name }}
+      run: |
+        pip install ai-assistant
+        ai_init_repo
 
     - name: Commit and Push Changes
       run: |

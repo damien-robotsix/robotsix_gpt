@@ -27,4 +27,4 @@ jobs:
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       run: |
-        python tools/workflow_specific/clean_update_vector_store.py .
+        python ai_assistant/clean_update_vector_store.py .
