@@ -28,11 +28,12 @@ jobs:
         REPO_NAME=${{ github.repository }}
         BRANCH=${{ github.event.ref }}
         BRANCH_NAME="${BRANCH##*/}"
-        python3 tools/fetch_ids_from_names.py --repository "$REPO_NAME" --branch "$BRANCH_NAME"
+        OUTPUT_FILE="ids_output.json"
+        python3 tools/workflow_specific/fetch_ids_from_names.py --repository "$REPO_NAME" --branch "$BRANCH_NAME" --output "$OUTPUT_FILE"
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
     - name: Delete Assistant and Vector Store
-      run: python tools/delete_assistant.py
+      run: python ai_assistant/delete_repo_assistant.py ids_output.json
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

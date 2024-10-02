@@ -1,6 +1,7 @@
 import argparse
 import os
 import openai
+import json
 
 # Initialize OpenAI API client
 openai.api_key = os.getenv('OPENAI_API_KEY')
@@ -9,10 +10,12 @@ openai.api_key = os.getenv('OPENAI_API_KEY')
 parser = argparse.ArgumentParser(description='Fetch assistant and vector store IDs by repo and branch names.')
 parser.add_argument('--repository', required=True, help='The name of the repository')
 parser.add_argument('--branch', required=True, help='The name of the branch')
+parser.add_argument('--output', required=True, help='The name of the output JSON file')
 args = parser.parse_args()
 
 repo_name = args.repository
 branch_name = args.branch
+output_file = args.output
 
 tag_to_find = f"{repo_name}-{branch_name}"
 
@@ -49,11 +52,13 @@ def get_vector_store_id_by_name():
 assistant_id = get_assistant_id_by_name()
 vector_store_id = get_vector_store_id_by_name()
 
-# Write IDs to an output file
-output_file = 'ids_output.txt'
+# Write IDs to a JSON output file
+output_data = {}
+if assistant_id:
+    output_data['repo_assistant_id'] = assistant_id
+if vector_store_id:
+    output_data['repo_vector_store_id'] = vector_store_id
+
 with open(output_file, 'w') as file:
-    if assistant_id:
-        file.write(f"repo_assistant_id={assistant_id}\n")
-    if vector_store_id:
-        file.write(f"repo_vector_store_id={vector_store_id}\n")
+    json.dump(output_data, file, indent=4)
 print(f"Output written to {output_file}")
