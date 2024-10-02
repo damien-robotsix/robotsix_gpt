@@ -3,6 +3,7 @@
 import argparse
 from ai_assistant.assistant_gpt import AssistantGpt
 import sys
+import pkg_resources
 
 
 def main():
@@ -31,7 +32,8 @@ def main():
             print(f"File {args.load_thread_id} not found. Proceeding without loading thread id.")
 
     assistant = AssistantGpt(interactive=args.interactive)
-    assistant.init_from_file("assistant_config.json", thread_id=thread_id, assistant_name=args.assistant)
+    config_file = pkg_resources.resource_filename('ai_assistant', 'assistant_config.json')
+    assistant.init_from_file(config_file, thread_id=thread_id, assistant_name=args.assistant)
     assistant.create_user_message(args.user_message)
     with open('/tmp/assistant_output.txt', 'w') as f:
         f.write(assistant.get_output() or "No output available")
