@@ -6,6 +6,10 @@
             {
                 "assistant_id": "asst_J5Of8UtJr9IYmJo6DBjTgCQP",
                 "description": "This assistant is specialized in open AI python API"
+            },
+            {
+                "assistant_id": "asst_4t31tPuNxIenHIRMAV8OC9Wx",
+                "description": "This assistant is specialized in generating python comments"
             }
         ]
     },
