@@ -27,7 +27,7 @@ jobs:
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       run: |
-        cd ai_assistant && pip install . && cd ..
+        pip install .
         ai_init_repo
 
     - name: Commit and Push Changes
