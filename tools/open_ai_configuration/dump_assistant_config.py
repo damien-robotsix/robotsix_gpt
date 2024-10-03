@@ -3,9 +3,11 @@ import json
 import openai
 import argparse
 
-api_key = os.environ.get("OPENAI_API_KEY", "<your OpenAI API key if not set as env var>")
-openai.api_key = api_key
-client = openai.OpenAI(api_key=api_key)
+# TODO: Should get the input file from CLI
+
+authorized_key = os.environ.get("OPENAI_API_KEY", "<your OpenAI API key if not set as env var>")
+openai.api_key = authorized_key
+client = openai.OpenAI(api_key=authorized_key)
 
 def get_assistant_configuration(assistant_id):
     """
@@ -18,12 +20,11 @@ def get_assistant_configuration(assistant_id):
         print(f"An error occurred: {e}")
         return None
 
-
-def main(output_file):
+def main(output_file, input_file):
     """
     Dumps the configuration of all assistants into a specified file.
     """
-    with open('assistant_config.json', 'r') as f:
+    with open(input_file, 'r') as f:
         config = json.load(f)
 
     assistants = []
@@ -45,9 +46,9 @@ def main(output_file):
 
     print(f"Assistant configurations have been dumped into {output_file}")
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Dump assistant configurations to a file.')
-    parser.add_argument('output_file', nargs='?', default='output.json', help='The file to write the assistant configurations to')
+    parser.add_argument('output_file', nargs='?', default='initial_config.json', help='The file to write the assistant configurations to')
+    parser.add_argument('input_file', help='The input configuration file')
     args = parser.parse_args()
-    main(args.output_file)
+    main(args.output_file, args.input_file)

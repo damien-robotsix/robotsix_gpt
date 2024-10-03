@@ -3,9 +3,9 @@
         "id": "asst_eb8VshjBYgNpOFyCImMN2zFA",
         "created_at": 1727286138,
         "description": null,
-        "instructions": "Your are an AI assistant. Your role is to answer the user query using the available tools and other AI specialized assistants that can answer your queries. You can access to user shell command input in the current working directory.\nUse all the tools available to you to solve autonomously as much as you can the query.",
+        "instructions": "Your are an AI assistant. Your role is to answer the user query using the available tools and other AI specialized assistants that can answer your queries.\nYou MUST keep user prompt to minimal.\nYou MUST ask in priority a slave assistant if there is one that fits your needs.\nOtherwise you MUST use as much as possible the available functions.\nWhen you overwrite a file you MUST provide the FULL file as all the content will be overwritten.",
         "metadata": {},
-        "model": "gpt-4o-2024-08-06",
+        "model": "gpt-4o-2024-05-13",
         "name": "Main agent",
         "object": "assistant",
         "tools": [
@@ -17,6 +17,7 @@
                     "name": "ShellCommandInput",
                     "description": "Execute a shell command",
                     "parameters": {
+                        "description": "Represents a shell command input for execution.",
                         "properties": {
                             "command": {
                                 "description": "The shell command to be executed in the repository root directory",
@@ -40,6 +41,7 @@
                     "name": "CreateFileInput",
                     "description": "Create a file at the specified path with the provided content.",
                     "parameters": {
+                        "description": "Represents a request to create a new file.",
                         "properties": {
                             "path": {
                                 "description": "The path of the file to create",
@@ -69,23 +71,60 @@
                     "name": "AskAssistant",
                     "description": "Ask a question to the assistant with the specified ID",
                     "parameters": {
+                        "description": "Represents a request to query an assistant.",
                         "properties": {
                             "assistant_id": {
                                 "description": "The ID of the assistant to ask",
                                 "title": "Assistant Id",
                                 "type": "string"
                             },
+                            "instance": {
+                                "description": "The instance of the assistant to ask. Default is 0.",
+                                "title": "Instance",
+                                "type": "integer"
+                            },
                             "message": {
                                 "description": "The prompt to send to the assistant",
                                 "title": "Message",
+                                "type": "string"
+                            },
+                            "additional_context": {
+                                "description": "Additional context to provide to the assistant (file content, etc.)",
+                                "title": "Additional Context",
                                 "type": "string"
                             }
                         },
                         "required": [
                             "assistant_id",
-                            "message"
+                            "instance",
+                            "message",
+                            "additional_context"
                         ],
                         "title": "AskAssistant",
+                        "type": "object",
+                        "additionalProperties": false
+                    },
+                    "strict": true
+                },
+                "type": "function"
+            },
+            {
+                "function": {
+                    "name": "CreateNewInstance",
+                    "description": "Create a new instance of the assistant with the specified ID",
+                    "parameters": {
+                        "description": "Represents a request to create a new instance of an assistant.",
+                        "properties": {
+                            "assistant_id": {
+                                "description": "The ID of the assistant instance to create",
+                                "title": "Assistant Id",
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "assistant_id"
+                        ],
+                        "title": "CreateNewInstance",
                         "type": "object",
                         "additionalProperties": false
                     },
@@ -98,6 +137,7 @@
                     "name": "LoadFileInput",
                     "description": "Load the content of a file given its path. Returns the content with line numbers.",
                     "parameters": {
+                        "description": "Represents a request to load the content of a file.",
                         "properties": {
                             "path": {
                                 "description": "The path of the file to load",
@@ -121,6 +161,7 @@
                     "name": "OverwriteFileInput",
                     "description": "Overwrite a file at the specified path with the provided content.",
                     "parameters": {
+                        "description": "Represents a request to overwrite an existing file with new content.",
                         "properties": {
                             "path": {
                                 "description": "The path of the file to overwrite",
@@ -161,7 +202,7 @@
         "id": "asst_MoHjFNWCAIKokAVOgEbPJrpM",
         "created_at": 1727637913,
         "description": null,
-        "instructions": "You are an AI assistant. Your role is to :\n- Use 'git status' to check the current state of the repository. \n- Check the individual files either with git diff --staged for modified files or checking new files content.\n- If available ask the repository assistant some insight on the commit. \n- Provide a detailed commit following the conventional commit format.",
+        "instructions": "You are an AI assistant. Your tasks:\n- Use `git status` to assess the current state.\n- For modified files, use `git diff --staged`.\n- For new files, examine their content.\n- Write a detailed commit message following Conventional Commits.\n- Ask the repository assistant to check the coherence of the commit message with the repository's context.\n",
         "metadata": {},
         "model": "gpt-4o-2024-08-06",
         "name": "Commit Assistant",
@@ -183,6 +224,198 @@
                             "command"
                         ],
                         "title": "ShellCommandInput",
+                        "type": "object",
+                        "additionalProperties": false
+                    },
+                    "strict": true
+                },
+                "type": "function"
+            },
+            {
+                "function": {
+                    "name": "AskAssistant",
+                    "description": "Ask a question to the assistant with the specified ID",
+                    "parameters": {
+                        "description": "Represents a request to query an assistant.",
+                        "properties": {
+                            "assistant_id": {
+                                "description": "The ID of the assistant to ask",
+                                "title": "Assistant Id",
+                                "type": "string"
+                            },
+                            "instance": {
+                                "description": "The instance of the assistant to ask. Default is 0.",
+                                "title": "Instance",
+                                "type": "integer"
+                            },
+                            "message": {
+                                "description": "The prompt to send to the assistant",
+                                "title": "Message",
+                                "type": "string"
+                            },
+                            "additional_context": {
+                                "description": "Additional context to provide to the assistant (file content, etc.)",
+                                "title": "Additional Context",
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "assistant_id",
+                            "instance",
+                            "message",
+                            "additional_context"
+                        ],
+                        "title": "AskAssistant",
+                        "type": "object",
+                        "additionalProperties": false
+                    },
+                    "strict": true
+                },
+                "type": "function"
+            },
+            {
+                "function": {
+                    "name": "LoadFileInput",
+                    "description": "Load the content of a file given its path. Returns the content with line numbers.",
+                    "parameters": {
+                        "properties": {
+                            "path": {
+                                "description": "The path of the file to load",
+                                "title": "Path",
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "path"
+                        ],
+                        "title": "LoadFileInput",
+                        "type": "object",
+                        "additionalProperties": false
+                    },
+                    "strict": true
+                },
+                "type": "function"
+            }
+        ],
+        "response_format": {
+            "json_schema": {
+                "name": "commit",
+                "description": null,
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "subject": {
+                            "type": "string"
+                        },
+                        "body": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "subject",
+                        "body"
+                    ],
+                    "additionalProperties": false
+                },
+                "strict": true
+            },
+            "type": "json_schema"
+        },
+        "temperature": 1.0,
+        "tool_resources": {},
+        "top_p": 1.0
+    },
+    "asst_eMpwfrbqkU4VEkCL2DS2d7CW": {
+        "id": "asst_eMpwfrbqkU4VEkCL2DS2d7CW",
+        "created_at": 1727676849,
+        "description": null,
+        "instructions": "You are an AI assistant. Your tasks:\n- Write a detailed commit message following Conventional Commits to squash a branch.\n- Ask the repository assistant to check the coherence of the commit message with the repository's context.\n",
+        "metadata": {},
+        "model": "gpt-4o-2024-08-06",
+        "name": "Squashing Commit Assistant",
+        "object": "assistant",
+        "tools": [
+            {
+                "function": {
+                    "name": "ShellCommandInput",
+                    "description": "Execute a shell command",
+                    "parameters": {
+                        "properties": {
+                            "command": {
+                                "description": "The shell command to be executed in the repository root directory",
+                                "title": "Command",
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "command"
+                        ],
+                        "title": "ShellCommandInput",
+                        "type": "object",
+                        "additionalProperties": false
+                    },
+                    "strict": true
+                },
+                "type": "function"
+            },
+            {
+                "function": {
+                    "name": "AskAssistant",
+                    "description": "Ask a question to the assistant with the specified ID",
+                    "parameters": {
+                        "description": "Represents a request to query an assistant.",
+                        "properties": {
+                            "assistant_id": {
+                                "description": "The ID of the assistant to ask",
+                                "title": "Assistant Id",
+                                "type": "string"
+                            },
+                            "instance": {
+                                "description": "The instance of the assistant to ask. Default is 0.",
+                                "title": "Instance",
+                                "type": "integer"
+                            },
+                            "message": {
+                                "description": "The prompt to send to the assistant",
+                                "title": "Message",
+                                "type": "string"
+                            },
+                            "additional_context": {
+                                "description": "Additional context to provide to the assistant (file content, etc.)",
+                                "title": "Additional Context",
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "assistant_id",
+                            "instance",
+                            "message",
+                            "additional_context"
+                        ],
+                        "title": "AskAssistant",
+                        "type": "object",
+                        "additionalProperties": false
+                    },
+                    "strict": true
+                },
+                "type": "function"
+            },
+            {
+                "function": {
+                    "name": "LoadFileInput",
+                    "description": "Load the content of a file given its path. Returns the content with line numbers.",
+                    "parameters": {
+                        "properties": {
+                            "path": {
+                                "description": "The path of the file to load",
+                                "title": "Path",
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "path"
+                        ],
+                        "title": "LoadFileInput",
                         "type": "object",
                         "additionalProperties": false
                     },

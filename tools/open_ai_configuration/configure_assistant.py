@@ -1,21 +1,21 @@
 import os
 import sys
+import argparse
 from openai import OpenAI
-from user_utility.utils import get_assistant_configuration
-from user_utility.assistant_functions import master_function_tools
+from ai_assistant.assistant_functions import master_function_tools
 
 
-def main():
+def main(assistant_id):
     """
     Main function to configure the assistant with specified tools.
     """
     # Set your OpenAI API key
-    api_key = os.environ.get("OPENAI_API_KEY", "<your OpenAI API key if not set as env var>")
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        print("Error: Please set the OpenAI API key as an environment variable.")
+        sys.exit(1)
+    
     client = OpenAI(api_key=api_key)
-
-    # Get the assistant configuration
-    assistant_configuration = get_assistant_configuration()
-    assistant_id = assistant_configuration['main']['assistant_id']
 
     # Update the assistant by adding tools
     response = client.beta.assistants.update(
@@ -32,4 +32,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Configure an OpenAI Assistant with specified tools.")
+    parser.add_argument("assistant_id", type=str, help="The ID of the assistant to configure.")
+    args = parser.parse_args()
+    main(args.assistant_id)
