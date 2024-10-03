@@ -49,7 +49,7 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          python install .
+          pip install .
           ai_assistant --save-thread-id thread-id - << 'EOF'
               Try to solve as much as you can the following issue in ${{ github.repository }} repository. You should not ask the user for prompt.
 
