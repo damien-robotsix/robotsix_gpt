@@ -18,5 +18,10 @@
         "name": "commit_squash",
         "assistant_id": "asst_eMpwfrbqkU4VEkCL2DS2d7CW",
         "description": "This assistant is specialized in generating commit messages for squash"
+    },
+    "python_comment": {
+        "name": "python_comment",
+        "assistant_id": "asst_4t31tPuNxIenHIRMAV8OC9Wx",
+        "description": "This assistant is specialized in generating python comments"
     }
 }

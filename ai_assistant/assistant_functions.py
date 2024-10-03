@@ -1,3 +1,6 @@
+# Copyright 2024 Damien Six (six.damien@robotsix.net)
+# SPDX-License-Identifier: Apache-2.0
+
 from pydantic import BaseModel, Field
 from typing import Dict, Any, Optional
 import subprocess
@@ -81,7 +84,7 @@ class TaskInput(BaseModel):
         """
         try:
             if self.input_type == 'ShellCommandInput':
-                print(self.parameters)
+                print(self.parameters)  # Print the parameters for shell command
                 shell_input = ShellCommandInput.model_validate_json(self.parameters)
                 return self.execute_shell_command(shell_input)
             elif self.input_type == 'CreateFileInput':
@@ -99,13 +102,13 @@ class TaskInput(BaseModel):
                     stderr=f"Unsupported task type: {self.input_type}. Supported types are: ShellCommandInput, CreateFileInput, LoadFileInput, OverwriteFileInput"
                 )
         except Exception as e:
-            return CommandFeedback(return_code=-1, stderr=str(e))
+            return CommandFeedback(return_code=-1, stderr=str(e))  # Return feedback with error message
 
     def execute_shell_command(self, input_data: ShellCommandInput) -> CommandFeedback:
         """
         Executes a shell command and returns its feedback.
         """
-        print(f"Executing command: {input_data.command}")
+        print(f"Executing command: {input_data.command}")  # Print the command to be executed
         try:
             result = subprocess.run(input_data.command, shell=True, capture_output=True, text=True)
             if result.returncode != 0:
@@ -130,7 +133,7 @@ class TaskInput(BaseModel):
         Creates a file at the given path with the specified content.
         """
         try:
-            print(f"Creating file at path: {input_data.path}")
+            print(f"Creating file at path: {input_data.path}")  # Print the file path to be created
             dirpath = os.path.dirname(input_data.path)
             # Ensure the directory exists if a directory is specified
             if dirpath:
@@ -138,10 +141,10 @@ class TaskInput(BaseModel):
             # Write the content to the file
             with open(input_data.path, 'w') as f:
                 f.write(input_data.content)
-            print(f"File created successfully at {input_data.path}")
+            print(f"File created successfully at {input_data.path}")  # Confirm file creation
             return CommandFeedback(return_code=0)
         except Exception as e:
-            print(f"Failed to create file: {e}")
+            print(f"Failed to create file: {e}")  # Print error if file creation fails
             return CommandFeedback(return_code=-1, stderr=str(e))
 
     def load_file(self, input_data: LoadFileInput) -> CommandFeedback:
@@ -149,16 +152,16 @@ class TaskInput(BaseModel):
         Loads the content of a file.
         """
         try:
-            print(f"Loading file content from path: {input_data.path}")
+            print(f"Loading file content from path: {input_data.path}")  # Inform of file loading operation
             if not os.path.exists(input_data.path):
                 return CommandFeedback(return_code=-1, stderr=f"File not found: {input_data.path}")
             with open(input_data.path, 'r') as f:
                 lines = f.readlines()
             content = ''.join(lines)
-            print(f"File content loaded successfully from {input_data.path}")
+            print(f"File content loaded successfully from {input_data.path}")  # Confirm successful loading
             return CommandFeedback(return_code=0, stdout=content)
         except Exception as e:
-            print(f"Failed to load file: {e}")
+            print(f"Failed to load file: {e}")  # Print error if file loading fails
             return CommandFeedback(return_code=-1, stderr=str(e))
 
 
