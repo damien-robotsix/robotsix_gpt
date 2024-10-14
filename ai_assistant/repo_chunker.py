@@ -19,7 +19,7 @@ def load_config(config_path):
         with open(config_path, 'r') as config_file:
             return json.load(config_file)
     except FileNotFoundError:
-        print(f"Warning: Configuration file not found at {config_path}. Please run 'ai_init' to create it.")
+        warnings.append(f"Warning: Configuration file not found at {config_path}. Please run 'ai_init' to create it.")
         exit(1)
 
 config = load_config(CONFIG_PATH)
@@ -47,7 +47,7 @@ def count_tokens(source_code: str) -> int:
     tokens = encoding.encode(source_code)
     return len(tokens)
 
-def traverse_tree(node, source_lines, max_tokens, chunks, file_relative_path, parent_node="file_root"):
+def traverse_tree(node, source_lines, max_tokens, chunks, file_relative_path, parent_node="file_root", warnings=None):
     """Recursively traverse the syntax tree to create initial chunks with token counts."""
     # Extract the text corresponding to the node
     start_line = node.start_point[0] + 1  # 1-based indexing
@@ -66,7 +66,8 @@ def traverse_tree(node, source_lines, max_tokens, chunks, file_relative_path, pa
         chunks.append(chunk)
     else:
         if not node.children:
-            print(f"Warning: Node from line {start_line} to {end_line} in {file_relative_path} exceeds max tokens and has no children. Adding full node.")
+            if warnings is not None:
+                warnings.append(f"Warning: Node from line {start_line} to {end_line} in {file_relative_path} exceeds max tokens and has no children. Adding full node.")
             chunk = {
                 'file_path': file_relative_path,
                 'line_start': start_line,
@@ -78,14 +79,15 @@ def traverse_tree(node, source_lines, max_tokens, chunks, file_relative_path, pa
         else:
             # If the node is too large, traverse its children
             for child in node.children:
-                traverse_tree(child, source_lines, max_tokens, chunks, file_relative_path, node)
+                traverse_tree(child, source_lines, max_tokens, chunks, file_relative_path, node, warnings)
 
-def chunk_file(file_path: str, max_tokens: int = MAX_TOKENS) -> list:
+def chunk_file(file_path: str, max_tokens: int = MAX_TOKENS, warnings=None) -> list:
     """Chunk a file using tree-sitter based on its detected type."""
     result = detect_file_type(file_path)
     file_type = result.dl.ct_label
     if not file_type:
-        print(f"Could not detect file type for {file_path}. Skipping.")
+        if warnings is not None:
+            warnings.append(f"Could not detect file type for {file_path}. Skipping.")
         return []
 
     if file_type == 'shell':
@@ -96,7 +98,8 @@ def chunk_file(file_path: str, max_tokens: int = MAX_TOKENS) -> list:
             with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:
                 source_code = file.read()
         except Exception as e:
-            print(f"Error reading file {file_path}: {e}")
+            if warnings is not None:
+                warnings.append(f"Error reading file {file_path}: {e}")
             return []
 
         source_lines = source_code.splitlines()
@@ -138,20 +141,23 @@ def chunk_file(file_path: str, max_tokens: int = MAX_TOKENS) -> list:
                 warnings.simplefilter("ignore", FutureWarning)
                 parser = get_parser(file_type)
         except Exception as e:
-            print(f"No parser available for file type '{file_type}' in {file_path}. Error: {e}")
+            if warnings is not None:
+                warnings.append(f"No parser available for file type '{file_type}' in {file_path}. Error: {e}")
             return []
 
         try:
             with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:
                 source_code = file.read()
         except Exception as e:
-            print(f"Error reading file {file_path}: {e}")
+            if warnings is not None:
+                warnings.append(f"Error reading file {file_path}: {e}")
             return []
 
         try:
             tree = parser.parse(bytes(source_code, 'utf8'))
         except Exception as e:
-            print(f"Error parsing file {file_path}: {e}")
+            if warnings is not None:
+                warnings.append(f"Error parsing file {file_path}: {e}")
             return []
 
         root_node = tree.root_node
@@ -159,7 +165,7 @@ def chunk_file(file_path: str, max_tokens: int = MAX_TOKENS) -> list:
         chunks = []
         file_relative_path = os.path.relpath(file_path, REPO_DIR)
 
-        traverse_tree(root_node, source_lines, max_tokens, chunks, file_relative_path)
+        traverse_tree(root_node, source_lines, max_tokens, chunks, file_relative_path, warnings=warnings)
 
         return chunks
 
@@ -234,7 +240,7 @@ def main():
         existing_chunks_df = pd.DataFrame()
     all_chunks = []
 
-    warnings = []
+    processing_warnings = []
 
     # Walk through the repository with a progress bar
     for root, dirs, files in tqdm(os.walk(REPO_DIR), desc="Processing files"):
@@ -257,7 +263,7 @@ def main():
                 continue
 
             # File has been modified, is new, or missing mod_time, re-chunk it
-            chunks = chunk_file(file_path, MAX_TOKENS)
+            chunks = chunk_file(file_path, MAX_TOKENS, warnings=processing_warnings)
             if chunks:
                 for chunk in chunks:
                     chunk['mod_time'] = file_mod_time  # Add modification time to each chunk
@@ -290,9 +296,10 @@ def main():
             )
         final_chunks_df.to_csv(csv_path, index=False, columns=['file_path', 'line_start', 'line_end', 'token_count', 'relative_path', 'mod_time'])
         print("Agglomerated chunks saved to repo_chunks.csv.")
-        print("\nWarnings:")
-        for warning in warnings:
-            print(warning)
+        if processing_warnings:
+            print("\nWarnings:")
+            for warning in processing_warnings:
+                print(warning)
     else:
         print("No chunks were created from the repository.")
 
