@@ -1,3 +1,4 @@
+import json
 import os
 import pandas as pd
 from pathlib import Path
@@ -6,10 +7,17 @@ from magika import Magika
 from magika.types import MagikaResult
 from collections import defaultdict
 
-# Configuration
-CLONE_DIR = '.'
-MAX_TOKENS = 250  # Maximum tokens per aggregated chunk (configurable)
-IGNORE_PATTERNS = ['.git', 'node_modules', '__pycache__', '*.md', '*.txt']  # Add patterns to ignore
+CONFIG_PATH = os.path.join(os.path.dirname(__file__), '.ai_assistant', 'config.json')
+
+def load_config(config_path):
+    """Load configuration from a JSON file."""
+    with open(config_path, 'r') as config_file:
+        return json.load(config_file)
+
+config = load_config(CONFIG_PATH)
+CLONE_DIR = config.get('clone_dir', '.')
+MAX_TOKENS = config.get('max_tokens', 250)
+IGNORE_PATTERNS = config.get('ignore_patterns', ['.git', 'node_modules', '__pycache__', '*.md', '*.txt'])
 
 def detect_file_type(file_path: str) -> MagikaResult:
     """Detect the file type using Magika."""
