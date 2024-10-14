@@ -241,7 +241,7 @@ def main():
         for file in files:
             file_path = os.path.join(root, file)
             relative_path = os.path.relpath(file_path, REPO_DIR)
-            if should_ignore(relative_path, IGNORE_PATTERNS):
+            if not os.path.exists(file_path) or should_ignore(relative_path, IGNORE_PATTERNS):
                 continue
 
             # Check if the file has been modified since the last chunking
