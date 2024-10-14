@@ -9,6 +9,7 @@ from magika import Magika
 from magika.types import MagikaResult
 from collections import defaultdict
 
+warnings_list = []
 REPO_DIR = find_git_root(os.getcwd())
 CONFIG_PATH = os.path.join(REPO_DIR, '.ai_assistant', 'config.json')
 
