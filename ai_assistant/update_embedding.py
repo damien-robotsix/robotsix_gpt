@@ -11,6 +11,9 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
+# Set OpenAI logging level to WARNING to ignore less severe logs
+logging.getLogger("openai").setLevel(logging.WARNING)
+
 # Configure OpenAI API
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
