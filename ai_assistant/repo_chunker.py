@@ -244,12 +244,12 @@ def main():
             # Check if the file has been modified since the last chunking
             file_mod_time = get_file_modification_time(file_path)
             existing_chunk = existing_chunks_df[existing_chunks_df['file_path'] == relative_path]
-            if not existing_chunk.empty and existing_chunk['mod_time'].iloc[0] >= file_mod_time:
+            if not existing_chunk.empty and 'mod_time' in existing_chunk and existing_chunk['mod_time'].iloc[0] >= file_mod_time:
                 # File has not been modified, skip re-chunking
                 print(f"Skipping unchanged file: {relative_path}")
                 continue
 
-            # File has been modified or is new, re-chunk it
+            # File has been modified, is new, or missing mod_time, re-chunk it
             chunks = chunk_file(file_path, MAX_TOKENS)
             if chunks:
                 for chunk in chunks:
