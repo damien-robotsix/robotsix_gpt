@@ -194,7 +194,7 @@ def agglomerate_chunks(all_chunks, max_tokens):
                         'file_path': current_agg['file_path'],
                         'line_start': current_agg['line_start'],
                         'line_end': current_agg['line_end'],
-                        'token_count': current_agg['token_count']
+                        'token_count': current_agg['token_count'],
                         'relative_path': os.path.relpath(current_agg['file_path'], REPO_DIR)
                     })
                     # Start a new aggregated chunk
@@ -211,7 +211,7 @@ def agglomerate_chunks(all_chunks, max_tokens):
                 'file_path': current_agg['file_path'],
                 'line_start': current_agg['line_start'],
                 'line_end': current_agg['line_end'],
-                'token_count': current_agg['token_count']
+                'token_count': current_agg['token_count'],
                 'relative_path': os.path.relpath(current_agg['file_path'], REPO_DIR)
             })
     return agglomerated
