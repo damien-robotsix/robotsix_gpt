@@ -2,13 +2,14 @@ import json
 import os
 import pandas as pd
 from pathlib import Path
-from ai_assistant.git import find_git_root, load_gitignore
+from ai_assistant.git_utils import find_git_root, load_gitignore
 from tree_sitter_languages import get_parser
 from magika import Magika
 from magika.types import MagikaResult
 from collections import defaultdict
 
-CONFIG_PATH = os.path.join(os.path.dirname(__file__), '.ai_assistant', 'config.json')
+REPO_DIR = find_git_root(os.getcwd())
+CONFIG_PATH = os.path.join(REPO_DIR, '.ai_assistant', 'config.json')
 
 def load_config(config_path):
     """Load configuration from a JSON file."""
@@ -20,11 +21,8 @@ def load_config(config_path):
         exit(1)
 
 config = load_config(CONFIG_PATH)
-REPO_DIR = config.get('repo_dir', '.')
 MAX_TOKENS = config.get('max_tokens', 250)
-# Load .gitignore patterns and merge with existing ignore patterns
-git_root = find_git_root(REPO_DIR)
-gitignore_spec = load_gitignore(git_root)
+gitignore_spec = load_gitignore(REPO_DIR)
 IGNORE_PATTERNS = config.get('ignore_patterns', []) + list(gitignore_spec.patterns)
 
 def detect_file_type(file_path: str) -> MagikaResult:
