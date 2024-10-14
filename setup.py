@@ -17,6 +17,7 @@ setup(
             'ai_update_files=ai_assistant.update_files:main',
             'ai_update_assistant=ai_assistant.update_assistant:main',
             'ai_update=ai_assistant.update_embedding:main',
+            'ai_init=ai_assistant.init_assistant:main',
         ],
     },
     install_requires=[

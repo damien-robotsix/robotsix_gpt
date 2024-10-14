@@ -24,7 +24,7 @@ def load_gitignore(git_root):
     else:
         return PathSpec.from_lines(GitWildMatchPattern, [])
     
-def ensure_gitignore_entry(git_root, entry=".robotsix_ai/"):
+def ensure_gitignore_entry(git_root, entry=".ai_assistant/"):
     """Ensure that the entry is present in .gitignore."""
     gitignore_path = os.path.join(git_root, '.gitignore')
     if os.path.exists(gitignore_path):
