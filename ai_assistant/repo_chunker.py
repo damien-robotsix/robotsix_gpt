@@ -83,6 +83,9 @@ def chunk_file(file_path: str, max_tokens: int = MAX_TOKENS) -> list:
         print(f"Could not detect file type for {file_path}. Skipping.")
         return []
 
+    if file_type == 'shell':
+        file_type = 'bash'
+
     if file_type == 'txt':
         try:
             with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:
