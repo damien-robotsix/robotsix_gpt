@@ -252,7 +252,6 @@ def main():
             if not existing_chunk.empty and 'mod_time' in existing_chunk.columns and existing_chunk['mod_time'].iloc[0] >= file_mod_time:
                 # File has not been modified, skip re-chunking
                 continue
-                continue
 
             # File has been modified, is new, or missing mod_time, re-chunk it
             chunks = chunk_file(file_path, MAX_TOKENS)
