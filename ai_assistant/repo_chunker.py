@@ -2,7 +2,7 @@ import json
 import os
 import pandas as pd
 from pathlib import Path
-from ai_assistant.git_utils import find_git_root, load_gitignore
+from ai_assistant.git_utils import find_git_root, load_gitignore, PathSpec, GitWildMatchPattern
 from tree_sitter_languages import get_parser
 from magika import Magika
 from magika.types import MagikaResult
@@ -23,7 +23,9 @@ def load_config(config_path):
 config = load_config(CONFIG_PATH)
 MAX_TOKENS = config.get('max_tokens', 250)
 gitignore_spec = load_gitignore(REPO_DIR)
-IGNORE_PATTERNS = config.get('ignore_patterns', []) + list(gitignore_spec.patterns)
+config_ignore_patterns = config.get('ignore_patterns', [])
+config_spec = PathSpec.from_lines(GitWildMatchPattern, config_ignore_patterns)
+IGNORE_PATTERNS = config_spec + gitignore_spec
 
 def detect_file_type(file_path: str) -> MagikaResult:
     """Detect the file type using Magika."""
@@ -31,17 +33,9 @@ def detect_file_type(file_path: str) -> MagikaResult:
     path = Path(file_path)
     return magika.identify_path(path)
 
-def should_ignore(file_path: str, ignore_patterns: list) -> bool:
-    """Determine whether to ignore a file or directory based on patterns."""
-    for pattern in ignore_patterns:
-        pattern_str = str(pattern)
-        if pattern_str.startswith('*.'):
-            # Handle wildcard patterns for file extensions
-            if file_path.endswith(pattern_str[1:]):
-                return True
-        elif pattern_str in file_path:
-            return True
-    return False
+def should_ignore(file_path: str, ignore_spec: PathSpec) -> bool:
+    """Determine whether to ignore a file or directory based on PathSpec."""
+    return ignore_spec.match_file(file_path)
 
 def count_tokens(source_code: str) -> int:
     """Count tokens in the source code. Placeholder for accurate tokenization."""
