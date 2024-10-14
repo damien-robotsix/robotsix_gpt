@@ -18,6 +18,10 @@ def update_embeddings(repo_chunks_path):
     """Update embeddings for files based on the repo_chunks.csv file."""
     # Read the repo_chunks.csv file
     repo_chunks_df = pd.read_csv(repo_chunks_path)
+    # Ensure the 'embedding' column exists, initialize with zeros if not
+    if 'embedding' not in repo_chunks_df.columns:
+        repo_chunks_df['embedding'] = 0
+
     updated_embeddings = []
 
     for _, row in repo_chunks_df.iterrows():
