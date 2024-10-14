@@ -11,8 +11,12 @@ CONFIG_PATH = os.path.join(os.path.dirname(__file__), '.ai_assistant', 'config.j
 
 def load_config(config_path):
     """Load configuration from a JSON file."""
-    with open(config_path, 'r') as config_file:
-        return json.load(config_file)
+    try:
+        with open(config_path, 'r') as config_file:
+            return json.load(config_file)
+    except FileNotFoundError:
+        print(f"Warning: Configuration file not found at {config_path}. Please run 'ai_init' to create it.")
+        return {}
 
 config = load_config(CONFIG_PATH)
 CLONE_DIR = config.get('clone_dir', '.')
