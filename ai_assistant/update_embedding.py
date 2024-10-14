@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import openai
+from tqdm import tqdm
 
 # Configure OpenAI API
 openai.api_key = os.getenv('OPENAI_API_KEY')
@@ -24,7 +25,7 @@ def update_embeddings(repo_chunks_path):
 
     updated_embeddings = []
 
-    for _, row in repo_chunks_df.iterrows():
+    for _, row in tqdm(repo_chunks_df.iterrows(), total=repo_chunks_df.shape[0], desc="Updating embeddings"):
         if pd.notna(row.get('embedding')) and row['embedding'] != 0:
             continue
 
