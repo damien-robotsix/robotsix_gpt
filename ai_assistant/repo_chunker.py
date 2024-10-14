@@ -16,12 +16,12 @@ def load_config(config_path):
             return json.load(config_file)
     except FileNotFoundError:
         print(f"Warning: Configuration file not found at {config_path}. Please run 'ai_init' to create it.")
-        return {}
+        exit(1)
 
 config = load_config(CONFIG_PATH)
-CLONE_DIR = config.get('clone_dir', '.')
+REPO_DIR = config.get('repo_dir', '.')
 MAX_TOKENS = config.get('max_tokens', 250)
-IGNORE_PATTERNS = config.get('ignore_patterns', ['.git', 'node_modules', '__pycache__', '*.md', '*.txt'])
+IGNORE_PATTERNS = config.get('ignore_patterns', [])
 
 def detect_file_type(file_path: str) -> MagikaResult:
     """Detect the file type using Magika."""
@@ -96,7 +96,7 @@ def chunk_file(file_path: str, max_tokens: int = MAX_TOKENS) -> list:
     root_node = tree.root_node
     source_lines = source_code.splitlines()
     chunks = []
-    file_relative_path = os.path.relpath(file_path, CLONE_DIR)
+    file_relative_path = os.path.relpath(file_path, REPO_DIR)
 
     traverse_tree(root_node, source_lines, max_tokens, chunks, file_relative_path)
 
@@ -162,12 +162,12 @@ def main():
     all_chunks = []
 
     # Walk through the repository
-    for root, dirs, files in os.walk(CLONE_DIR):
+    for root, dirs, files in os.walk(REPO_DIR):
         # Modify dirs in-place to skip ignored directories
         dirs[:] = [d for d in dirs if not should_ignore(os.path.join(root, d), IGNORE_PATTERNS)]
         for file in files:
             file_path = os.path.join(root, file)
-            relative_path = os.path.relpath(file_path, CLONE_DIR)
+            relative_path = os.path.relpath(file_path, REPO_DIR)
             if should_ignore(relative_path, IGNORE_PATTERNS):
                 continue
 
@@ -192,7 +192,8 @@ def main():
         print(df.head())
 
         # Save to CSV or any desired format
-        df.to_csv('repo_chunks.csv', index=False)
+        output_dir = os.path.join(REPO_DIR, '.ai_assistant')
+        df.to_csv(os.path.join(output_dir, 'repo_chunks.csv'), index=False)
         print("Agglomerated chunks saved to repo_chunks.csv.")
     else:
         print("No chunks were created from the repository.")
