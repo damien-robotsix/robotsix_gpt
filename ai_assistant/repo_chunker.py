@@ -2,6 +2,7 @@ import json
 import os
 import pandas as pd
 from pathlib import Path
+import time
 from ai_assistant.git_utils import find_git_root, load_gitignore, PathSpec, GitWildMatchPattern
 from tree_sitter_languages import get_parser
 from magika import Magika
@@ -216,7 +217,18 @@ def agglomerate_chunks(all_chunks, max_tokens):
             })
     return agglomerated
 
+def get_file_modification_time(file_path: str) -> float:
+    """Get the last modification time of a file."""
+    return os.path.getmtime(file_path)
+
 def main():
+    # Load existing chunks from CSV
+    output_dir = os.path.join(REPO_DIR, '.ai_assistant')
+    csv_path = os.path.join(output_dir, 'repo_chunks.csv')
+    if os.path.exists(csv_path):
+        existing_chunks_df = pd.read_csv(csv_path)
+    else:
+        existing_chunks_df = pd.DataFrame()
     all_chunks = []
 
     # Walk through the repository
@@ -229,8 +241,19 @@ def main():
             if should_ignore(relative_path, IGNORE_PATTERNS):
                 continue
 
+            # Check if the file has been modified since the last chunking
+            file_mod_time = get_file_modification_time(file_path)
+            existing_chunk = existing_chunks_df[existing_chunks_df['file_path'] == relative_path]
+            if not existing_chunk.empty and existing_chunk['mod_time'].iloc[0] >= file_mod_time:
+                # File has not been modified, skip re-chunking
+                print(f"Skipping unchanged file: {relative_path}")
+                continue
+
+            # File has been modified or is new, re-chunk it
             chunks = chunk_file(file_path, MAX_TOKENS)
             if chunks:
+                for chunk in chunks:
+                    chunk['mod_time'] = file_mod_time  # Add modification time to each chunk
                 all_chunks.extend(chunks)
                 print(f"Parsed {relative_path} into {len(chunks)} initial chunks.")
             else:
@@ -241,12 +264,18 @@ def main():
         agglomerated_chunks = agglomerate_chunks(all_chunks, MAX_TOKENS)
         print(f"Agglomerated into {len(agglomerated_chunks)} chunks.")
 
-        # Create DataFrame
-        df = pd.DataFrame(agglomerated_chunks)
+        # Create DataFrame and merge with existing data
+        new_chunks_df = pd.DataFrame(agglomerated_chunks)
+        if not existing_chunks_df.empty:
+            # Remove old chunks for modified files
+            existing_chunks_df = existing_chunks_df[~existing_chunks_df['file_path'].isin(new_chunks_df['file_path'])]
+            # Concatenate new and existing chunks
+            final_chunks_df = pd.concat([existing_chunks_df, new_chunks_df], ignore_index=True)
+        else:
+            final_chunks_df = new_chunks_df
 
-        # Save to CSV or any desired format
-        output_dir = os.path.join(REPO_DIR, '.ai_assistant')
-        df.to_csv(os.path.join(output_dir, 'repo_chunks.csv'), index=False)
+        # Save to CSV
+        final_chunks_df.to_csv(csv_path, index=False)
         print("Agglomerated chunks saved to repo_chunks.csv.")
     else:
         print("No chunks were created from the repository.")
