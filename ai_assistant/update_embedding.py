@@ -13,7 +13,7 @@ logging.basicConfig(
 
 # Set OpenAI logging level to WARNING to ignore less severe logs
 logging.getLogger("openai").setLevel(logging.WARNING)
-logging.getLogger("_client").setLevel(logging.WARNING)
+logging.getLogger("_client").setLevel(logging.ERROR)
 
 # Configure OpenAI API
 openai.api_key = os.getenv('OPENAI_API_KEY')
