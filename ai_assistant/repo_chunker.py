@@ -1,4 +1,5 @@
 import json
+from tqdm import tqdm
 import os
 import pandas as pd
 from pathlib import Path
@@ -231,8 +232,10 @@ def main():
         existing_chunks_df = pd.DataFrame()
     all_chunks = []
 
-    # Walk through the repository
-    for root, dirs, files in os.walk(REPO_DIR):
+    warnings = []
+
+    # Walk through the repository with a progress bar
+    for root, dirs, files in tqdm(os.walk(REPO_DIR), desc="Processing files"):
         # Modify dirs in-place to skip ignored directories
         dirs[:] = [d for d in dirs if not should_ignore(os.path.join(root, d), IGNORE_PATTERNS)]
         for file in files:
@@ -246,7 +249,7 @@ def main():
             existing_chunk = existing_chunks_df[existing_chunks_df['file_path'] == relative_path]
             if not existing_chunk.empty and 'mod_time' in existing_chunk.columns and existing_chunk['mod_time'].iloc[0] >= file_mod_time:
                 # File has not been modified, skip re-chunking
-                print(f"Skipping unchanged file: {relative_path}")
+                continue
                 continue
 
             # File has been modified, is new, or missing mod_time, re-chunk it
@@ -256,9 +259,8 @@ def main():
                     chunk['mod_time'] = file_mod_time  # Add modification time to each chunk
                     chunk['embedding'] = 0  # Reset embedding to 0 for modified files
                 all_chunks.extend(chunks)
-                print(f"Parsed {relative_path} into {len(chunks)} initial chunks.")
             else:
-                print(f"No chunks created for {relative_path}.")
+                warnings.append(f"No chunks created for {relative_path}.")
 
     if all_chunks:
         # Agglomerate chunks
@@ -285,6 +287,9 @@ def main():
             )
         final_chunks_df.to_csv(csv_path, index=False, columns=['file_path', 'line_start', 'line_end', 'token_count', 'relative_path', 'mod_time'])
         print("Agglomerated chunks saved to repo_chunks.csv.")
+        print("\nWarnings:")
+        for warning in warnings:
+            print(warning)
     else:
         print("No chunks were created from the repository.")
 
