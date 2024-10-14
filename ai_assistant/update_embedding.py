@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 import openai
-from ai_assistant.utils.utils import load_embeddings, save_embeddings
+from ai_assistant.utils import load_embeddings, save_embeddings
 from ai_assistant.utils.git import find_git_root, load_gitignore, ensure_gitignore_entry
 from ai_assistant.utils.files import compute_hash
 from ai_assistant.utils.chunk import chunk_file

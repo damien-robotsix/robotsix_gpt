@@ -1,7 +1,7 @@
 import openai
 from sklearn.metrics.pairwise import cosine_similarity
 import os
-from ai_assistant.utils.utils import load_embeddings
+from ai_assistant.utils import load_embeddings
 
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
