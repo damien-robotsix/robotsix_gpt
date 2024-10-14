@@ -1,5 +1,13 @@
 import os
+import json
 from ai_assistant.git import find_git_root, ensure_gitignore_entry
+
+CONFIG_FILE_PATH = os.path.join('.ai_assistant', 'config.json')
+DEFAULT_CONFIG = {
+    'clone_dir': '.',
+    'max_tokens': 250,
+    'ignore_patterns': ['.git', 'node_modules', '__pycache__', '*.md', '*.txt']
+}
 
 def initialize_assistant():
     """Create a .ai_assistant directory at the root of the repository."""
@@ -12,6 +20,14 @@ def initialize_assistant():
     else:
         print(f"Directory already exists: {ai_assistant_dir}")
     ensure_gitignore_entry(git_root, ".ai_assistant/")
+
+    config_file_path = os.path.join(git_root, CONFIG_FILE_PATH)
+    if not os.path.exists(config_file_path):
+        with open(config_file_path, 'w') as config_file:
+            json.dump(DEFAULT_CONFIG, config_file, indent=4)
+        print(f"Created config file: {config_file_path}")
+    else:
+        print(f"Config file already exists: {config_file_path}")
 
 
 def main():
