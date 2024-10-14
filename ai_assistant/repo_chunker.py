@@ -5,9 +5,7 @@ import pandas as pd
 from pathlib import Path
 import warnings
 from ai_assistant.git_utils import find_git_root, load_gitignore, PathSpec, GitWildMatchPattern
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore", FutureWarning)
-    from tree_sitter_languages import get_parser
+from tree_sitter_languages import get_parser
 from magika import Magika
 from magika.types import MagikaResult
 from collections import defaultdict
@@ -136,7 +134,9 @@ def chunk_file(file_path: str, max_tokens: int = MAX_TOKENS) -> list:
         return chunks
     else:
         try:
-            parser = get_parser(file_type)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", FutureWarning)
+                parser = get_parser(file_type)
         except Exception as e:
             print(f"No parser available for file type '{file_type}' in {file_path}. Error: {e}")
             return []
