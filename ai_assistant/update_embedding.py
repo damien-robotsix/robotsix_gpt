@@ -2,18 +2,16 @@ import os
 import pandas as pd
 import openai
 from tqdm import tqdm
+from tenacity import retry, wait_random_exponential, stop_after_attempt
 
 # Configure OpenAI API
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
-def get_embedding(text):
-    """Get the embedding for the given text using OpenAI API."""
-    try:
-        text.replace('\n', ' ')  # Remove newlines
-        return openai.OpenAI().embeddings.create(input = [text], model="text-embedding-3-large").data[0].embedding
-    except Exception as e:
-        print(f"Error obtaining embedding for text: {e}")
-        return None
+@retry(wait=wait_random_exponential(min=1, max=20), stop=stop_after_attempt(6))
+def get_embedding(text: str, model="text-embedding-3-small") -> list[float]:
+    """Get the embedding for the given text using OpenAI API with retry logic."""
+    text = text.replace('\n', ' ')  # Remove newlines
+    return openai.OpenAI().embeddings.create(input=[text], model=model).data[0].embedding
 
 def update_embeddings(repo_chunks_path):
     """Update embeddings for files based on the repo_chunks.csv file."""
