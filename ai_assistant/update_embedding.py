@@ -8,7 +8,7 @@ import logging
 # Configure logging
 logging.basicConfig(
     level=logging.DEBUG, 
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    format='%(asctime)s - %(levelname)s - %(module)s - %(message)s'
 )
 
 # Set OpenAI logging level to WARNING to ignore less severe logs
