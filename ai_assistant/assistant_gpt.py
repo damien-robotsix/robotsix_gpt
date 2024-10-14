@@ -190,7 +190,10 @@ class AssistantGpt(AssistantEventHandler):
                     self.tool_outputs.append({"tool_call_id": tool.id, "output": response.model_dump_json()})
                 except KeyError:
                     if assistant_id not in self.slave_assistants:
-                        error_message = f"Assistant {assistant_id} not found. Available assistants: {list(self.slave_assistants.keys())}"
+                        if not self.slave_assistants:
+                            error_message = "No slave assistants found."
+                        else:
+                            error_message = f"Assistant {assistant_id} not found. Available assistants: {list(self.slave_assistants.keys())}"
                     elif request.instance not in self.slave_assistants[assistant_id]:
                         error_message = f"Instance {request.instance} not found for assistant {assistant_id}. Available instances: {list(self.slave_assistants[assistant_id].keys())}"
                     print(f"{Colors.FAIL}{error_message}{Colors.ENDC}")

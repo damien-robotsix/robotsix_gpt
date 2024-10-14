@@ -2,6 +2,7 @@ import json
 from tqdm import tqdm
 import os
 import pandas as pd
+import warnings
 from pathlib import Path
 from ai_assistant.git_utils import find_git_root, load_gitignore, PathSpec, GitWildMatchPattern
 from tree_sitter_languages import get_parser
@@ -81,14 +82,14 @@ def traverse_tree(node, source_lines, max_tokens, chunks, file_relative_path, pa
             for child in node.children:
                 traverse_tree(child, source_lines, max_tokens, chunks, file_relative_path, node, warnings)
 
-def chunk_file(file_path: str, max_tokens: int = MAX_TOKENS, warnings=None) -> list:
+def chunk_file(file_path: str, max_tokens: int = MAX_TOKENS, chunker_warnings=None) -> list:
     """Chunk a file using tree-sitter based on its detected type."""
     warnings_list = []
     result = detect_file_type(file_path)
     file_type = result.dl.ct_label
     if not file_type:
-        if warnings is not None:
-            warnings.append(f"Could not detect file type for {file_path}. Skipping.")
+        if chunker_warnings is not None:
+            chunker_warnings.append(f"Could not detect file type for {file_path}. Skipping.")
         return []
 
     if file_type == 'shell':
@@ -99,8 +100,8 @@ def chunk_file(file_path: str, max_tokens: int = MAX_TOKENS, warnings=None) -> l
             with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:
                 source_code = file.read()
         except Exception as e:
-            if warnings is not None:
-                warnings.append(f"Error reading file {file_path}: {e}")
+            if chunker_warnings is not None:
+                chunker_warnings.append(f"Error reading file {file_path}: {e}")
             return []
 
         source_lines = source_code.splitlines()
@@ -142,23 +143,23 @@ def chunk_file(file_path: str, max_tokens: int = MAX_TOKENS, warnings=None) -> l
                 warnings.simplefilter("ignore", FutureWarning)
                 parser = get_parser(file_type)
         except Exception as e:
-            if warnings is not None:
-                warnings.append(f"No parser available for file type '{file_type}' in {file_path}. Error: {e}")
+            if chunker_warnings is not None:
+                chunker_warnings.append(f"No parser available for file type '{file_type}' in {file_path}. Error: {e}")
             return []
 
         try:
             with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:
                 source_code = file.read()
         except Exception as e:
-            if warnings is not None:
-                warnings.append(f"Error reading file {file_path}: {e}")
+            if chunker_warnings is not None:
+                chunker_warnings.append(f"Error reading file {file_path}: {e}")
             return []
 
         try:
             tree = parser.parse(bytes(source_code, 'utf8'))
         except Exception as e:
-            if warnings is not None:
-                warnings.append(f"Error parsing file {file_path}: {e}")
+            if chunker_warnings is not None:
+                chunker_warnings.append(f"Error parsing file {file_path}: {e}")
             return []
 
         root_node = tree.root_node
@@ -166,7 +167,7 @@ def chunk_file(file_path: str, max_tokens: int = MAX_TOKENS, warnings=None) -> l
         chunks = []
         file_relative_path = os.path.relpath(file_path, REPO_DIR)
 
-        traverse_tree(root_node, source_lines, max_tokens, chunks, file_relative_path, warnings=warnings)
+        traverse_tree(root_node, source_lines, max_tokens, chunks, file_relative_path, warnings=chunker_warnings)
 
         return chunks
 
@@ -264,7 +265,7 @@ def main():
                 continue
 
             # File has been modified, is new, or missing mod_time, re-chunk it
-            chunks = chunk_file(file_path, MAX_TOKENS, warnings=processing_warnings)
+            chunks = chunk_file(file_path, MAX_TOKENS, chunker_warnings=processing_warnings)
             if chunks:
                 for chunk in chunks:
                     chunk['mod_time'] = file_mod_time  # Add modification time to each chunk
