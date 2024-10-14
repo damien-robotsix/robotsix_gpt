@@ -56,7 +56,7 @@ def traverse_tree(node, source_lines, max_tokens, chunks, file_relative_path, pa
     node_text = '\n'.join(source_lines[node.start_point[0]:node.end_point[0]+1])
     token_count = count_tokens(node_text)
 
-    if token_count <= max_tokens and parent_node is not None:
+    if token_count <= max_tokens:
         chunk = {
             'file_path': file_relative_path,
             'line_start': start_line,
