@@ -37,10 +37,13 @@ def should_ignore(file_path: str, ignore_spec: PathSpec) -> bool:
     """Determine whether to ignore a file or directory based on PathSpec."""
     return ignore_spec.match_file(file_path)
 
+import tiktoken
+
 def count_tokens(source_code: str) -> int:
-    """Count tokens in the source code. Placeholder for accurate tokenization."""
-    # Implement a proper tokenizer if needed. For now, use word count.
-    return len(source_code.split())
+    """Count tokens in the source code using tiktoken."""
+    encoding = tiktoken.get_encoding("gpt2")
+    tokens = encoding.encode(source_code)
+    return len(tokens)
 
 def traverse_tree(node, source_lines, max_tokens, chunks, file_relative_path, parent_node="file_root"):
     """Recursively traverse the syntax tree to create initial chunks with token counts."""
