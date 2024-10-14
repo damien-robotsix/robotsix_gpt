@@ -48,7 +48,7 @@ def count_tokens(source_code: str) -> int:
     # Implement a proper tokenizer if needed. For now, use word count.
     return len(source_code.split())
 
-def traverse_tree(node, source_lines, max_tokens, chunks, file_relative_path):
+def traverse_tree(node, source_lines, max_tokens, chunks, file_relative_path, parent_node=None):
     """Recursively traverse the syntax tree to create initial chunks with token counts."""
     # Extract the text corresponding to the node
     start_line = node.start_point[0] + 1  # 1-based indexing
@@ -56,18 +56,19 @@ def traverse_tree(node, source_lines, max_tokens, chunks, file_relative_path):
     node_text = '\n'.join(source_lines[node.start_point[0]:node.end_point[0]+1])
     token_count = count_tokens(node_text)
 
-    if token_count <= max_tokens:
+    if token_count <= max_tokens and parent_node is not None:
         chunk = {
             'file_path': file_relative_path,
             'line_start': start_line,
             'line_end': end_line,
-            'token_count': token_count
+            'token_count': token_count,
+            'parent_node': parent_node
         }
         chunks.append(chunk)
     else:
         # If the node is too large, traverse its children
         for child in node.children:
-            traverse_tree(child, source_lines, max_tokens, chunks, file_relative_path)
+            traverse_tree(child, source_lines, max_tokens, chunks, file_relative_path, node)
 
 def chunk_file(file_path: str, max_tokens: int = MAX_TOKENS) -> list:
     """Chunk a file using tree-sitter based on its detected type."""
@@ -116,8 +117,8 @@ def agglomerate_chunks(all_chunks, max_tokens):
         chunks_by_file[chunk['file_path']].append(chunk)
     
     for file_path, chunks in chunks_by_file.items():
-        # Sort chunks by starting line
-        sorted_chunks = sorted(chunks, key=lambda x: x['line_start'])
+        # Sort chunks by starting line and group by parent node
+        sorted_chunks = sorted(chunks, key=lambda x: (x['parent_node'], x['line_start']))
         current_agg = {
             'file_path': file_path,
             'line_start': None,
@@ -132,7 +133,7 @@ def agglomerate_chunks(all_chunks, max_tokens):
                 current_agg['line_end'] = chunk['line_end']
                 current_agg['token_count'] = chunk['token_count']
             else:
-                if current_agg['token_count'] + chunk['token_count'] <= max_tokens:
+                if current_agg['token_count'] + chunk['token_count'] <= max_tokens and current_agg.get('parent_node') == chunk['parent_node']:
                     # Aggregate the chunk
                     current_agg['line_end'] = chunk['line_end']
                     current_agg['token_count'] += chunk['token_count']
