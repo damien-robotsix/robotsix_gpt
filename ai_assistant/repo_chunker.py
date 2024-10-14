@@ -2,6 +2,7 @@ import json
 import os
 import pandas as pd
 from pathlib import Path
+from ai_assistant.git import find_git_root, load_gitignore
 from tree_sitter_languages import get_parser
 from magika import Magika
 from magika.types import MagikaResult
@@ -21,7 +22,10 @@ def load_config(config_path):
 config = load_config(CONFIG_PATH)
 REPO_DIR = config.get('repo_dir', '.')
 MAX_TOKENS = config.get('max_tokens', 250)
-IGNORE_PATTERNS = config.get('ignore_patterns', [])
+# Load .gitignore patterns and merge with existing ignore patterns
+git_root = find_git_root(REPO_DIR)
+gitignore_spec = load_gitignore(git_root)
+IGNORE_PATTERNS = config.get('ignore_patterns', []) + list(gitignore_spec.patterns)
 
 def detect_file_type(file_path: str) -> MagikaResult:
     """Detect the file type using Magika."""
