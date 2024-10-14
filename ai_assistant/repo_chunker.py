@@ -34,11 +34,12 @@ def detect_file_type(file_path: str) -> MagikaResult:
 def should_ignore(file_path: str, ignore_patterns: list) -> bool:
     """Determine whether to ignore a file or directory based on patterns."""
     for pattern in ignore_patterns:
-        if pattern.startswith('*.'):
+        pattern_str = str(pattern)
+        if pattern_str.startswith('*.'):
             # Handle wildcard patterns for file extensions
-            if file_path.endswith(pattern[1:]):
+            if file_path.endswith(pattern_str[1:]):
                 return True
-        elif pattern in file_path:
+        elif pattern_str in file_path:
             return True
     return False
 
