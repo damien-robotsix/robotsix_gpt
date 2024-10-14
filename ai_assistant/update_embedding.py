@@ -1,10 +1,7 @@
 import os
 import pandas as pd
 import openai
-from ai_assistant.utils import load_embeddings, save_embeddings
-from ai_assistant.utils.git import find_git_root, load_gitignore, ensure_gitignore_entry
-from ai_assistant.utils.files import compute_hash
-from ai_assistant.utils.chunk import chunk_file
+from ai_assistant.utils import save_embeddings
 
 # Configure OpenAI API
 openai.api_key = os.getenv('OPENAI_API_KEY')  # It's safer to use environment variables
@@ -61,30 +58,39 @@ def process_file(file_path):
 
     return chunk_embeddings if chunk_embeddings else None
 
-def update_embeddings(git_root, spec, embedding_df, file_hashes):
-    """Update embeddings for files by processing chunks and overviews if the file has changed."""
+def update_embeddings(repo_chunks_path):
+    """Update embeddings for files based on the repo_chunks.csv file."""
+    # Read the repo_chunks.csv file
+    repo_chunks_df = pd.read_csv(repo_chunks_path)
     updated_embeddings = []
-    for root, _, files in os.walk(git_root):
-        for file in files:
-            file_path = os.path.join(root, file)
-            rel_path = os.path.relpath(file_path, git_root)
 
-            # Skip if matches .gitignore patterns
-            if spec.match_file(rel_path):
-                continue
+    for _, row in repo_chunks_df.iterrows():
+        file_path = row['file_path']
+        start_line = row['line_start']
+        end_line = row['line_end']
+        
+        # Read the file content for the specified lines
+        with open(file_path, 'r') as file:
+            lines = file.readlines()
+            chunk_content = ''.join(lines[start_line-1:end_line]).strip()
 
-            current_hash = compute_hash(file_path)
-            if file_path not in file_hashes or current_hash != file_hashes[file_path]:
-                print(f"Processing file: {file_path}")
-                chunked_embeddings = process_file(file_path)
-                if chunked_embeddings:
-                    updated_embeddings.extend(chunked_embeddings)
-                    file_hashes[file_path] = current_hash
+        # Get embedding for the chunk
+        if chunk_content:
+            embedding = get_embedding(chunk_content)
+            if embedding:
+                updated_embeddings.append({
+                    'file_path': file_path,
+                    'start_line': start_line,
+                    'end_line': end_line,
+                    'embedding': embedding,
+                    'content': chunk_content,
+                    'type': 'chunk'
+                })
 
+    # Save the updated embeddings to a new CSV file
     if updated_embeddings:
-        new_df = pd.DataFrame(updated_embeddings)
-        embedding_df = pd.concat([embedding_df, new_df], ignore_index=True)
-    return embedding_df, file_hashes
+        embeddings_df = pd.DataFrame(updated_embeddings)
+        embeddings_df.to_csv('updated_embeddings.csv', index=False)
 
 
 def clean_up_missing_files(embedding_df):
@@ -101,39 +107,13 @@ def clean_up_missing_files(embedding_df):
 
 
 def main():
-    # Determine the current working directory
-    start_path = os.getcwd()
-
-    try:
-        git_root = find_git_root(start_path)
-        print(f"Git root found at: {git_root}")
-    except FileNotFoundError as e:
-        print(e)
-        return
-
-    # Ensure .robotsix_ai is in .gitignore
-    ensure_gitignore_entry(git_root, entry=".robotsix_ai/")
-
-    # Define the .robotsix_ai directory
-    ai_dir = os.path.join(git_root, '.robotsix_ai')
-    os.makedirs(ai_dir, exist_ok=True)
-
-    # Load .gitignore patterns
-    spec = load_gitignore(git_root)
-
-    # Load existing data
-    embedding_df, file_hashes = load_embeddings()
-
-    # Clean up missing files
-    embedding_df = clean_up_missing_files(embedding_df)
-
-    # Update embeddings
-    embedding_df, file_hashes = update_embeddings(git_root, spec, embedding_df, file_hashes)
-
-    # Save updated data
-    save_embeddings(embedding_df, file_hashes)
-
-    print("Embedding process completed.")
+    # Path to the repo_chunks.csv file
+    repo_chunks_path = 'ai_assistant/repo_chunks.csv'
+    
+    # Update embeddings based on the repo_chunks.csv file
+    update_embeddings(repo_chunks_path)
+    
+    print("Embedding process completed and saved to updated_embeddings.csv.")
 
 if __name__ == '__main__':
     main()
