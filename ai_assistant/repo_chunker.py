@@ -241,7 +241,6 @@ def main():
 
         # Create DataFrame
         df = pd.DataFrame(agglomerated_chunks)
-        print(df.head())
 
         # Save to CSV or any desired format
         output_dir = os.path.join(REPO_DIR, '.ai_assistant')
