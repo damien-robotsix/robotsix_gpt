@@ -254,6 +254,7 @@ def main():
             if chunks:
                 for chunk in chunks:
                     chunk['mod_time'] = file_mod_time  # Add modification time to each chunk
+                    chunk['embedding'] = 0  # Reset embedding to 0 for modified files
                 all_chunks.extend(chunks)
                 print(f"Parsed {relative_path} into {len(chunks)} initial chunks.")
             else:
