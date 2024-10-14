@@ -3,7 +3,6 @@ from tqdm import tqdm
 import os
 import pandas as pd
 from pathlib import Path
-import time
 from ai_assistant.git_utils import find_git_root, load_gitignore, PathSpec, GitWildMatchPattern
 from tree_sitter_languages import get_parser
 from magika import Magika
