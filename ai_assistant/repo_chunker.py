@@ -269,13 +269,12 @@ def main():
 
         # Create DataFrame and merge with existing data
         new_chunks_df = pd.DataFrame(agglomerated_chunks)
+        # Remove old chunks for modified files if existing_chunks_df is not empty
         if not existing_chunks_df.empty:
-            # Remove old chunks for modified files
             existing_chunks_df = existing_chunks_df[~existing_chunks_df['file_path'].isin(new_chunks_df['file_path'])]
-            # Concatenate new and existing chunks
-            final_chunks_df = pd.concat([existing_chunks_df, new_chunks_df], ignore_index=True)
-        else:
-            final_chunks_df = new_chunks_df
+        
+        # Concatenate new and existing chunks
+        final_chunks_df = pd.concat([existing_chunks_df, new_chunks_df], ignore_index=True)
 
         # Remove entries for files that no longer exist
         final_chunks_df = final_chunks_df[final_chunks_df['file_path'].apply(lambda x: os.path.exists(os.path.join(REPO_DIR, x)))]
