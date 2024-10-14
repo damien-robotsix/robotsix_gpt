@@ -60,9 +60,20 @@ def traverse_tree(node, source_lines, max_tokens, chunks, file_relative_path, pa
         }
         chunks.append(chunk)
     else:
-        # If the node is too large, traverse its children
-        for child in node.children:
-            traverse_tree(child, source_lines, max_tokens, chunks, file_relative_path, node)
+        if not node.children:
+            print(f"Warning: Node from line {start_line} to {end_line} in {file_relative_path} exceeds max tokens and has no children. Adding full node.")
+            chunk = {
+                'file_path': file_relative_path,
+                'line_start': start_line,
+                'line_end': end_line,
+                'token_count': token_count,
+                'parent_node': parent_node
+            }
+            chunks.append(chunk)
+        else:
+            # If the node is too large, traverse its children
+            for child in node.children:
+                traverse_tree(child, source_lines, max_tokens, chunks, file_relative_path, node)
 
 def chunk_file(file_path: str, max_tokens: int = MAX_TOKENS) -> list:
     """Chunk a file using tree-sitter based on its detected type."""
@@ -72,33 +83,73 @@ def chunk_file(file_path: str, max_tokens: int = MAX_TOKENS) -> list:
         print(f"Could not detect file type for {file_path}. Skipping.")
         return []
 
-    try:
-        parser = get_parser(file_type)
-    except Exception as e:
-        print(f"No parser available for file type '{file_type}' in {file_path}. Error: {e}")
-        return []
+    if file_type == 'txt':
+        try:
+            with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:
+                source_code = file.read()
+        except Exception as e:
+            print(f"Error reading file {file_path}: {e}")
+            return []
 
-    try:
-        with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:
-            source_code = file.read()
-    except Exception as e:
-        print(f"Error reading file {file_path}: {e}")
-        return []
+        source_lines = source_code.splitlines()
+        chunks = []
+        file_relative_path = os.path.relpath(file_path, REPO_DIR)
 
-    try:
-        tree = parser.parse(bytes(source_code, 'utf8'))
-    except Exception as e:
-        print(f"Error parsing file {file_path}: {e}")
-        return []
+        # Chunk text files based on max_tokens
+        current_chunk = {
+            'file_path': file_relative_path,
+            'line_start': 1,
+            'line_end': 0,
+            'token_count': 0
+        }
+        for i, line in enumerate(source_lines, start=1):
+            line_token_count = count_tokens(line)
+            if current_chunk['token_count'] + line_token_count > max_tokens:
+                current_chunk['line_end'] = i - 1
+                chunks.append(current_chunk)
+                current_chunk = {
+                    'file_path': file_relative_path,
+                    'line_start': i,
+                    'line_end': 0,
+                    'token_count': line_token_count
+                }
+            else:
+                current_chunk['token_count'] += line_token_count
 
-    root_node = tree.root_node
-    source_lines = source_code.splitlines()
-    chunks = []
-    file_relative_path = os.path.relpath(file_path, REPO_DIR)
+        # Add the last chunk
+        if current_chunk['token_count'] > 0:
+            current_chunk['line_end'] = len(source_lines)
+            chunks.append(current_chunk)
 
-    traverse_tree(root_node, source_lines, max_tokens, chunks, file_relative_path)
+        return chunks
+    else:
+        try:
+            parser = get_parser(file_type)
+        except Exception as e:
+            print(f"No parser available for file type '{file_type}' in {file_path}. Error: {e}")
+            return []
 
-    return chunks
+        try:
+            with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:
+                source_code = file.read()
+        except Exception as e:
+            print(f"Error reading file {file_path}: {e}")
+            return []
+
+        try:
+            tree = parser.parse(bytes(source_code, 'utf8'))
+        except Exception as e:
+            print(f"Error parsing file {file_path}: {e}")
+            return []
+
+        root_node = tree.root_node
+        source_lines = source_code.splitlines()
+        chunks = []
+        file_relative_path = os.path.relpath(file_path, REPO_DIR)
+
+        traverse_tree(root_node, source_lines, max_tokens, chunks, file_relative_path)
+
+        return chunks
 
 def agglomerate_chunks(all_chunks, max_tokens):
     """
