@@ -277,7 +277,9 @@ def main():
         # Remove entries for files that no longer exist
         final_chunks_df = final_chunks_df[final_chunks_df['file_path'].apply(lambda x: os.path.exists(os.path.join(REPO_DIR, x)))]
 
-        # Save to CSV with modification times
+        # Ensure 'mod_time' column exists
+        if 'mod_time' not in final_chunks_df.columns:
+            final_chunks_df['mod_time'] = None
         final_chunks_df.to_csv(csv_path, index=False, columns=['file_path', 'line_start', 'line_end', 'token_count', 'relative_path', 'mod_time'])
         print("Agglomerated chunks saved to repo_chunks.csv.")
     else:
