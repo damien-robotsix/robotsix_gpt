@@ -24,5 +24,6 @@ setup(
         'requests',
         'gitpython',
         'clang==14',
+        'tiktoken',
     ],
 )
