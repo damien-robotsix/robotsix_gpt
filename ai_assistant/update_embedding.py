@@ -41,14 +41,23 @@ def update_embeddings(repo_chunks_path):
                     'file_path': file_path,
                     'start_line': start_line,
                     'end_line': end_line,
-                    'embedding': embedding,
-                    'content': chunk_content,
+                    'embedding': embedding
                 })
 
     # Append the updated embeddings to the existing CSV file
     if updated_embeddings:
         embeddings_df = pd.DataFrame(updated_embeddings)
-        embeddings_df.to_csv(repo_chunks_path, mode='a', header=False, index=False)
+        # Update the existing DataFrame with new embeddings
+        for updated in updated_embeddings:
+            repo_chunks_df.loc[
+                (repo_chunks_df['file_path'] == updated['file_path']) &
+                (repo_chunks_df['line_start'] == updated['start_line']) &
+                (repo_chunks_df['line_end'] == updated['end_line']),
+                'embedding'
+            ] = updated['embedding']
+
+        # Save the updated DataFrame back to the CSV
+        repo_chunks_df.to_csv(repo_chunks_path, index=False)
 
 
 def main():
