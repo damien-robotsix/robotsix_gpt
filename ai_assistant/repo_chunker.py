@@ -246,7 +246,10 @@ def main():
 
             # Check if the file has been modified since the last chunking
             file_mod_time = get_file_modification_time(file_path)
-            existing_chunk = existing_chunks_df[existing_chunks_df['file_path'] == relative_path]
+            if 'file_path' in existing_chunks_df.columns:
+                existing_chunk = existing_chunks_df[existing_chunks_df['file_path'] == relative_path]
+            else:
+                existing_chunk = pd.DataFrame()  # Create an empty DataFrame if 'file_path' column is missing
             if not existing_chunk.empty and 'mod_time' in existing_chunk.columns and existing_chunk['mod_time'].iloc[0] >= file_mod_time:
                 # File has not been modified, skip re-chunking
                 continue
