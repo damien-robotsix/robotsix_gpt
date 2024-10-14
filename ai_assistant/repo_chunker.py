@@ -3,7 +3,6 @@ from tqdm import tqdm
 import os
 import pandas as pd
 from pathlib import Path
-import warnings
 from ai_assistant.git_utils import find_git_root, load_gitignore, PathSpec, GitWildMatchPattern
 from tree_sitter_languages import get_parser
 from magika import Magika
@@ -19,7 +18,7 @@ def load_config(config_path):
         with open(config_path, 'r') as config_file:
             return json.load(config_file)
     except FileNotFoundError:
-        warnings.append(f"Warning: Configuration file not found at {config_path}. Please run 'ai_init' to create it.")
+        warnings_list.append(f"Warning: Configuration file not found at {config_path}. Please run 'ai_init' to create it.")
         exit(1)
 
 config = load_config(CONFIG_PATH)
@@ -83,6 +82,7 @@ def traverse_tree(node, source_lines, max_tokens, chunks, file_relative_path, pa
 
 def chunk_file(file_path: str, max_tokens: int = MAX_TOKENS, warnings=None) -> list:
     """Chunk a file using tree-sitter based on its detected type."""
+    warnings_list = []
     result = detect_file_type(file_path)
     file_type = result.dl.ct_label
     if not file_type:
@@ -270,7 +270,7 @@ def main():
                     chunk['embedding'] = 0  # Reset embedding to 0 for modified files
                 all_chunks.extend(chunks)
             else:
-                warnings.append(f"No chunks created for {relative_path}.")
+                processing_warnings.append(f"No chunks created for {relative_path}.")
 
     if all_chunks:
         # Agglomerate chunks
