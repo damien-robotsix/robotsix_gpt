@@ -21,6 +21,9 @@ def update_embeddings(repo_chunks_path):
     updated_embeddings = []
 
     for _, row in repo_chunks_df.iterrows():
+        if pd.notna(row.get('embedding')) and row['embedding'] != 0:
+            continue
+
         file_path = row['file_path']
         start_line = row['line_start']
         end_line = row['line_end']
@@ -42,15 +45,15 @@ def update_embeddings(repo_chunks_path):
                     'content': chunk_content,
                 })
 
-    # Save the updated embeddings to a new CSV file
+    # Append the updated embeddings to the existing CSV file
     if updated_embeddings:
         embeddings_df = pd.DataFrame(updated_embeddings)
-        embeddings_df.to_csv('updated_embeddings.csv', index=False)
+        embeddings_df.to_csv(repo_chunks_path, mode='a', header=False, index=False)
 
 
 def main():
     # Path to the repo_chunks.csv file
-    repo_chunks_path = 'ai_assistant/repo_chunks.csv'
+    repo_chunks_path = '.ai_assistant/repo_chunks.csv'
     
     # Update embeddings based on the repo_chunks.csv file
     update_embeddings(repo_chunks_path)
