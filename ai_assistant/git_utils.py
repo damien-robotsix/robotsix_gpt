@@ -1,5 +1,6 @@
 import git
 import os
+from git.exc import InvalidGitRepositoryError
 from pathspec import PathSpec
 from pathspec.patterns import GitWildMatchPattern
 
@@ -8,8 +9,8 @@ def find_git_root(start_path):
     try:
         repo = git.Repo(start_path, search_parent_directories=True)
         return repo.git.rev_parse("--show-toplevel")
-    except git.exc.InvalidGitRepositoryError:
-        raise FileNotFoundError("No git repository found from the current directory upwards.")
+    except InvalidGitRepositoryError:
+        raise FileNotFoundError("No git repository found from the current directory upwards {}".format(start_path))
     
 def load_gitignore(git_root):
     """Load .gitignore patterns using pathspec."""

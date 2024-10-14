@@ -1,12 +1,11 @@
 import os
 import json
-from ai_assistant.git import find_git_root, ensure_gitignore_entry
+from ai_assistant.git_utils import find_git_root, ensure_gitignore_entry
 
 CONFIG_FILE_PATH = os.path.join('.ai_assistant', 'config.json')
 DEFAULT_CONFIG = {
-    'clone_dir': '.',
-    'max_tokens': 250,
-    'ignore_patterns': ['.git', 'node_modules', '__pycache__', '*.md', '*.txt']
+    'max_tokens': 500,
+    'ignore_patterns': ['.git/']
 }
 
 def initialize_assistant():
