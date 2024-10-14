@@ -46,7 +46,6 @@ def update_embeddings(repo_chunks_path):
 
     # Append the updated embeddings to the existing CSV file
     if updated_embeddings:
-        embeddings_df = pd.DataFrame(updated_embeddings)
         # Update the existing DataFrame with new embeddings
         for updated in updated_embeddings:
             repo_chunks_df.loc[
