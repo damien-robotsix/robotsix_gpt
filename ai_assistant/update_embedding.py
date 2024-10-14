@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import openai
 from ai_assistant.utils import save_embeddings
+from ai_assistant.utils.chunk import chunk_file
 
 # Configure OpenAI API
 openai.api_key = os.getenv('OPENAI_API_KEY')  # It's safer to use environment variables
