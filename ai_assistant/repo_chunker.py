@@ -278,8 +278,10 @@ def main():
         final_chunks_df = final_chunks_df[final_chunks_df['file_path'].apply(lambda x: os.path.exists(os.path.join(REPO_DIR, x)))]
 
         # Ensure 'mod_time' column exists
-        if 'mod_time' not in final_chunks_df.columns:
-            final_chunks_df['mod_time'] = None
+        if 'mod_time' not in final_chunks_df.columns or final_chunks_df['mod_time'].isnull().any():
+            final_chunks_df['mod_time'] = final_chunks_df['file_path'].apply(
+                lambda x: get_file_modification_time(os.path.join(REPO_DIR, x))
+            )
         final_chunks_df.to_csv(csv_path, index=False, columns=['file_path', 'line_start', 'line_end', 'token_count', 'relative_path', 'mod_time'])
         print("Agglomerated chunks saved to repo_chunks.csv.")
     else:
