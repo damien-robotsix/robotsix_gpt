@@ -25,5 +25,6 @@ setup(
         'gitpython',
         'clang==14',
         'tiktoken',
+        'tqdm',
     ],
 )
