@@ -92,6 +92,20 @@ def chunk_file(file_path: str, max_tokens: int = MAX_TOKENS, chunker_warnings=No
             chunker_warnings.append(f"Could not detect file type for {file_path}. Skipping.")
         return []
 
+    # Check if the total token count of the file exceeds 50 times the max chunk size
+    try:
+        with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:
+            source_code = file.read()
+        total_token_count = count_tokens(source_code)
+        if total_token_count > 50 * max_tokens:
+            user_input = input(f"The file {file_path} has {total_token_count} tokens, which exceeds 50 times the max chunk size. Do you want to include it? (y/n): ")
+            if user_input.lower() != 'y':
+                return []
+    except Exception as e:
+        if chunker_warnings is not None:
+            chunker_warnings.append(f"Error reading file {file_path}: {e}")
+        return []
+
     if file_type == 'shell':
         file_type = 'bash'
 
