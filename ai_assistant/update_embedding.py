@@ -82,7 +82,7 @@ def update_embeddings(repo_chunks_path):
 
     # Initialize tqdm with total number of rows
     with tqdm(total=total_rows, desc="Updating embeddings") as pbar:
-        for _, row in rows_to_update.iterrows():
+        for index, row in rows_to_update.iterrows():
             file_path = row['file_path']
             start_line = row['line_start']
             end_line = row['line_end']
@@ -95,7 +95,7 @@ def update_embeddings(repo_chunks_path):
                         lines[start_line-1:end_line]).strip()
                     if chunk_content:
                         embedding = get_embedding(chunk_content)
-                        row['embedding'] = embedding
+                        repo_chunks_df.at[index, 'embedding'] = embedding
                     else:
                         logging.warning(
                             f"Empty content for {file_path} lines {start_line}-{end_line}. Skipping.")
