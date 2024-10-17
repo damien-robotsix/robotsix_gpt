@@ -65,9 +65,6 @@ def traverse_tree(node, source_lines, max_tokens, chunks, file_relative_path, pa
             'parent_node': parent_node
         }
         chunks.append(chunk)
-        print("\nProcessed files:")
-        for file in processed_files:
-            print(file)
     else:    
         if not node.children:
             if warnings is not None:
@@ -282,6 +279,10 @@ def main():
                 # File has not been modified, skip re-chunking
                 continue
 
+            print(f"Processing {relative_path}...")
+            print(f"File modification time: {file_mod_time}")
+            print(f"Existing chunk modification time: {existing_chunk['mod_time'].iloc[0] if not existing_chunk.empty else None}")
+
             # File has been modified, is new, or missing mod_time, re-chunk it
             chunks = chunk_file(file_path, MAX_TOKENS, chunker_warnings=processing_warnings)
             if chunks:
@@ -323,6 +324,10 @@ def main():
                 print(warning)
     else:
         print("No chunks were created from the repository.")
+
+    print("\nProcessed files:")
+    for file in processed_files:
+        print(file)
 
 if __name__ == '__main__':
     main()
