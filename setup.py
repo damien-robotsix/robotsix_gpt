@@ -26,5 +26,6 @@ setup(
         'clang==14',
         'tiktoken',
         'tqdm',
+        'tenacity',
     ],
 )

@@ -66,6 +66,8 @@ def update_embeddings(repo_chunks_path):
     if 'embedding' not in repo_chunks_df.columns:
         # Use None instead of 0 for embeddings
         repo_chunks_df['embedding'] = None
+        
+    repo_chunks_df['embedding'] = repo_chunks_df['embedding'].astype('object')
 
     # Identify rows that need embeddings
     rows_to_update = repo_chunks_df[
@@ -105,8 +107,6 @@ def update_embeddings(repo_chunks_path):
                 continue
 
             pbar.update(1)
-
-        print(repo_chunks_df)
 
         # Save the updated DataFrame back to the CSV
         repo_chunks_df.to_csv(repo_chunks_path, index=False)
