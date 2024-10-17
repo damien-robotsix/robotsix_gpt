@@ -32,6 +32,10 @@ messages = [
         "role": "user",
         "content": prompt
     },
+    {
+        "role": "user",
+        "content": "Some context that might help you is found below:"
+    }
 ]
 
 iterations = 0
@@ -42,6 +46,8 @@ for _, row in context.iterrows():
     file_path = row['file_path']
     with open(file_path, 'r') as file:
         lines = file.readlines()
+        # Append with line numbers
+        lines = [f"{i + line_start}: {line}" for i, line in enumerate(lines)]
         content = ''.join(
             lines[line_start - 1:line_end]).strip()
     messages.append({
@@ -54,7 +60,11 @@ for _, row in context.iterrows():
         })
     })
     iterations += 1
-    if iterations > 5:
+    print(file_path)
+    print(line_start)
+    print(line_end)
+    print(content)
+    if iterations > 7:
         break
 
 response = client.chat.completions.create(
@@ -65,9 +75,13 @@ response = client.chat.completions.create(
     ]
 )
 
+print("Finish")
+print(response.choices[0].finish_reason)
+print(response.choices[0])
 
-if response.choices[0].finish_reason == "tools_call":
+if response.choices[0].finish_reason == 'tool_calls':
     for tool in response.choices[0].message.tool_calls:
+        print(tool)
         task = TaskInput.model_construct(input_type=tool.function.name, parameters=tool.function.arguments)
         output = task.execute()
 print(response.choices[0].message.content)

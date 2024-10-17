@@ -7,7 +7,7 @@ from openai import OpenAI, AssistantEventHandler
 from ai_assistant.assistant_functions import TaskInput, AskAssistant, AssistantResponse, CreateNewInstance, CommandFeedback
 
 # Set up logging
-logging.basicConfig(level=logging.DEBUG, filename='assistant_gpt.log',
+logging.basicConfig(level=logging.DEBUG, filename=os.path.join('.ai_assistant', 'logs', 'assistant_gpt.log'),
                     format='%(name)s: %(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger()
 
