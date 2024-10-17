@@ -243,7 +243,7 @@ def agglomerate_chunks(all_chunks, max_tokens):
     return agglomerated
 
 def get_file_modification_time(file_path: str) -> float:
-    """Get the last modification time of a file."""
+    """Get the last modification time of a file with higher precision."""
     return os.path.getmtime(file_path)
 
 def main():
