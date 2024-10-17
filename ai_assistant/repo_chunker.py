@@ -275,13 +275,9 @@ def main():
                 existing_chunk = existing_chunks_df[existing_chunks_df['file_path'] == relative_path]
             else:
                 existing_chunk = pd.DataFrame()  # Create an empty DataFrame if 'file_path' column is missing
-            if not existing_chunk.empty and 'mod_time' in existing_chunk.columns and existing_chunk['mod_time'].iloc[0] >= file_mod_time:
+            if not existing_chunk.empty and 'mod_time' in existing_chunk.columns and existing_chunk['mod_time'].iloc[0] >= file_mod_time - 0.001:
                 # File has not been modified, skip re-chunking
                 continue
-
-            print(f"Processing {relative_path}...")
-            print(f"File modification time: {file_mod_time}")
-            print(f"Existing chunk modification time: {existing_chunk['mod_time'].iloc[0] if not existing_chunk.empty else None}")
 
             # File has been modified, is new, or missing mod_time, re-chunk it
             chunks = chunk_file(file_path, MAX_TOKENS, chunker_warnings=processing_warnings)
@@ -316,7 +312,7 @@ def main():
             final_chunks_df['mod_time'] = final_chunks_df['file_path'].apply(
                 lambda x: get_file_modification_time(os.path.join(REPO_DIR, x))
             )
-        final_chunks_df.to_csv(csv_path, index=False, columns=['file_path', 'line_start', 'line_end', 'token_count', 'relative_path', 'mod_time'])
+        final_chunks_df.to_csv(csv_path, index=False)
         print("Agglomerated chunks saved to repo_chunks.csv.")
         if processing_warnings:
             print("\nWarnings:")
