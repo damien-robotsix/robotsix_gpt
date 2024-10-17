@@ -47,7 +47,7 @@ for _, row in context.iterrows():
     with open(file_path, 'r') as file:
         lines = file.readlines()
         # Append with line numbers
-        lines = [f"{i + line_start}: {line}" for i, line in enumerate(lines)]
+        lines = [f"{i+1}: {line}" for i, line in enumerate(lines)]
         content = ''.join(
             lines[line_start - 1:line_end]).strip()
     messages.append({
@@ -64,7 +64,7 @@ for _, row in context.iterrows():
     print(line_start)
     print(line_end)
     print(content)
-    if iterations > 7:
+    if iterations > 3:
         break
 
 response = client.chat.completions.create(

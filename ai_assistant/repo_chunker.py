@@ -24,7 +24,7 @@ def load_config(config_path):
         exit(1)
 
 config = load_config(CONFIG_PATH)
-MAX_TOKENS = config.get('max_tokens', 250)
+MAX_TOKENS = config.get('max_tokens', 500)
 gitignore_spec = load_gitignore(REPO_DIR)
 config_ignore_patterns = config.get('ignore_patterns', [])
 config_spec = PathSpec.from_lines(GitWildMatchPattern, config_ignore_patterns)

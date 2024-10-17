@@ -94,7 +94,7 @@ class ModifyChunk(BaseModel):
     line_end: int = Field(...,
                           description="The ending line number of the chunk to modify")
     content: str = Field(...,
-                         description="The new content to replace the chunk with")
+                         description="The new content to replace the chunk with WITHOUT line numbers")
 
 
 class TaskInput(BaseModel):

@@ -95,8 +95,12 @@ def update_embeddings(repo_chunks_path):
                     lines = file.readlines()
                     chunk_content = ''.join(
                         lines[start_line-1:end_line]).strip()
+
+                    # Add filename and line numbers to the chunk content
+                    chunk_content_with_metadata = f"File: {file_path} | Lines: {start_line}-{end_line}\n{chunk_content}"
+
                     if chunk_content:
-                        embedding = get_embedding(chunk_content)
+                        embedding = get_embedding(chunk_content_with_metadata)
                         repo_chunks_df.at[index, 'embedding'] = embedding
                     else:
                         logging.warning(
