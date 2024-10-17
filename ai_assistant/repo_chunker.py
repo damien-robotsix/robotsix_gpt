@@ -65,7 +65,10 @@ def traverse_tree(node, source_lines, max_tokens, chunks, file_relative_path, pa
             'parent_node': parent_node
         }
         chunks.append(chunk)
-    else:
+        print("\nProcessed files:")
+        for file in processed_files:
+            print(file)
+    else:    
         if not node.children:
             if warnings is not None:
                 warnings.append(f"Warning: Node from line {start_line} to {end_line} in {file_relative_path} exceeds max tokens and has no children. Adding full node.")
@@ -256,6 +259,7 @@ def main():
         existing_chunks_df = pd.DataFrame()
     all_chunks = []
 
+    processed_files = []
     processing_warnings = []
 
     # Walk through the repository with a progress bar
@@ -285,6 +289,7 @@ def main():
                     chunk['mod_time'] = file_mod_time  # Add modification time to each chunk
                     chunk['embedding'] = 0  # Reset embedding to 0 for modified files
                 all_chunks.extend(chunks)
+                processed_files.append(relative_path)
             else:
                 processing_warnings.append(f"No chunks created for {relative_path}.")
 
