@@ -3,6 +3,7 @@ import os
 import repo_chunker
 import update_embedding
 from embedding_search import search
+from ai_assistant.assistant_functions import modify_chunk_tool, TaskInput
 import json
 import argparse
 
@@ -16,13 +17,13 @@ update_embedding.main()
 parser = argparse.ArgumentParser(description='Process a request using the AI assistant.')
 
 # Add arguments
-parser.add_argument('--message', type=str, required=True, help='The message or prompt to process using the assistant.')
+parser.add_argument('-m', type=str, required=True, help='The message or prompt to process using the assistant.')
 
 # Parse the arguments
 args = parser.parse_args()
 
 # Use the command line argument as the prompt
-prompt = args.message
+prompt = args.m
 
 context = search(prompt)
 
@@ -59,6 +60,14 @@ for _, row in context.iterrows():
 response = client.chat.completions.create(
     messages=messages,
     model="gpt-4o-2024-08-06",
+    tools  = [
+        modify_chunk_tool
+    ]
 )
 
+
+if response.choices[0].finish_reason == "tools_call":
+    for tool in response.choices[0].message.tool_calls:
+        task = TaskInput.model_construct(input_type=tool.function.name, parameters=tool.function.arguments)
+        output = task.execute()
 print(response.choices[0].message.content)
