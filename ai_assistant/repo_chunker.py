@@ -82,7 +82,7 @@ def traverse_tree(node, source_lines, max_tokens, chunks, file_relative_path, pa
             for child in node.children:
                 traverse_tree(child, source_lines, max_tokens, chunks, file_relative_path, node, warnings)
 
-def chunk_file(file_path: str, max_tokens: int = MAX_TOKENS, chunker_warnings=None) -> list:
+def chunk_file(file_path: str, max_tokens: int = MAX_TOKENS, chunker_warnings=None) -> tuple:
     """Chunk a file using tree-sitter based on its detected type."""
     warnings_list = []
     result = detect_file_type(file_path)
@@ -136,7 +136,7 @@ def chunk_file(file_path: str, max_tokens: int = MAX_TOKENS, chunker_warnings=No
             current_chunk['line_end'] = len(source_lines)
             chunks.append(current_chunk)
 
-        return chunks
+        return chunks, len(chunks)
     else:
         try:
             with warnings.catch_warnings():
@@ -265,7 +265,11 @@ def main():
                 continue
 
             # File has been modified, is new, or missing mod_time, re-chunk it
-            chunks = chunk_file(file_path, MAX_TOKENS, chunker_warnings=processing_warnings)
+            chunks, num_chunks = chunk_file(file_path, MAX_TOKENS, chunker_warnings=processing_warnings)
+            if num_chunks > 50:
+                user_input = input(f"The file {relative_path} generates {num_chunks} chunks. Do you want to include it? (y/n): ")
+                if user_input.lower() != 'y':
+                    continue
             if chunks:
                 for chunk in chunks:
                     chunk['mod_time'] = file_mod_time  # Add modification time to each chunk
