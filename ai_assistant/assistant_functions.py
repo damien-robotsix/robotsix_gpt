@@ -20,13 +20,12 @@ class ShellCommandInput(BaseModel):
         ..., description="The shell command to be executed in the repository root directory")
 
 
-class LoadFileInput(BaseModel):
+class CreateFileInput(BaseModel):
     """
     Represents a request to create a new file.
     """
     path: str = Field(..., description="The path of the file to create")
     content: str = Field(..., description="The content to write to the file")
-
 
 class OverwriteFileInput(BaseModel):
     """
@@ -85,16 +84,23 @@ class LoadFileInput(BaseModel):
 
 class ModifyChunk(BaseModel):
     """
-    Represents a request to modify a chunk of code.
+    Represents a request to modify a file.
     """
     file_path: str = Field(...,
-                           description="The path of the file containing the chunk to modify")
+                           description="The path of the modified file")
     line_start: int = Field(...,
-                            description="The starting line number of the chunk to modify")
+                            description="The starting line number of the content to replace")
     line_end: int = Field(...,
-                          description="The ending line number of the chunk to modify")
+                          description="The ending line number of content to replace")
     content: str = Field(...,
-                         description="The new content to replace the chunk with WITHOUT line numbers")
+                         description="The new content WITHOUT line numbers")
+    
+class RequestAdditionalContext(BaseModel):
+    """
+    Represents a request to provide additional context to the assistant.
+    """
+    context: str = Field(...,
+                         description="The context to provide to the assistant")
 
 
 class TaskInput(BaseModel):
@@ -123,6 +129,10 @@ class TaskInput(BaseModel):
             elif self.input_type == 'ModifyChunk':
                 modify_input = ModifyChunk.model_validate_json(self.parameters)
                 return self.modify_chunk(modify_input)
+            elif self.input_type == 'CreateFileInput':
+                create_input = CreateFileInput.model_validate_json(
+                    self.parameters)
+                return self.create_file(create_input)
             else:
                 return CommandFeedback(
                     return_code=-1,
@@ -212,6 +222,23 @@ class TaskInput(BaseModel):
         with open(file_path, 'w') as file:
             file.writelines(lines)
 
+    def create_file(self, input_data: CreateFileInput) -> CommandFeedback:
+        """
+        Creates a new file with the specified content.
+        """
+        try:
+            # Inform of file creation operation
+            print(f"Creating file at path: {input_data.path}")
+            with open(input_data.path, 'w') as f:
+                f.write(input_data.content)
+            # Confirm successful creation
+            print(f"File created successfully at {input_data.path}")
+            return CommandFeedback(return_code=0)
+        except Exception as e:
+            # Print error if file creation fails
+            print(f"Failed to create file: {e}")
+            return CommandFeedback(return_code=-1, stderr=str(e))
+
 
 master_function_tools = [
     openai.pydantic_function_tool(
@@ -228,3 +255,5 @@ master_function_tools = [
 
 modify_chunk_tool = openai.pydantic_function_tool(
     ModifyChunk, description="Modify a chunk of code in a file.")
+create_file_tool = openai.pydantic_function_tool(
+    CreateFileInput, description="Create a new file with the specified content.")

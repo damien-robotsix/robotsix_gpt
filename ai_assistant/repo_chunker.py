@@ -9,6 +9,7 @@ from tree_sitter_languages import get_parser
 from magika import Magika
 from magika.types import MagikaResult
 from collections import defaultdict
+import hashlib
 
 warnings_list = []
 REPO_DIR = find_git_root(os.getcwd())
@@ -216,12 +217,16 @@ def agglomerate_chunks(all_chunks, max_tokens):
                     current_agg['token_count'] += chunk['token_count']
                 else:
                     # Save the current aggregated chunk
+                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:
+                        lines = file.readlines()
+                        content = ''.join(lines[current_agg['line_start']-1:current_agg['line_end']]).strip()
                     agglomerated.append({
                         'file_path': current_agg['file_path'],
                         'line_start': current_agg['line_start'],
                         'line_end': current_agg['line_end'],
                         'token_count': current_agg['token_count'],
-                        'relative_path': os.path.relpath(current_agg['file_path'], REPO_DIR)
+                        'relative_path': os.path.relpath(current_agg['file_path'], REPO_DIR),
+                        'hash': hashlib.sha256(content.encode('utf-8')).hexdigest()
                     })
                     # Start a new aggregated chunk
                     current_agg = {
@@ -232,13 +237,17 @@ def agglomerate_chunks(all_chunks, max_tokens):
                         'parent_node': chunk['parent_node']
                     }
         # Don't forget to add the last aggregated chunk
+        with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:
+            lines = file.readlines()
+            content = ''.join(lines[current_agg['line_start']-1:current_agg['line_end']]).strip()
         if current_agg['line_start'] is not None:
             agglomerated.append({
                 'file_path': current_agg['file_path'],
                 'line_start': current_agg['line_start'],
                 'line_end': current_agg['line_end'],
                 'token_count': current_agg['token_count'],
-                'relative_path': os.path.relpath(current_agg['file_path'], REPO_DIR)
+                'relative_path': os.path.relpath(current_agg['file_path'], REPO_DIR),
+                'hash': hashlib.sha256(content.encode('utf-8')).hexdigest()
             })
     return agglomerated
 
@@ -284,7 +293,6 @@ def main():
             if chunks:
                 for chunk in chunks:
                     chunk['mod_time'] = file_mod_time  # Add modification time to each chunk
-                    chunk['embedding'] = 0  # Reset embedding to 0 for modified files
                 all_chunks.extend(chunks)
                 processed_files.append(relative_path)
             else:
@@ -298,7 +306,12 @@ def main():
         # Create DataFrame and merge with existing data
         new_chunks_df = pd.DataFrame(agglomerated_chunks)
         # Remove old chunks for modified files if existing_chunks_df is not empty
+        # Copy the embedding column from existing_chunks_df if the hash matches
         if not existing_chunks_df.empty:
+            if 'hash' in new_chunks_df.columns and 'hash' in existing_chunks_df.columns:
+                new_chunks_df['embedding'] = new_chunks_df['hash'].apply(
+                    lambda x: existing_chunks_df[existing_chunks_df['hash'] == x]['embedding'].iloc[0] if x in existing_chunks_df['hash'].values else None
+                )
             existing_chunks_df = existing_chunks_df[~existing_chunks_df['file_path'].isin(new_chunks_df['file_path'])]
         
         # Concatenate new and existing chunks

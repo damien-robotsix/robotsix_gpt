@@ -27,5 +27,6 @@ setup(
         'tiktoken',
         'tqdm',
         'tenacity',
+        'transitions'
     ],
 )
