@@ -1,3 +1,4 @@
+import json
 from openai import OpenAI
 import os
 from typing import List, Dict
@@ -66,4 +67,16 @@ class AssistantFSMFunctions:
             ]
         )
 
+        # Log the interaction
+        self.log_interaction(prompt, response)
+
         return response
+
+    def log_interaction(self, prompt: str, response: str):
+        log_entry = {
+            "prompt": prompt,
+            "response": response
+        }
+        with open(self.log_file_path, 'a') as log_file:
+            json.dump(log_entry, log_file)
+            log_file.write('\n')
