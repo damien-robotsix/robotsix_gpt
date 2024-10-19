@@ -35,15 +35,20 @@ class AIAssistantFSM:
         if response.choices[0].finish_reason == 'tool_calls':
             self.use_tool()
 
-    def on_enter_using_tool(self):
-        for tool in self.current_response.choices[0].message.tool_calls:
-            print(tool)
-            task = TaskInput.model_construct(
-                input_type=tool.function.name, parameters=tool.function.arguments)
-            output = task.execute()
+def on_enter_using_tool(self):
+    tool_calls = self.current_response.choices[0].message.tool_calls
+    # Sort tool calls by line_start in descending order
+    sorted_tool_calls = sorted(
+        tool_calls,
+        key=lambda tool: tool.function.arguments['line_start'],
+        reverse=True
+    )
+    for tool in sorted_tool_calls:
+        print(tool)
+        task = TaskInput.model_construct(
+            input_type=tool.function.name, parameters=tool.function.arguments)
+        output = task.execute()
 
-    def on_enter_idle(self):
-        print("Returning to idle state.")
 
 
 if __name__ == "__main__":
