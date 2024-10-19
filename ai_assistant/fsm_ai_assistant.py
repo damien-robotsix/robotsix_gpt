@@ -2,6 +2,7 @@ from openai import OpenAI
 import os
 from ai_assistant.assistant_functions_fsm import AssistantFSMFunctions
 from transitions import Machine
+from ai_assistant.assistant_tools import modify_chunk_tool, TaskInput, create_file_tool
 import repo_chunker
 import update_embedding
 
@@ -26,7 +27,13 @@ class AIAssistantFSM:
 
     def on_enter_processing(self):
         response = self.assistant_functions.respond_to_prompt(self.user_input)
-        print("Response:", response)
+        if response.choices[0].finish_reason == 'tool_calls':
+            for tool in response.choices[0].message.tool_calls:
+                print(tool)
+                task = TaskInput.model_construct(
+                    input_type=tool.function.name, parameters=tool.function.arguments)
+                output = task.execute()
+        print(response.choices[0].message.content)
 
     def on_enter_idle(self):
         print("Returning to idle state.")
