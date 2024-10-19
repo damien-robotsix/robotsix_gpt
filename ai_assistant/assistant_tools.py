@@ -82,7 +82,7 @@ class LoadFileInput(BaseModel):
     path: str = Field(..., description="The path of the file to load")
 
 
-class ModifyChunk(BaseModel):
+class ModifyFile(BaseModel):
     """
     Represents a request to modify a file.
     """
@@ -91,7 +91,7 @@ class ModifyChunk(BaseModel):
     line_start: int = Field(...,
                             description="The starting line number of the content to replace")
     line_end: int = Field(...,
-                          description="The ending line number of content to replace")
+                          description="The ending line number of the content to replace")
     content: str = Field(...,
                          description="The new content WITHOUT line numbers")
     
@@ -126,8 +126,8 @@ class TaskInput(BaseModel):
             elif self.input_type == 'LoadFileInput':
                 load_input = LoadFileInput.model_validate_json(self.parameters)
                 return self.load_file(load_input)
-            elif self.input_type == 'ModifyChunk':
-                modify_input = ModifyChunk.model_validate_json(self.parameters)
+            elif self.input_type == 'ModifyFile':
+                modify_input = ModifyFile.model_validate_json(self.parameters)
                 return self.modify_chunk(modify_input)
             elif self.input_type == 'CreateFileInput':
                 create_input = CreateFileInput.model_validate_json(
@@ -188,7 +188,7 @@ class TaskInput(BaseModel):
             print(f"Failed to load file: {e}")
             return CommandFeedback(return_code=-1, stderr=str(e))
 
-    def modify_chunk(self, input_data: ModifyChunk) -> CommandFeedback:
+    def modify_chunk(self, input_data: ModifyFile) -> CommandFeedback:
         print(f"Modifying chunk in file: {input_data.file_path}")
         file_path = os.path.join(GIT_ROOT, input_data.file_path)
         line_start = input_data.line_start
@@ -254,6 +254,6 @@ master_function_tools = [
 ]
 
 modify_chunk_tool = openai.pydantic_function_tool(
-    ModifyChunk, description="Modify a chunk of code in a file.")
+    ModifyFile, description="Modify a chunk of code in a file.")
 create_file_tool = openai.pydantic_function_tool(
     CreateFileInput, description="Create a new file with the specified content.")

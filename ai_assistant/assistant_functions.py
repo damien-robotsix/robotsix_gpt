@@ -2,9 +2,11 @@ from openai import OpenAI
 import os
 from typing import List, Dict
 from embedding_search import search
+from assistant_tools import modify_chunk_tool, create_file_tool
 
 api_key = os.environ.get("OPENAI_API_KEY")
 client = OpenAI(api_key=api_key)
+
 
 class AssistantFSMFunctions:
     def __init__(self, client):
@@ -53,7 +55,11 @@ class AssistantFSMFunctions:
 
         response = self.client.chat.completions.create(
             messages=messages,
-            model="gpt-4o-2024-08-06"
+            model="gpt-4o-2024-08-06",
+            tools=[
+                modify_chunk_tool,
+                create_file_tool
+            ]
         )
 
-        return response.choices[0].message.content
+        return response
