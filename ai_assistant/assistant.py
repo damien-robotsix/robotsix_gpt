@@ -3,7 +3,7 @@ import os
 import repo_chunker
 import update_embedding
 from embedding_search import search
-from ai_assistant.assistant_functions import modify_chunk_tool, TaskInput, create_file_tool
+from ai_assistant.assistant_tools import modify_chunk_tool, TaskInput, create_file_tool
 import json
 import argparse
 
@@ -64,7 +64,7 @@ for _, row in context.iterrows():
     print(line_start)
     print(line_end)
     print(content)
-    if iterations > 4:
+    if iterations > 6:
         break
 
 response = client.chat.completions.create(

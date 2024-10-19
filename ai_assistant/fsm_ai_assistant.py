@@ -1,31 +1,39 @@
+from openai import OpenAI
+import os
+from ai_assistant.assistant_functions_fsm import AssistantFSMFunctions
 from transitions import Machine
-
+import repo_chunker
+import update_embedding
 
 class AIAssistantFSM:
     states = ['init', 'waiting_for_user_input', 'processing', 'responding']
 
     def __init__(self):
+        self.client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+        self.assistant_functions = AssistantFSMFunctions(self.client)
         self.machine = Machine(
             model=self, states=AIAssistantFSM.states, initial='init')
 
         self.machine.add_transition(
-            trigger='process_request', source='waiting_for_user_input', dest='processing')
+            trigger='process_user_request', source='waiting_for_user_input', dest='processing')
         self.machine.add_transition(
             trigger='send_response', source='processing', dest='responding')
-        self.machine.add_transition(
-            trigger='begin', source='init', dest='waiting_for_user_input')
 
     def on_enter_waiting_for_user_input(self):
-        user_input = input(
-            ">>>: ")
+        user_input = input(">>>: ")
+        self.user_input = user_input
+        self.process_user_request()
 
-    def on_enter_responding(self):
-        print("Sending response to user.")
+    def on_enter_processing(self):
+        response = self.assistant_functions.respond_to_prompt(self.user_input)
+        print("Response:", response)
 
     def on_enter_idle(self):
         print("Returning to idle state.")
 
 
 if __name__ == "__main__":
+    repo_chunker.main()
+    update_embedding.main()
     assistant = AIAssistantFSM()
     assistant.begin()
