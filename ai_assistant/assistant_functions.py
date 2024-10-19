@@ -11,6 +11,10 @@ client = OpenAI(api_key=api_key)
 class AssistantFSMFunctions:
     def __init__(self, client):
         self.client = client
+        # Ensure the .ai_assistant directory exists
+        self.log_file_path = os.path.join('.ai_assistant', 'interaction_log.json')
+        os.makedirs(os.path.dirname(self.log_file_path), exist_ok=True)
+        
 
     def generate_context(self, prompt: str) -> List[Dict]:
         context = search(prompt)
