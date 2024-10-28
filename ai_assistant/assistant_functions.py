@@ -3,7 +3,7 @@ from openai import OpenAI
 import os
 from typing import List, Dict
 from embedding_search import search
-from assistant_tools import modify_chunk_tool, create_file_tool
+from assistant_tools import modify_chunk_tool, create_file_tool, add_context_tool
 
 api_key = os.environ.get("OPENAI_API_KEY")
 client = OpenAI(api_key=api_key)
@@ -17,9 +17,9 @@ class AssistantFSMFunctions:
             '.ai_assistant', 'interaction_log.json')
         os.makedirs(os.path.dirname(self.log_file_path), exist_ok=True)
 
-    def generate_context(self, prompt: str) -> List[Dict]:
+    def generate_context(self, prompt: str):
         context = search(prompt)
-        formatted_context = []
+        formatted_context = {}
 
         iterations = 0
         for _, row in context.iterrows():
@@ -32,39 +32,32 @@ class AssistantFSMFunctions:
                 lines = [f"{i+1}: {line}" for i, line in enumerate(lines)]
                 content = ''.join(
                     lines[line_start - 1:line_end]).strip()
-            formatted_context.append({
-                "role": "user",
-                "content": json.dumps({
+            formatted_context["CONTEXT " + str(iterations + 1)] = {
                     "file_path": file_path,
                     "extracted_content": content
-                })
-            })
+                }
             iterations += 1
-            if iterations > 6:
+            if iterations > 3:
                 break
 
         return formatted_context
 
-    def respond_to_prompt(self, prompt: str) -> str:
+    def respond_to_prompt(self, prompt: str, context) -> str:
         messages = [
             {
                 "role": "system",
-                "content": "You are an expert AI assistant. Your role is to help the user with their request concerning the current repository. Your answer should be concise and accurate. "
+                "content": "You are an expert AI assistant. Your role is to help the user with their request concerning the current repository. Your answer should be concise and accurate. Try to solve the issue as much as you can using the available tools without asking the user for prompts."
                 "You might be asked to create code. In that case, you should act as a software engineer expert to solve the user's problem."
             },
             {
                 "role": "user",
-                "content": prompt
+                "content": "Here is some context for my request: " + json.dumps(context)
             },
             {
                 "role": "user",
-                "content": "Some context that might help you is found below:"
-            }
+                "content": "Here is the request: " + prompt
+            },
         ]
-
-        context = self.generate_context(prompt)
-
-        messages = messages + context
 
 
         response = self.client.chat.completions.create(
@@ -72,7 +65,8 @@ class AssistantFSMFunctions:
             model="gpt-4o-2024-08-06",
             tools=[
                 modify_chunk_tool,
-                create_file_tool
+                create_file_tool,
+                add_context_tool
             ]
         )
 
@@ -90,4 +84,5 @@ class AssistantFSMFunctions:
             if response.choices[0].finish_reason == 'tool_calls':
                 for tool in response.choices[0].message.tool_calls:
                     json.dump(tool.function.name, log_file, indent=4)
+                    json.dump(tool.function.arguments, log_file, indent=4)
             log_file.write('\n')

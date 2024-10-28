@@ -45,7 +45,7 @@ import tiktoken
 
 def count_tokens(source_code: str) -> int:
     """Count tokens in the source code using tiktoken."""
-    encoding = tiktoken.get_encoding("gpt2")
+    encoding = tiktoken.encoding_for_model("gpt-4o")
     tokens = encoding.encode(source_code)
     return len(tokens)
 
@@ -316,23 +316,23 @@ def main():
         
         # Concatenate new and existing chunks
         final_chunks_df = pd.concat([existing_chunks_df, new_chunks_df], ignore_index=True)
-
-        # Remove entries for files that no longer exist
-        final_chunks_df = final_chunks_df[final_chunks_df['file_path'].apply(lambda x: os.path.exists(os.path.join(REPO_DIR, x)))]
-
-        # Ensure 'mod_time' column exists
-        if 'mod_time' not in final_chunks_df.columns or final_chunks_df['mod_time'].isnull().any():
-            final_chunks_df['mod_time'] = final_chunks_df['file_path'].apply(
-                lambda x: get_file_modification_time(os.path.join(REPO_DIR, x))
-            )
-        final_chunks_df.to_csv(csv_path, index=False)
-        print("Agglomerated chunks saved to repo_chunks.csv.")
-        if processing_warnings:
-            print("\nWarnings:")
-            for warning in processing_warnings:
-                print(warning)
     else:
-        print("No chunks were created from the repository.")
+        final_chunks_df = existing_chunks_df
+
+    # Remove entries for files that no longer exist
+    final_chunks_df = final_chunks_df[final_chunks_df['file_path'].apply(lambda x: os.path.exists(os.path.join(REPO_DIR, x)))]
+
+    # Ensure 'mod_time' column exists
+    if 'mod_time' not in final_chunks_df.columns or final_chunks_df['mod_time'].isnull().any():
+        final_chunks_df['mod_time'] = final_chunks_df['file_path'].apply(
+            lambda x: get_file_modification_time(os.path.join(REPO_DIR, x))
+        )
+    final_chunks_df.to_csv(csv_path, index=False)
+    print("Agglomerated chunks saved to repo_chunks.csv.")
+    if processing_warnings:
+        print("\nWarnings:")
+        for warning in processing_warnings:
+            print(warning)
 
     print("\nProcessed files:")
     for file in processed_files:

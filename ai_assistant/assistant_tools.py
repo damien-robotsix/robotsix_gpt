@@ -95,13 +95,12 @@ class ModifyFile(BaseModel):
     content: str = Field(...,
                          description="The new content WITHOUT line numbers")
     
-class RequestAdditionalContext(BaseModel):
+class AddContext(BaseModel):
     """
-    Represents a request to provide additional context to the assistant.
+    Represents a request to add additional context to the assistant.
     """
-    context: str = Field(...,
-                         description="The context to provide to the assistant")
-
+    context_prompt: str = Field(...,
+                               description="Prompt about the context to add")
 
 class TaskInput(BaseModel):
     """
@@ -257,3 +256,5 @@ modify_chunk_tool = openai.pydantic_function_tool(
     ModifyFile, description="Modify a chunk of code in a file.")
 create_file_tool = openai.pydantic_function_tool(
     CreateFileInput, description="Create a new file with the specified content.")
+add_context_tool = openai.pydantic_function_tool(
+    AddContext, description="Add additional context to the assistant.")
