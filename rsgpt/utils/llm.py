@@ -1,110 +1,36 @@
 from langchain_openai import ChatOpenAI
-from typing import Optional
-from langchain_core.tools import BaseTool
-from langchain_core.runnables import RunnableConfig
-from langchain_core.messages import HumanMessage, ToolCall, ToolMessage
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import PydanticOutputParser
-from pydantic import BaseModel, Field
-import json
-from datetime import datetime
-from os import getenv, path
+from os import getenv
+from langchain.callbacks.base import BaseCallbackHandler
 
 
-class MultiToolCall(BaseModel):
-    tool_calls: list[ToolCall] = Field(description="The list of tool calls to make")
+class InputDisplayCallbackHandler(BaseCallbackHandler):
+    def on_llm_start(self, serialized, prompts, **kwargs):
+        print("\n--- INPUT SENT TO LLM ---")
+        for prompt in prompts:
+            print(prompt)
+        print("-------------------------\n")
 
 
-class ChatDeepSeek(ChatOpenAI):
-    tools: list[BaseTool] = []
-    tools_prompt: ChatPromptTemplate = ChatPromptTemplate.from_messages(
-        [
-            (
-                "system",
-                "You can use the following tools: {tool_names}\n"
-                "Each tool will perform a task and respond with their results and status. "
-                "To call tools, you should provide only the tool calls json schema in the message without any additional information. The schema is provided below.\n"
-                "{tool_call_schema}\n"
-                "The tool arguments schema for each tool is provided below.\n"
-                "{tool_schemas}\n",
-            ),
-            ("placeholder", "{messages}"),
-        ]
-    )
-
-    def __init__(self, model_name: str):
-        super().__init__(
-            openai_api_key=getenv("OPENROUTER_API_KEY"),
-            openai_api_base="https://openrouter.ai/api/v1",
-            model_name=model_name,
-            verbose=True,
-        )
-
-    def bind_tools(self, tools: list[BaseTool]):
-        # Copy self and bind the tools
-        new_self = self.copy()
-        new_self.tools = tools
-        return new_self
-
-    def invoke(self, input, config: Optional[RunnableConfig] = None):
-        tool_schemas = ""
-        for tool in self.tools:
-            tool_schemas += json.dumps(tool.get_input_jsonschema())
-            tool_schemas += "\n"
-
-        messages = []
-        try:
-            messages = input.messages
-        except:
-            messages = input
-
-        prompt = self.tools_prompt.invoke(
-            {
-                "messages": messages,
-                "tool_names": [tool.name for tool in self.tools],
-                "tool_call_schema": json.dumps(MultiToolCall.schema()),
-                "tool_schemas": tool_schemas,
-            }
-        )
-        print("======================PROMPT=====================")
-        for message in prompt.messages:
-            message.pretty_print()
-        response = super().invoke(prompt, config)
-        print("======================RESPONSE==================")
-        response.pretty_print()
-        parser = PydanticOutputParser(pydantic_object=MultiToolCall)
-        try:
-            parsed = parser.parse(response.content)
-        except Exception as e:
-            parsed = None
-        if parsed:
-            messages.append(response)
-            for tool_call in parsed.tool_calls:
-                for tool in self.tools:
-                    if tool.name == tool_call["name"]:
-                        tool._parse_input(tool_call["args"], tool_call["id"])
-                        tool_args = tool_call["args"]
-                        if tool.name == "call_worker":
-                            tool_args["messages"] = messages
-                        tool_response = tool.invoke(tool_args, config)
-                        tool_message = ToolMessage(
-                            content=tool_response,
-                            tool_name=tool.name,
-                            tool_call_id=tool_call["id"],
-                        )
-                        to_human_message = HumanMessage(
-                            content=tool_message.model_dump_json(),
-                        )
-                        messages.append(to_human_message)
-            return self.invoke(messages, config)
-        else:
-            return response
+class OutputDisplayCallbackHandler(BaseCallbackHandler):
+    def on_llm_end(self, response, **kwargs):
+        print("\n--- OUTPUT FROM LLM ---")
+        print(response)
+        print("-------------------------\n")
 
 
-llm_base = ChatDeepSeek(
-    model_name="deepseek/deepseek-chat",
+input_display_callback = InputDisplayCallbackHandler()
+output_display_callback = OutputDisplayCallbackHandler()
+
+llm_base = ChatOpenAI(
+    openai_api_key=getenv("OPENROUTER_API_KEY"),
+    openai_api_base="https://openrouter.ai/api/v1",
+    model_name="openai/gpt-4o-2024-11-20",
+    callbacks=[input_display_callback, output_display_callback],
 )
 
-llm_think = ChatDeepSeek(
+llm_think = ChatOpenAI(
+    openai_api_key=getenv("OPENROUTER_API_KEY"),
+    openai_api_base="https://openrouter.ai/api/v1",
     model_name="deepseek/deepseek-r1",
+    callbacks=[input_display_callback, output_display_callback],
 )
