@@ -108,6 +108,4 @@ dmypy.json
 # Backup files
 *.bak
 *.swp
-.aider*
 
-.ai_assistant/
