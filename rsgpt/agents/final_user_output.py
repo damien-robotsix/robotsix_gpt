@@ -1,6 +1,6 @@
 from .agent import Agent
 from pydantic import BaseModel, Field
-from ..litellm_handler import LLMHandler
+from rsgpt.utils.litellm_handler import LLMHandler
 from typing import override
 
 
