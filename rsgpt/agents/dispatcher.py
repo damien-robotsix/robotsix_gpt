@@ -4,6 +4,7 @@ from .agent import Agent
 from .file_creator import FileCreator
 from .file_loader import FileLoader
 from .final_user_output import FinalUserOutput
+from .command_executor import CommandExecutor
 from pydantic import BaseModel, Field
 import json
 
@@ -28,6 +29,7 @@ class Dispatcher(Agent):
             "FileCreator": FileCreator,
             "FileLoader": FileLoader,
             "FinalUserOutput": FinalUserOutput,
+            "CommandExecutor": CommandExecutor,
         }
         self._system_prompt: str = (
             "You are a dispatcher agent. You can dispatch tasks to different agents."
