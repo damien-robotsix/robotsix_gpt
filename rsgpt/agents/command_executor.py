@@ -35,11 +35,14 @@ class CommandExecutor(Agent):
             return [
                 {
                     "role": "assistant",
-                    "content": "Command executed. Output: " + result.stdout,
+                    "content": "Command executed. Output: "
+                    + result.stdout
+                    + "\n"
+                    + "Error: "
+                    + result.stderr,
                 }
             ]
         except Exception as e:
             return [
                 {"role": "assistant", "content": "Error executing command: " + str(e)}
             ]
-
