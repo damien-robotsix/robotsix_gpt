@@ -1,0 +1,12 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "rsgpt"
+version = "0.0.0"
+authors = [{ name = " Damien  SIX ", email = " damien@robotsix.net " }]
+dependencies = ["pydantic", "litellm"]
+
+[project.scripts]
+rsgpt = "rsgpt:main.main"

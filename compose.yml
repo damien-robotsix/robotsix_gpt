@@ -1,0 +1,33 @@
+services:
+  dev:
+    restart: unless-stopped
+    image: docker.robotsix.net/dev-docker:latest
+    container_name: robotsix-dev-ai
+    tty: true
+    stdin_open: true
+    environment:
+      - TERM=xterm-256color
+      - TZ=Europe/Paris
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    network_mode: host
+    volumes:
+      # Saves copilot configuration
+      - copilot-config:/home/robotsix-docker/.config/github-copilot
+      # Change this to mount your project directory
+      - .:/home/robotsix-docker/robotsix_gpt
+      # Git configuration
+      - ~/.gitconfig:/home/robotsix-docker/.gitconfig:ro
+      # Tmuxinator configuration
+      - ./project.yml:/home/robotsix-docker/.tmuxinator/project.yml:ro
+      # SSH keys
+      - ~/.ssh:/home/robotsix-docker/.ssh:ro
+      - /dev/snd:/dev/snd
+    entrypoint: ["/bin/zsh", "-c", "tmuxinator start project"]
+    devices:
+      # Sound devices
+      - /dev/snd
+    pull_policy: always
+
+volumes:
+  copilot-config:
+    external: false
