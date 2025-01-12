@@ -1,12 +1,11 @@
+import json
+
 from typing import override
+
 from ..litellm_handler import LLMHandler
 from .agent import Agent
-from .file_creator import FileCreator
-from .file_loader import FileLoader
-from .final_user_output import FinalUserOutput
-from .command_executor import CommandExecutor
 from pydantic import BaseModel, Field
-import json
+from .agent_registry import all_agents
 
 
 class DispatcherArgs(BaseModel):
@@ -25,12 +24,7 @@ class DispatcherOutput(BaseModel):
 class Dispatcher(Agent):
     def __init__(self, llm_handler: LLMHandler, args: DispatcherArgs):
         super().__init__(llm_handler)
-        self._agents: dict[str, type[Agent]] = {
-            "FileCreator": FileCreator,
-            "FileLoader": FileLoader,
-            "FinalUserOutput": FinalUserOutput,
-            "CommandExecutor": CommandExecutor,
-        }
+        self._agents: dict[str, type[Agent]] = all_agents
         self._system_prompt: str = (
             "You are a dispatcher agent. You can dispatch tasks to different agents."
             + "The available agents are: \n"
@@ -38,10 +32,9 @@ class Dispatcher(Agent):
         for agent in self._agents:
             self._system_prompt += (
                 agent
-                + "\nAgent description: \n"
+                + ", Agent description: \n"
                 + self._agents[agent].agent_description()
-                + "\n"
-                + "Agent arguments: \n"
+                + ", Agent arguments: \n"
             )
             arguments = self._agents[agent].agent_arguments()
             if arguments:
@@ -69,7 +62,7 @@ class Dispatcher(Agent):
             agent_args_pydantic_instance = agent_args_pydantic.model_validate_json(
                 agent_args
             )
-        print("Agent name:", agent_name, "\n", "Agent args:", agent_args, "\n\n")
+        print("Agent name:", agent_name, ", Agent args:", agent_args, ",\n")
         dispatched_agent = self._agents[agent_name](
             self._llm_handler, agent_args_pydantic_instance
         )
@@ -80,4 +73,3 @@ class Dispatcher(Agent):
             dispacther_args = DispatcherArgs(messages=input_messages)
             inner_dispacther = Dispatcher(self._llm_handler, dispacther_args)
             return inner_dispacther.trigger()
-
