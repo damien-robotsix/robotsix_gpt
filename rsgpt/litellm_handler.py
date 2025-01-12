@@ -14,10 +14,10 @@ class LLMHandler:
         self._config = config
 
     def get_answer(
-        self, prompt: str, response_format: type[BaseModel] | None
+        self, messages: list[dict[str, str]], response_format: type[BaseModel] | None
     ) -> str | None:
-        print("User prompt: ", prompt)
-        messages = [{"role": "user", "content": prompt}]
+        print(messages)
+        print("\n \n")
         response = completion(
             model=self._config.model, messages=messages, response_format=response_format
         )

@@ -1,6 +1,6 @@
 import sys
 from .litellm_handler import LLMHandler, LlmConfig
-from .agents.dispatcher import Dispatcher
+from .agents.dispatcher import Dispatcher, DispatcherArgs
 
 
 def main():
@@ -10,9 +10,10 @@ def main():
     user_prompt = sys.argv[1]
     config = LlmConfig(model="gpt-4o")
     llm_handler = LLMHandler(config)
-    dispatcher = Dispatcher(llm_handler)
-    result = dispatcher.trigger(user_prompt)
-    print(result)
+    messages = [{"role": "user", "content": user_prompt}]
+    dispatcher_args = DispatcherArgs(messages=messages)
+    dispatcher = Dispatcher(llm_handler, dispatcher_args)
+    _ = dispatcher.trigger()
 
 
 if __name__ == "__main__":

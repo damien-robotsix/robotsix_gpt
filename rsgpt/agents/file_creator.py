@@ -6,10 +6,7 @@ from typing import override
 
 
 class FileCreatorArgs(BaseModel):
-    """
-    This Pydantic class contains configuration parameters for file creation.
-    """
-
+    prompt: str = Field(description="The prompt to be sent to the agent")
     file_type: str = Field(
         ..., description="The type of file to be created, such as '.txt' or '.py'."
     )
@@ -28,12 +25,7 @@ class FileCreatorOutput(BaseModel):
 
 class FileCreator(Agent):
     def __init__(self, llm_handler: LLMHandler, args: FileCreatorArgs):
-        """
-        Initialize the FileCreator with specific parameters.
-        :param llm_handler: An instance of the LLMHandler class.
-        :param params: A validated instance of the FileCreateParams Pydantic model.
-        """
-        super().__init__(llm_handler, args)
+        super().__init__(llm_handler)
         self._system_prompt: str = (
             "You are a specialist in creating "
             + args.file_type
@@ -42,6 +34,8 @@ class FileCreator(Agent):
             + " When asked to create a file, provide the file content.\n"
         )
         self._file_path: Path = args.file_path
+        self._user_prompt: str = args.prompt
+        print("FileCreator initialized with file path:", self._file_path)
 
     @override
     @classmethod
@@ -53,25 +47,56 @@ class FileCreator(Agent):
         return FileCreatorArgs
 
     @override
-    def trigger(self, prompt: str) -> str:
+    @classmethod
+    def agent_description(cls) -> str:
+        """
+        Return a description of the agent.
+        :return: A string describing the agent.
+        """
+        return "This agent creates a file with the provided content."
+
+    @override
+    def trigger(self) -> list[dict[str, str]] | None:
         """
         Trigger the file creation process based on the LLM's response.
         :param prompt: Prompt content for the LLM to process.
         :return: A string message indicating the outcome of the operation.
         """
         # Interacts with the LLM handler to get a response
-        response = self._llm_handler.get_answer(
-            self._system_prompt + prompt, FileCreatorOutput
-        )
+        input_messages = [
+            {"role": "system", "content": self._system_prompt},
+            {"role": "user", "content": self._user_prompt},
+        ]
+        response = self._llm_handler.get_answer(input_messages, FileCreatorOutput)
         assert response is not None
         response_pydantic = FileCreatorOutput.model_validate_json(response)
         if response_pydantic.create_file:
             # Write content to the provided file path
-            with open(self._file_path, "w") as file:
-                success = file.write(response_pydantic.file_content)
+            try:
+                with open(self._file_path, "w") as file:
+                    success = file.write(response_pydantic.file_content)
+            except Exception as e:
+                return [
+                    {
+                        "role": "assistant",
+                        "content": "Error occurred while writing to the file: "
+                        + str(e),
+                    }
+                ]
 
             if not success:
-                return "Failed to create file."
-            return "File created successfully."
+                return [
+                    {
+                        "role": "assistant",
+                        "content": "Error occurred while writing to the file.",
+                    }
+                ]
+            print("File created successfully.")
+            return None
         else:
-            return response_pydantic.additional_info
+            return [
+                {
+                    "role": "assistant",
+                    "content": response_pydantic.additional_info,
+                }
+            ]
