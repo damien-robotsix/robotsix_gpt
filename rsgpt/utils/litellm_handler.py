@@ -1,10 +1,7 @@
+from .configurations import LlmConfig
 from pydantic import BaseModel
 from litellm import completion, Choices
 from litellm.files.main import ModelResponse
-
-
-class LlmConfig(BaseModel):
-    model: str
 
 
 class LLMHandler:
