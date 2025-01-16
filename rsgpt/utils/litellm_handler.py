@@ -2,6 +2,7 @@ from .configurations import LlmConfig
 from pydantic import BaseModel
 from litellm import completion, Choices
 from litellm.files.main import ModelResponse
+import json
 
 
 class LLMHandler:
@@ -21,4 +22,6 @@ class LLMHandler:
         assert isinstance(response, ModelResponse)
         choice = response.choices[0]
         assert isinstance(choice, Choices)
-        return choice.message.content
+        output = choice.message
+        output = json.loads(output.model_dump_json())
+        return output["content"]

@@ -1,44 +1,17 @@
-import json
 from tqdm import tqdm
 import os
 import pandas as pd
 import warnings
 from pathlib import Path
-from ai_assistant.git_utils import (
-    find_git_root,
-    load_gitignore,
-    PathSpec,
-    GitWildMatchPattern,
-)
 from tree_sitter_languages import get_parser
 from magika import Magika
 from magika.types import MagikaResult
 from collections import defaultdict
+from .configurations import RsgptConfig
+from .context import RsgptContext
+from .git import is_path_ignored
 import hashlib
-
-warnings_list = []
-REPO_DIR = find_git_root(os.getcwd())
-CONFIG_PATH = os.path.join(REPO_DIR, ".ai_assistant", "config.json")
-
-
-def load_config(config_path):
-    """Load configuration from a JSON file."""
-    try:
-        with open(config_path, "r") as config_file:
-            return json.load(config_file)
-    except FileNotFoundError:
-        warnings_list.append(
-            f"Warning: Configuration file not found at {config_path}. Please run 'ai_init' to create it."
-        )
-        exit(1)
-
-
-config = load_config(CONFIG_PATH)
-MAX_TOKENS = config.get("max_tokens", 500)
-gitignore_spec = load_gitignore(REPO_DIR)
-config_ignore_patterns = config.get("ignore_patterns", [])
-config_spec = PathSpec.from_lines(GitWildMatchPattern, config_ignore_patterns)
-IGNORE_PATTERNS = config_spec + gitignore_spec
+import tiktoken
 
 
 def detect_file_type(file_path: str) -> MagikaResult:
@@ -46,14 +19,6 @@ def detect_file_type(file_path: str) -> MagikaResult:
     magika = Magika()
     path = Path(file_path)
     return magika.identify_path(path)
-
-
-def should_ignore(file_path: str, ignore_spec: PathSpec) -> bool:
-    """Determine whether to ignore a file or directory based on PathSpec."""
-    return ignore_spec.match_file(file_path)
-
-
-import tiktoken
 
 
 def count_tokens(source_code: str) -> int:
@@ -92,7 +57,7 @@ def traverse_tree(
         if not node.children:
             if warnings is not None:
                 warnings.append(
-                    f"Warning: Node from line {start_line} to {end_line} in {file_relative_path} exceeds max tokens and has no children. Adding full node."
+                    f"Warning: Node from line {start_line} to {end_line} in {file_relative_path} exceeds max tokens and has no children. Adding full node ."
                 )
             chunk = {
                 "file_path": file_relative_path,
@@ -117,10 +82,9 @@ def traverse_tree(
 
 
 def chunk_file(
-    file_path: str, max_tokens: int = MAX_TOKENS, chunker_warnings=None
+    file_path: str, config: RsgptConfig, context: RsgptContext, chunker_warnings=None
 ) -> list:
     """Chunk a file using tree-sitter based on its detected type."""
-    warnings_list = []
     result = detect_file_type(file_path)
     file_type = result.dl.ct_label
     if not file_type:
@@ -135,7 +99,7 @@ def chunk_file(
         with open(file_path, "r", encoding="utf-8", errors="ignore") as file:
             source_code = file.read()
         total_token_count = count_tokens(source_code)
-        if total_token_count > 50 * max_tokens:
+        if total_token_count > 50 * config.chuncker_config.max_chunk_size:
             user_input = input(
                 f"The file {file_path} has {total_token_count} tokens, which exceeds 50 times the max chunk size. Do you want to include it? (y/n): "
             )
@@ -160,7 +124,7 @@ def chunk_file(
 
         source_lines = source_code.splitlines()
         chunks = []
-        file_relative_path = os.path.relpath(file_path, REPO_DIR)
+        file_relative_path = os.path.relpath(file_path, context.git_repo_root)
 
         # Chunk text files based on max_tokens
         current_chunk = {
@@ -172,7 +136,10 @@ def chunk_file(
         }
         for i, line in enumerate(source_lines, start=1):
             line_token_count = count_tokens(line)
-            if current_chunk["token_count"] + line_token_count > max_tokens:
+            if (
+                current_chunk["token_count"] + line_token_count
+                > config.chuncker_config.max_chunk_size
+            ):
                 current_chunk["line_end"] = i - 1
                 chunks.append(current_chunk)
                 current_chunk = {
@@ -221,12 +188,12 @@ def chunk_file(
         root_node = tree.root_node
         source_lines = source_code.splitlines()
         chunks = []
-        file_relative_path = os.path.relpath(file_path, REPO_DIR)
+        file_relative_path = os.path.relpath(file_path, context.git_repo_root)
 
         traverse_tree(
             root_node,
             source_lines,
-            max_tokens,
+            config.chuncker_config.max_chunk_size,
             chunks,
             file_relative_path,
             warnings=chunker_warnings,
@@ -235,7 +202,7 @@ def chunk_file(
         return chunks
 
 
-def agglomerate_chunks(all_chunks, max_tokens):
+def agglomerate_chunks(all_chunks, context: RsgptContext, config: RsgptConfig):
     """
     Agglomerate chunks to reach as close as possible to max_tokens per aggregated chunk.
     """
@@ -261,7 +228,8 @@ def agglomerate_chunks(all_chunks, max_tokens):
                 current_agg["parent_node"] = chunk["parent_node"]
             else:
                 if (
-                    current_agg["token_count"] + chunk["token_count"] <= max_tokens
+                    current_agg["token_count"] + chunk["token_count"]
+                    <= config.chuncker_config.max_chunk_size
                     and current_agg["parent_node"] == chunk["parent_node"]
                 ):
                     # Aggregate the chunk
@@ -285,7 +253,7 @@ def agglomerate_chunks(all_chunks, max_tokens):
                             "line_end": current_agg["line_end"],
                             "token_count": current_agg["token_count"],
                             "relative_path": os.path.relpath(
-                                current_agg["file_path"], REPO_DIR
+                                current_agg["file_path"], context.git_repo_root
                             ),
                             "hash": hashlib.sha256(content.encode("utf-8")).hexdigest(),
                         }
@@ -312,7 +280,7 @@ def agglomerate_chunks(all_chunks, max_tokens):
                     "line_end": current_agg["line_end"],
                     "token_count": current_agg["token_count"],
                     "relative_path": os.path.relpath(
-                        current_agg["file_path"], REPO_DIR
+                        current_agg["file_path"], context.git_repo_root
                     ),
                     "hash": hashlib.sha256(content.encode("utf-8")).hexdigest(),
                 }
@@ -325,9 +293,12 @@ def get_file_modification_time(file_path: str) -> float:
     return os.path.getmtime(file_path)
 
 
-def main():
+def update_chunks(config: RsgptConfig, context: RsgptContext):
     # Load existing chunks from CSV
-    output_dir = os.path.join(REPO_DIR, ".ai_assistant")
+    if not context.git_repo_root:
+        print("Not in a git repository. Exiting.")
+        return
+    output_dir = os.path.join(context.git_repo_root, ".rsgpt")
     csv_path = os.path.join(output_dir, "repo_chunks.csv")
     if os.path.exists(csv_path):
         existing_chunks_df = pd.read_csv(csv_path)
@@ -339,21 +310,31 @@ def main():
     processing_warnings = []
 
     # Walk through the repository with a progress bar
-    for root, dirs, files in tqdm(os.walk(REPO_DIR), desc="Processing files"):
+    for root, dirs, files in tqdm(
+        os.walk(context.git_repo_root), desc="Processing files"
+    ):
         # Modify dirs in-place to skip ignored directories
         dirs[:] = [
-            d for d in dirs if not should_ignore(os.path.join(root, d), IGNORE_PATTERNS)
+            d
+            for d in dirs
+            if not is_path_ignored(
+                context.git_repo_root,
+                Path(os.path.join(root, d)),
+                config.chuncker_config.ignored_paths,
+            )
         ]
         for file in files:
             file_path = os.path.join(root, file)
-            relative_path = os.path.relpath(file_path, REPO_DIR)
-            if not os.path.exists(file_path) or should_ignore(
-                relative_path, IGNORE_PATTERNS
+            if not os.path.exists(file_path) or is_path_ignored(
+                context.git_repo_root,
+                Path(file_path),
+                config.chuncker_config.ignored_paths,
             ):
                 continue
 
             # Check if the file has been modified since the last chunking
             file_mod_time = get_file_modification_time(file_path)
+            relative_path = os.path.relpath(file_path, context.git_repo_root)
             if "file_path" in existing_chunks_df.columns:
                 existing_chunk = existing_chunks_df[
                     existing_chunks_df["file_path"] == relative_path
@@ -372,7 +353,7 @@ def main():
 
             # File has been modified, is new, or missing mod_time, re-chunk it
             chunks = chunk_file(
-                file_path, MAX_TOKENS, chunker_warnings=processing_warnings
+                file_path, config, context, chunker_warnings=processing_warnings
             )
             if chunks:
                 for chunk in chunks:
@@ -386,7 +367,7 @@ def main():
 
     if all_chunks:
         # Agglomerate chunks
-        agglomerated_chunks = agglomerate_chunks(all_chunks, MAX_TOKENS)
+        agglomerated_chunks = agglomerate_chunks(all_chunks, context, config)
         print(f"Agglomerated into {len(agglomerated_chunks)} chunks.")
 
         # Create DataFrame and merge with existing data
@@ -413,10 +394,18 @@ def main():
     else:
         final_chunks_df = existing_chunks_df
 
+    if processing_warnings:
+        print("\nWarnings:")
+        for warning in processing_warnings:
+            print(warning)
+
     # Remove entries for files that no longer exist
+    if final_chunks_df.empty:
+        print("No chunks to save.")
+        return
     final_chunks_df = final_chunks_df[
         final_chunks_df["file_path"].apply(
-            lambda x: os.path.exists(os.path.join(REPO_DIR, x))
+            lambda x: os.path.exists(os.path.join(context.git_repo_root, x))
         )
     ]
 
@@ -426,19 +415,10 @@ def main():
         or final_chunks_df["mod_time"].isnull().any()
     ):
         final_chunks_df["mod_time"] = final_chunks_df["file_path"].apply(
-            lambda x: get_file_modification_time(os.path.join(REPO_DIR, x))
+            lambda x: get_file_modification_time(os.path.join(context.git_repo_root, x))
         )
     final_chunks_df.to_csv(csv_path, index=False)
     print("Agglomerated chunks saved to repo_chunks.csv.")
-    if processing_warnings:
-        print("\nWarnings:")
-        for warning in processing_warnings:
-            print(warning)
-
     print("\nProcessed files:")
     for file in processed_files:
         print(file)
-
-
-if __name__ == "__main__":
-    main()
