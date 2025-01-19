@@ -109,3 +109,4 @@ dmypy.json
 *.bak
 *.swp
 
+.rsgpt
