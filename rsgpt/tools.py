@@ -1,10 +1,12 @@
 from langchain_core.tools import tool
 from langchain_core.documents import Document
 import uuid
+import os
 from langchain_openai.embeddings import OpenAIEmbeddings
 from langchain_core.vectorstores import InMemoryVectorStore
 from langchain_core.runnables import RunnableConfig
 from langchain_community.tools.tavily_search import TavilySearchResults
+from langchain_chroma import Chroma
 
 
 @tool
@@ -36,6 +38,46 @@ def search_recall_memories(query: str, config: RunnableConfig) -> list[str]:
     if not documents:
         return ["NO MEMORIES FOUND"]
     return [document.page_content for document in documents]
+
+
+@tool
+def search_repo_content(query: str, config: RunnableConfig) -> list[str]:
+    """Perform semantic search on repo content based on query."""
+    vector_store = Chroma(
+        collection_name="repo",
+        embedding_function=OpenAIEmbeddings(),
+        persist_directory=os.path.join(
+            config["configurable"]["repo_path"], ".rsgpt", "chroma_db"
+        ),
+    )
+    search_results = vector_store.similarity_search(query, k=3)
+    return [document.model_dump_json() for document in search_results]
+
+
+@tool
+def search_repo_by_path(
+    path: str, chunk_number: int, config: RunnableConfig
+) -> list[str]:
+    """Search for file content by path and chunk number (starting from 0) in the repository."""
+    vector_store = Chroma(
+        collection_name="repo",
+        embedding_function=OpenAIEmbeddings(),
+        persist_directory=os.path.join(
+            config["configurable"]["repo_path"], ".rsgpt", "chroma_db"
+        ),
+    )
+    documents = vector_store.get(where={"file_path": path})
+    if len(documents["ids"]) == 0:
+        return ["NO FILE FOUND"]
+    if chunk_number > len(documents["ids"]):
+        return [f"NO CHUNK FOUND, max chunk number is {len(documents['ids'])}"]
+    for index in range(len(documents["ids"])):
+        if (
+            documents["metadatas"][index]["chunk_number"]
+            == f"{chunk_number}/{len(documents['ids'])}"
+        ):
+            return [documents["documents"][index]]
+    return ["NO CHUNK FOUND"]
 
 
 web_search = TavilySearchResults(max_results=2)
