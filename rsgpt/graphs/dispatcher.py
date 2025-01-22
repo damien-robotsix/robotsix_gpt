@@ -38,6 +38,7 @@ class DispatcherGraph(StateGraph):
         self.add_node(self.dispatcher_agent)
         self.add_node(self.repo_diver)
         self.add_node(self.specialist_on_langchain)
+        self.add_edge("tools", "dispatcher_agent")
         self.add_edge(START, "dispatcher_agent")
 
     def dispatcher_agent(self, state: DispatcherState):
