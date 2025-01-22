@@ -44,9 +44,8 @@ class RepoDiverGraph(StateGraph):
             (
                 "system",
                 " You are a helpful AI that assists developers with the knowledge of the repository content."
-                " You should use the tools provided to gather the knowledge relative the conversation and help to solve the user query."
-                " You MUST use search_repo_content or generate_repo_tree if you are unsure about the file path."
-                " AFTER using the tools, you MUST produce a final output that will describe with details every piece of information that can be usefull for the current conversation",
+                " You should use the tools provided to solve the user's queries."
+                " If asked to provide file content, just provide the content of the file.",
             ),
             ("placeholder", "{messages}"),
         ]
