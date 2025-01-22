@@ -1,7 +1,7 @@
 from langgraph.graph import MessagesState, StateGraph, START, END
 from .repo_diver import RepoDiverGraph
 from .specialist_with_memory import SpecialistWithMemoryGraph
-from langchain_anthropic import ChatAnthropic
+from langchain_openai import ChatOpenAI
 from langgraph.types import Command
 from langchain_core.runnables import RunnableConfig
 from langgraph.prebuilt import ToolNode
@@ -24,7 +24,7 @@ class DispatcherGraph(StateGraph):
         "If the human initial querry is completed, make a short conclusion."
     )
 
-    llm = ChatAnthropic(model="claude-3-5-sonnet-latest")
+    llm = ChatOpenAI(model_name="gpt-4o")
     llm_with_tools = llm.bind_tools([call_worker])
 
     repo_diver_g = RepoDiverGraph().compile()

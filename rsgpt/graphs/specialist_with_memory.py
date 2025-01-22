@@ -4,7 +4,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableConfig
 from langchain_core.messages import get_buffer_string
 from ..tools import save_recall_memory, search_recall_memories, web_search
-from langchain_anthropic import ChatAnthropic
+from langchain_openai import ChatOpenAI
 import tiktoken
 
 
@@ -62,7 +62,7 @@ class SpecialistWithMemoryGraph(StateGraph):
         ]
     )
 
-    model: ChatAnthropic = ChatAnthropic(model_name="claude-3-5-sonnet-20241022")
+    model: ChatOpenAI = ChatOpenAI(model_name="gpt-4o")
     model_with_tools = model.bind_tools([save_recall_memory, web_search])
 
     def agent(self, state: SpecialistWithMemoryState) -> SpecialistWithMemoryState:
