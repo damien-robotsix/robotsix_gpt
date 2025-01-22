@@ -57,7 +57,7 @@ class DispatcherGraph(StateGraph):
                     goto=response.tool_calls[0]["args"]["worker"],
                     update={
                         "messages": (
-                            "assistant",
+                            "user",
                             response.tool_calls[0]["args"]["additional_prompt"],
                         )
                     },
