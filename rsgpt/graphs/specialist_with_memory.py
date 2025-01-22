@@ -99,4 +99,7 @@ class SpecialistWithMemoryGraph(StateGraph):
         if msg.tool_calls:
             return "tools"
 
+        print(f"SPECIALIST {self.subject}")
+        for message in state["messages"]:
+            message.pretty_print()
         return END

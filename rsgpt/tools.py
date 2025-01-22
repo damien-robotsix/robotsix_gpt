@@ -80,4 +80,49 @@ def search_repo_by_path(
     return ["NO CHUNK FOUND"]
 
 
+@tool
+def generate_repo_tree(config: RunnableConfig) -> str:
+    """
+    Generates a tree representation of a repository, ignoring files and folders starting with a dot.
+    """
+    root_path = config["configurable"]["repo_path"]
+
+    def generate_repo_tree_rec(root_path_rec, prefix):
+        tree = []
+        entries = sorted(
+            [e for e in os.listdir(root_path_rec) if not e.startswith(".")]
+        )
+        for index, entry in enumerate(entries):
+            entry_path = os.path.join(root_path_rec, entry)
+            connector = "└── " if index == len(entries) - 1 else "├── "
+            tree.append(f"{prefix}{connector}{entry}")
+
+            if os.path.isdir(entry_path):
+                subtree_prefix = (
+                    f"{prefix}    " if index == len(entries) - 1 else f"{prefix}│   "
+                )
+                tree.append(generate_repo_tree_rec(entry_path, subtree_prefix))
+        return "\n".join(tree)
+
+    return generate_repo_tree_rec(root_path, "")
+
+
+@tool
+def create_file(file_path: str, file_content: str, config: RunnableConfig) -> str:
+    """Create a file in the repository."""
+    full_path = os.path.join(config["configurable"]["repo_path"], file_path)
+    try:
+        with open(full_path, "w") as f:
+            f.write(file_content)
+    except Exception as e:
+        return f"Error creating file: {e}"
+    return f"File created at {full_path}"
+
+
+@tool
+def call_worker(worker: str, additional_prompt: str):
+    """Call a worker agent."""
+    return
+
+
 web_search = TavilySearchResults(max_results=2)

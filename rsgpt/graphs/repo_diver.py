@@ -10,7 +10,7 @@ from langchain_core.documents import Document
 import os
 from datetime import datetime
 from git import Repo
-from ..tools import search_repo_content, search_repo_by_path
+from ..tools import search_repo_content, search_repo_by_path, generate_repo_tree
 
 
 class RepoDiverGraph(StateGraph):
@@ -18,7 +18,9 @@ class RepoDiverGraph(StateGraph):
         super().__init__(MessagesState)
         self.add_node(self.load_repository)
         self.add_node(self.agent)
-        tool_node = ToolNode(tools=[search_repo_content, search_repo_by_path])
+        tool_node = ToolNode(
+            tools=[search_repo_content, search_repo_by_path, generate_repo_tree]
+        )
         self.add_node("tools", tool_node)
         self.add_edge(START, "load_repository")
         self.add_edge("load_repository", "agent")
@@ -31,6 +33,7 @@ class RepoDiverGraph(StateGraph):
                 "system",
                 " You are a helpful AI that assists developers with the knowledge of the repository content."
                 " You should use the tools provided to gather the knowledge relative the conversation."
+                " You MUST use search_repo_content or generate_repo_tree if you are unsure about the file path."
                 " You MUST NOT try to solve any of the user requests, just provide the appropriate context."
                 " AFTER using the tools, you MUST produce a final output that will describe with details every piece of information that can be usefull for the current conversation",
             ),
@@ -39,7 +42,9 @@ class RepoDiverGraph(StateGraph):
     )
 
     model: ChatOpenAI = ChatOpenAI(model_name="gpt-4o")
-    model_with_tools = model.bind_tools([search_repo_content, search_repo_by_path])
+    model_with_tools = model.bind_tools(
+        [search_repo_content, search_repo_by_path, generate_repo_tree]
+    )
 
     def agent(self, state: MessagesState) -> dict:
         bound = self.prompt | self.model_with_tools
@@ -87,14 +92,10 @@ class RepoDiverGraph(StateGraph):
             ".hpp": Language.CPP,
         }
 
-        print("Modified files:")
-        print(modified_files)
-
         old_documents = vector_store.get()
         for index in range(len(old_documents["ids"])):
             old_file_path = old_documents["metadatas"][index]["file_path"]
             if old_file_path in modified_files or old_file_path not in repo_file_list:
-                print(f"Deleting obsolete document: {old_file_path}")
                 vector_store.delete(old_documents["ids"][index])
 
         for file_path in modified_files:
@@ -137,4 +138,7 @@ class RepoDiverGraph(StateGraph):
         if msg.tool_calls:
             return "tools"
 
+        print("REPO DIVER")
+        for message in state["messages"]:
+            message.pretty_print()
         return END
