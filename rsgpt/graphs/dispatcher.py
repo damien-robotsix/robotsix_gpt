@@ -25,14 +25,14 @@ class DispatcherGraph(StateGraph):
     )
 
     llm = ChatAnthropic(model="claude-3-5-sonnet-latest")
-    llm_with_tools = llm.bind_tools([create_file, call_worker])
+    llm_with_tools = llm.bind_tools([call_worker])
 
     repo_diver_g = RepoDiverGraph().compile()
     specialist_on_langchain_g = SpecialistWithMemoryGraph("langchain").compile()
 
     def __init__(self):
         super().__init__(DispatcherState)
-        self.tools = [create_file, call_worker]
+        self.tools = []
         self.add_node("tools", ToolNode(tools=self.tools))
         self.add_node(self.dispatcher_agent)
         self.add_node(self.repo_diver)
