@@ -1,4 +1,3 @@
-from inspect import EndOfBlock
 from langgraph.graph import MessagesState, StateGraph, START, END
 from .repo_diver import RepoDiverGraph
 from .specialist_with_memory import SpecialistWithMemoryGraph
@@ -16,7 +15,7 @@ class DispatcherState(MessagesState):
 class DispatcherGraph(StateGraph):
     system_prompt: str = (
         "You are a supervisor agent tasked with managing a conversation the following workers agent:\n"
-        "repo_diver: Analyze  the content of the current repository\n"
+        "repo_diver: Operate in the current repository\n"
         "specialist_on_langchain: A specialist on LangChain. Does not have access to the repository content. All context must be provided in the conversation.\n"
         "Each worker will perform a task and respond with their results and status."
         "You are responsible of anticipating the workers needs and routing the conversation accordingly.\n"

@@ -10,7 +10,13 @@ from langchain_core.documents import Document
 import os
 from datetime import datetime
 from git import Repo
-from ..tools import search_repo_content, search_repo_by_path, generate_repo_tree
+from ..tools import (
+    search_repo_content,
+    search_repo_by_path,
+    generate_repo_tree,
+    create_file,
+    modify_file_chunk,
+)
 
 
 class RepoDiverGraph(StateGraph):
@@ -19,7 +25,13 @@ class RepoDiverGraph(StateGraph):
         self.add_node(self.load_repository)
         self.add_node(self.agent)
         tool_node = ToolNode(
-            tools=[search_repo_content, search_repo_by_path, generate_repo_tree]
+            tools=[
+                search_repo_content,
+                search_repo_by_path,
+                generate_repo_tree,
+                create_file,
+                modify_file_chunk,
+            ]
         )
         self.add_node("tools", tool_node)
         self.add_edge(START, "load_repository")
@@ -32,9 +44,8 @@ class RepoDiverGraph(StateGraph):
             (
                 "system",
                 " You are a helpful AI that assists developers with the knowledge of the repository content."
-                " You should use the tools provided to gather the knowledge relative the conversation."
+                " You should use the tools provided to gather the knowledge relative the conversation and help to solve the user query."
                 " You MUST use search_repo_content or generate_repo_tree if you are unsure about the file path."
-                " You MUST NOT try to solve any of the user requests, just provide the appropriate context."
                 " AFTER using the tools, you MUST produce a final output that will describe with details every piece of information that can be usefull for the current conversation",
             ),
             ("placeholder", "{messages}"),
@@ -43,7 +54,13 @@ class RepoDiverGraph(StateGraph):
 
     model: ChatOpenAI = ChatOpenAI(model_name="gpt-4o")
     model_with_tools = model.bind_tools(
-        [search_repo_content, search_repo_by_path, generate_repo_tree]
+        [
+            search_repo_content,
+            search_repo_by_path,
+            generate_repo_tree,
+            create_file,
+            modify_file_chunk,
+        ]
     )
 
     def agent(self, state: MessagesState) -> dict:
