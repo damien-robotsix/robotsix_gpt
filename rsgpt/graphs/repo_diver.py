@@ -1,15 +1,7 @@
 from langgraph.graph import MessagesState, StateGraph, START, END
 from langgraph.prebuilt import ToolNode
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import RunnableConfig
 from langchain_openai import ChatOpenAI
-from langchain_chroma import Chroma
-from langchain_openai.embeddings import OpenAIEmbeddings
-from langchain.text_splitter import RecursiveCharacterTextSplitter, Language
-from langchain_core.documents import Document
-import os
-from datetime import datetime
-from git import Repo
 from ..tools import (
     search_repo_content,
     search_repo_by_path,
@@ -29,7 +21,6 @@ class RepoDiverGraph(StateGraph):
             ]
         )
         self.add_node("tools", tool_node)
-        self.add_node(self.load_repository)
         self.add_conditional_edges("agent", self.route_tools, ["tools", END])
         self.add_edge("tools", "agent")
         self.add_edge(START, "agent")
