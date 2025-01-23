@@ -14,8 +14,6 @@ from ..tools import (
     search_repo_content,
     search_repo_by_path,
     generate_repo_tree,
-    create_file,
-    modify_file_chunk,
 )
 
 
@@ -29,8 +27,6 @@ class RepoDiverGraph(StateGraph):
                 search_repo_content,
                 search_repo_by_path,
                 generate_repo_tree,
-                create_file,
-                modify_file_chunk,
             ]
         )
         self.add_node("tools", tool_node)
@@ -44,8 +40,7 @@ class RepoDiverGraph(StateGraph):
             (
                 "system",
                 " You are a helpful AI that assists developers with the knowledge of the repository content."
-                " You should use the tools provided to solve the user's queries."
-                " If asked to provide file content, just provide the content of the file.",
+                " You can analyze the repository content to help solving the user querry.",
             ),
             ("placeholder", "{messages}"),
         ]
@@ -57,8 +52,6 @@ class RepoDiverGraph(StateGraph):
             search_repo_content,
             search_repo_by_path,
             generate_repo_tree,
-            create_file,
-            modify_file_chunk,
         ]
     )
 
@@ -87,9 +80,12 @@ class RepoDiverGraph(StateGraph):
         repo_file_list = repo.git.ls_files().split("\n")
         modified_files = []
         for file in repo_file_list:
-            file_datetime = datetime.fromtimestamp(os.path.getmtime(file))
-            if file_datetime > last_check_datetime:
-                modified_files.append(file)
+            try:
+                file_datetime = datetime.fromtimestamp(os.path.getmtime(file))
+                if file_datetime > last_check_datetime:
+                    modified_files.append(file)
+            except FileNotFoundError:
+                pass
 
         # Get the vectorstore
         vector_store = Chroma(

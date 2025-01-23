@@ -1,3 +1,4 @@
+from langchain_core.callbacks import file
 from langchain_core.tools import tool
 from langchain_core.documents import Document
 import uuid
@@ -131,7 +132,7 @@ def modify_file_chunk(
     file_path: str, chunk_number: str, new_content: str, config: RunnableConfig
 ) -> str:
     """
-    Modify a specific chunk of a file and update both the file and the vector store.
+    Modify a specific chunk of a file to update it.
 
     Args:
         file_path (str): Path to the file containing the chunk
@@ -175,6 +176,10 @@ def modify_file_chunk(
 
     except Exception as e:
         return f"Error modifying chunk: {str(e)}"
+
+
+# TODO: A tool to read a full file
+# TODO: A tool to write a full file
 
 
 web_search = TavilySearchResults(max_results=2)
