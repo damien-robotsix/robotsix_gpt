@@ -6,7 +6,6 @@ from langchain_openai.embeddings import OpenAIEmbeddings
 from langchain_core.vectorstores import InMemoryVectorStore
 from langchain_core.runnables import RunnableConfig
 from langchain_community.tools.tavily_search import TavilySearchResults
-from langchain_community.tools import WriteFileTool
 from langchain_chroma import Chroma
 
 
@@ -130,8 +129,13 @@ def call_worker(worker: str, additional_prompt: str):
 def write_file(file_path: str, file_content: str, config: RunnableConfig):
     """Write file content to a file."""
     repo_path = config["configurable"]["repo_path"]
-    write_file_tool = WriteFileTool(root_dir=repo_path)
-    return write_file_tool.invoke({"file_path": file_path, "text": file_content})
+    full_path = os.path.join(repo_path, file_path)
+    try:
+        with open(full_path, "w") as f:
+            f.write(file_content)
+    except Exception as e:
+        return f"Error writing file: {e}"
+    return f"File written successfully to {full_path}"
 
 
 @tool
@@ -154,9 +158,7 @@ def modify_file_chunk(
             ),
         )
         # Retrieve all chunks for the file
-        results = vector_store.get(
-            where={"file_path": file_path}, include=["metadatas", "documents"]
-        )
+        results = vector_store.get(where={"file_path": file_path})
         if not results["ids"]:
             return "File not found in vector store"
         # Order results by chunk number
@@ -165,7 +167,7 @@ def modify_file_chunk(
         )
         # Retreive the selected chunk content
         index = int(chunk_number.split("/")[0])
-        modified_content = results["documents"][index].page_content
+        modified_content = results["documents"][index]
         # Find and replace the selected chunk content in the file
         with open(
             os.path.join(config["configurable"]["repo_path"], file_path), "r"
