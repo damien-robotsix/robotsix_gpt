@@ -174,6 +174,10 @@ def modify_file_chunk(
         ) as f:
             file_content = f.read()
             file_content = file_content.replace(modified_content, new_content)
+        with open(
+            os.path.join(config["configurable"]["repo_path"], file_path), "w"
+        ) as f:
+            f.write(file_content)
         return "File chunk modified successfully"
     except Exception as e:
         return f"Error modifying chunk: {str(e)}"

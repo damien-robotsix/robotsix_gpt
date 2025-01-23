@@ -82,5 +82,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 - Built with [LangChain](https://github.com/hwchase17/langchain)
 
 ---
-
 For more information or to report issues, please visit the repository's issue tracker.
