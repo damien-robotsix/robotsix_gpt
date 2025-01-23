@@ -1,4 +1,3 @@
-from langchain_core.callbacks import file
 from langchain_core.tools import tool
 from langchain_core.documents import Document
 import uuid
@@ -7,8 +6,8 @@ from langchain_openai.embeddings import OpenAIEmbeddings
 from langchain_core.vectorstores import InMemoryVectorStore
 from langchain_core.runnables import RunnableConfig
 from langchain_community.tools.tavily_search import TavilySearchResults
+from langchain_community.tools import WriteFileTool
 from langchain_chroma import Chroma
-from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 
 @tool
@@ -128,12 +127,19 @@ def call_worker(worker: str, additional_prompt: str):
 
 
 @tool
+def write_file(file_path: str, file_content: str, config: RunnableConfig):
+    """Write file content to a file."""
+    repo_path = config["configurable"]["repo_path"]
+    write_file_tool = WriteFileTool(root_dir=repo_path)
+    return write_file_tool.invoke({"file_path": file_path, "text": file_content})
+
+
+@tool
 def modify_file_chunk(
     file_path: str, chunk_number: str, new_content: str, config: RunnableConfig
 ) -> str:
     """
-    Modify a specific chunk of a file to update it.
-
+    Modify a specific chunk of a file and update both the file and the vector store.
     Args:
         file_path (str): Path to the file containing the chunk
         chunk_number (str): Chunk number in format "index/total"
@@ -147,39 +153,28 @@ def modify_file_chunk(
                 config["configurable"]["repo_path"], ".rsgpt", "chroma_db"
             ),
         )
-
         # Retrieve all chunks for the file
         results = vector_store.get(
             where={"file_path": file_path}, include=["metadatas", "documents"]
         )
-
         if not results["ids"]:
             return "File not found in vector store"
-
         # Order results by chunk number
         results["metadatas"] = sorted(
             results["metadatas"], key=lambda x: x["chunk_number"].split("/")[0]
         )
-
         # Retreive the selected chunk content
         index = int(chunk_number.split("/")[0])
         modified_content = results["documents"][index].page_content
-
         # Find and replace the selected chunk content in the file
         with open(
             os.path.join(config["configurable"]["repo_path"], file_path), "r"
         ) as f:
             file_content = f.read()
             file_content = file_content.replace(modified_content, new_content)
-
         return "File chunk modified successfully"
-
     except Exception as e:
         return f"Error modifying chunk: {str(e)}"
-
-
-# TODO: A tool to read a full file
-# TODO: A tool to write a full file
 
 
 web_search = TavilySearchResults(max_results=2)
