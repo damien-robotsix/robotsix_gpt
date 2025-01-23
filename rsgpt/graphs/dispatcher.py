@@ -48,7 +48,6 @@ class DispatcherGraph(StateGraph):
         super().__init__(DispatcherState)
         self.tools = [
             write_file,
-            read_file,
             modify_file_chunk,
             search_repo_by_path,
             generate_repo_tree,
