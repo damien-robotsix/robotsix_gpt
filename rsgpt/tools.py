@@ -44,6 +44,36 @@ def execute_command_at_repo_root(command: str, config: RunnableConfig) -> str:
 
 
 @tool
+def run_python_test_script(test_script_name: str, config: RunnableConfig) -> str:
+    """
+    Execute a Python test script from the test folder and return its output.
+    """
+    try:
+        repo_root = config["configurable"]["repo_path"]
+        command = [
+            "python3",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "test",
+            "-p",
+            test_script_name,
+        ]
+        result = subprocess.run(
+            command,
+            cwd=repo_root,
+            shell=True,
+            check=True,
+            text=True,
+            capture_output=True,
+        )
+        return result.stdout
+    except subprocess.CalledProcessError as e:
+        return f"An error occurred while running the test script: {e.stderr}"
+
+
+@tool
 def search_recall_memories(query: str, config: RunnableConfig) -> list[str]:
     """Search for memories in vectorstore based on query."""
     try:

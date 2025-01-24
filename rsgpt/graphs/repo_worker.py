@@ -17,6 +17,7 @@ from ..tools import (
     search_repo_by_path,
     generate_repo_tree,
     execute_command_at_repo_root,
+    run_python_test_script,  # Added the new tool here
 )
 
 
@@ -32,6 +33,7 @@ class RepoWorker(StateGraph):
                 write_file,
                 modify_file_chunk,
                 execute_command_at_repo_root,
+                run_python_test_script,
             ]
         )
         self.add_node("tools", tool_node)
@@ -66,6 +68,7 @@ class RepoWorker(StateGraph):
             write_file,
             modify_file_chunk,
             execute_command_at_repo_root,
+            run_python_test_script,
         ]
     )
 
