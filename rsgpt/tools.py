@@ -69,6 +69,7 @@ def search_repo_by_path(
     documents = vector_store.get(where={"file_path": path})
     if len(documents["ids"]) == 0:
         return ["NO FILE FOUND"]
+    chunk_max = len(documents["ids"])
     if chunk_number > len(documents["ids"]):
         return [f"NO CHUNK FOUND, max chunk number is {len(documents['ids'])}"]
     for index in range(len(documents["ids"])):
@@ -76,7 +77,11 @@ def search_repo_by_path(
             documents["metadatas"][index]["chunk_number"]
             == f"{chunk_number}/{len(documents['ids'])}"
         ):
-            return [documents["documents"][index]]
+            return [
+                "{'content': documents['documents'][index],"
+                f"'chunk_number': '{chunk_number}/{chunk_max}'"
+                "}"
+            ]
     return ["NO CHUNK FOUND"]
 
 
