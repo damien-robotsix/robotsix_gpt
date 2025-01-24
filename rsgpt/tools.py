@@ -130,6 +130,9 @@ def write_file(file_path: str, file_content: str, config: RunnableConfig):
     """Write file content to a file."""
     repo_path = config["configurable"]["repo_path"]
     full_path = os.path.join(repo_path, file_path)
+    # Check if the file exists
+    if os.path.exists(full_path):
+        return "File already exists. Use modify_file_chunk to update the file."
     try:
         with open(full_path, "w") as f:
             f.write(file_content)

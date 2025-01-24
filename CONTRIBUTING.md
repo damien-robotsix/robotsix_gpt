@@ -1,43 +1,77 @@
-# Contributing to the Project
-
-Thank you for considering contributing to our project! We welcome all contributions and are grateful for your support.
-
 ## Code Style Guidelines
-- **Python**: Follow PEP 8 guidelines for writing clean and readable Python code. Use tools like `flake8` to check for style compliance.
-- Ensure all code is properly documented, and docstrings are used where applicable.
 
-## Branch Naming Conventions
-- Use the following format for branch names: `type/description`, where `type` can be `feature`, `fix`, `chore`, etc.
-  - Example: `feature/add-login-functionality`
+### General Coding Standards
 
-## Commit Message Guidelines
-- Follow the Conventional Commits specification:
-  - **feat**: A new feature
-  - **fix**: A bug fix
-  - **docs**: Documentation only changes
-  - **style**: Changes that do not affect the meaning of the code (white-space, formatting, etc.)
-  - **refactor**: A code change that neither fixes a bug nor adds a feature
-  - **perf**: A code change that improves performance
-  - **test**: Adding missing or correcting existing tests
-  - **chore**: Changes to the build process or auxiliary tools and libraries
-- Example: `feat: add user authentication module`
+- Follow [PEP 8](https://www.python.org/dev/peps/pep-0008/) for Python code style conventions.
+- Where applicable, also consider [PEP 257](https://www.python.org/dev/peps/pep-0257/) for docstring conventions.
 
-## Testing Requirements
-- Ensure all new features and bug fixes are covered by tests.
-- Run all tests to ensure nothing is broken before submitting a pull request.
+### Code Layout
 
-## Pull Request Process
-1. Ensure your code follows the style guidelines and tests have been added for any new behavior.
-2. Ensure all tests pass.
-3. Submit your pull request with a clear description of the changes and any related issue numbers.
-4. Wait for a reviewer to provide feedback.
+- **Indentation:** Use 4 spaces per indentation level. Do not use tabs.
+- **Line Length:** Limit all lines to a maximum of 79 characters.
+- **Blank Lines:** Surround top-level function and class definitions with two blank lines. Method definitions inside a class are surrounded by a single blank line.
 
-## Issue Reporting
-- Use the issue tracker to report bugs and request features.
-- Provide as much detail as possible to help us understand and replicate the issue.
+### Imports
 
-## Community Guidelines
-- Be respectful and considerate in all communications.
-- Follow the project's code of conduct at all times, demonstrating our values of inclusivity and respectfulness.
+- Imports should always be at the top of the file, just after any module comments and docstrings.
+- Follow the order: standard library imports, third-party imports, local application/library-specific imports. Each group should be separated by a blank line.
+  
+```python
+import os
+import sys
 
-We appreciate your efforts to contribute to this project! If you have any questions or need further assistance, feel free to reach out to the maintainers.
+import requests
+
+from mymodule import my_function
+```
+
+### Naming Conventions
+
+- **Function and Variable Names:** Use lowercase words separated by underscores, e.g., `my_function`, `variable_name`.
+- **Class Names:** Follow the CapWords convention, e.g., `MyClass`.
+- **Constants:** Use all uppercase words separated by underscores, e.g., `MAX_OVERFLOW`.
+
+### Comments
+
+- Comments should be complete sentences. Use one or two spaces after a sentence-ending period.
+- Ensure that comments are up to date with the code they describe.
+- Use inline comments sparingly and only if necessary.
+
+### Docstrings
+
+- Write docstrings for all public modules, functions, classes, and methods.
+- Follow the conventions outlined in [PEP 257](https://www.python.org/dev/peps/pep-0257/) for writing docstrings.
+
+### Strings
+
+- Prefer using single quotes (`'`) for strings unless the string contains a single quote character.
+
+### Whitespaces
+
+- Avoid extraneous whitespace in the following situations:
+  ```python
+  # Correct:
+  spam(ham[1], {eggs: 2})
+  
+  # Wrong:
+  spam( ham[ 1 ], { eggs: 2 } )
+  ```
+
+### Exceptions
+
+- Use specific exception types whenever possible.
+- Use "try-except" block for handling exceptions when necessary. Clean up resources after exceptions using "finally".
+
+### Best Practices
+
+- **Type Hints:** Use type hints to specify the expected types of function arguments and return values.
+- **Linter Usage:** Use tools like Flake8 or pylint to automatically check for style violations.
+- **Testing:** Write unit tests for new code and changes with frameworks such as pytest or unittest.
+  
+```python
+def add(a: int, b: int) -> int:
+    """Add two integers and return the result."""
+    return a + b
+```
+
+Please ensure you follow these guidelines when contributing new code to maintain consistency across the project. For any queries related to these guidelines, please reach out in our project's communication channel.
