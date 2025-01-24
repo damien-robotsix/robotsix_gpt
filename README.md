@@ -66,19 +66,21 @@ The project uses several configuration files:
 
 ## 💡 Usage
 
-[Usage instructions to be added based on specific implementation details]
+To use RSGPT:
+1. Ensure all dependencies are installed as described in the installation section.
+2. Run the main script to analyze a repository:
+   ```bash
+   python main.py --repo-path /path/to/your/repo
+   ```
+   Adjust the `--repo-path` to the location of the repository you wish to analyze.
 
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## 📝 License
-
-[License information to be added]
-
 ## 👥 Authors
 
-- Initial work - [Author Name]
+- Initial work by [Your Name Here]
 
 ## 🙏 Acknowledgments
 

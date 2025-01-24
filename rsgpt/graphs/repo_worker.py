@@ -6,6 +6,7 @@ from langchain_chroma import Chroma
 from langchain_openai.embeddings import OpenAIEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter, Language
 from langchain_core.documents import Document
+from langchain_core.runnables import RunnableConfig
 import os
 from datetime import datetime
 from git import Repo
@@ -18,7 +19,7 @@ from ..tools import (
 )
 
 
-class RepoDiverGraph(StateGraph):
+class RepoWorker(StateGraph):
     def __init__(self):
         super().__init__(MessagesState)
         self.add_node(self.agent)

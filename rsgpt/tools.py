@@ -120,7 +120,7 @@ def create_file(file_path: str, file_content: str, config: RunnableConfig) -> st
 
 
 @tool
-def call_worker(worker: str, additional_prompt: str):
+def call_worker(worker: str, prompt: str):
     """Call a worker agent."""
     return
 
