@@ -1,11 +1,8 @@
 from langgraph.graph import MessagesState, StateGraph, START, END
-from .repo_worker import RepoWorker
-from .specialist_with_memory import SpecialistWithMemoryGraph
 from langchain_openai import ChatOpenAI
 from langgraph.types import Command
-from langchain_core.runnables import RunnableConfig
 from langgraph.prebuilt import ToolNode
-from ..tools import (
+from .worker_tool import (
     call_worker,
 )
 
@@ -36,16 +33,11 @@ class DispatcherGraph(StateGraph):
         ]
     )
 
-    repo_worker_g = RepoWorker().compile()
-    specialist_on_langchain_g = SpecialistWithMemoryGraph("langchain").compile()
-
     def __init__(self):
         super().__init__(DispatcherState)
-        self.tools = []
+        self.tools = [call_worker]
         self.add_node("tools", ToolNode(tools=self.tools))
         self.add_node(self.dispatcher_agent)
-        self.add_node(self.repo_worker)
-        self.add_node(self.specialist_on_langchain)
         self.add_edge(START, "dispatcher_agent")
         self.add_edge("tools", "dispatcher_agent")
 
@@ -58,54 +50,8 @@ class DispatcherGraph(StateGraph):
             message.pretty_print()
         response = self.llm_with_tools.invoke(messages)
         print("DISPATCHER RESPONSE")
-        print(response)
+        response.pretty_print()
         print("END DISPATCHER RESPONSE")
         if response.tool_calls:
-            if response.tool_calls[0]["name"] == "call_worker":
-                return Command(
-                    goto=response.tool_calls[0]["args"]["worker"],
-                    update={
-                        "messages": [
-                            (
-                                "assistant",
-                                "CALLING WORKER: "
-                                + response.tool_calls[0]["args"]["worker"],
-                            ),
-                            (
-                                "assistant",
-                                response.tool_calls[0]["args"]["prompt"],
-                            ),
-                        ]
-                    },
-                )
-            return Command(
-                goto="tools",
-                update={
-                    "messages": response,
-                },
-            )
+            return Command(goto="tools", update={"messages": response})
         return Command(goto=END, update={"messages": response})
-
-    def repo_worker(self, state: DispatcherState, config: RunnableConfig):
-        worker_prompt = state["messages"][-1].content
-        response = self.repo_worker_g.invoke(
-            {"messages": ("user", worker_prompt)}, config
-        )
-        response_message = response["messages"][-1].content
-        response_message = str("REPO WORKER: \n") + response_message
-        return Command(
-            goto="dispatcher_agent",
-            update={"messages": ("assistant", response_message)},
-        )
-
-    def specialist_on_langchain(self, state: DispatcherState, config: RunnableConfig):
-        worker_prompt = state["messages"][-1].content
-        response = self.specialist_on_langchain_g.invoke(
-            {"messages": ("user", worker_prompt)}, config
-        )
-        response_message = response["messages"][-1].content
-        response_message = str("SPECIALIST ON LANGCHAIN: \n") + response_message
-        return Command(
-            goto="dispatcher_agent",
-            update={"messages": ("assistant", response_message)},
-        )

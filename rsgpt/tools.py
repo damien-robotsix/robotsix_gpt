@@ -124,12 +124,6 @@ def create_file(file_path: str, file_content: str, config: RunnableConfig) -> st
 
 
 @tool
-def call_worker(worker: str, prompt: str):
-    """Call a worker agent."""
-    return
-
-
-@tool
 def write_file(file_path: str, file_content: str, config: RunnableConfig):
     """Write file content to a file."""
     repo_path = config["configurable"]["repo_path"]
@@ -150,7 +144,7 @@ def modify_file_chunk(
     file_path: str, chunk_number: str, new_content: str, config: RunnableConfig
 ) -> str:
     """
-    Modify a specific chunk of a file and update both the file and the vector store.
+    Modify a specific chunk of a file.
     Args:
         file_path (str): Path to the file containing the chunk
         chunk_number (str): Chunk number in format "index/total"
@@ -188,6 +182,48 @@ def modify_file_chunk(
         return "File chunk modified successfully"
     except Exception as e:
         return f"Error modifying chunk: {str(e)}"
+
+
+@tool
+def delete_file_chunk(file_path: str, chunk_number: str, config: RunnableConfig) -> str:
+    """
+    Delete a specific chunk of a file.
+    Args:
+        file_path (str): Path to the file containing the chunk
+        chunk_number (str): Chunk number in format "index/total"
+    """
+    try:
+        vector_store = Chroma(
+            collection_name="repo",
+            embedding_function=OpenAIEmbeddings(),
+            persist_directory=os.path.join(
+                config["configurable"]["repo_path"], ".rsgpt", "chroma_db"
+            ),
+        )
+        # Retrieve all chunks for the file
+        results = vector_store.get(where={"file_path": file_path})
+        if not results["ids"]:
+            return "File not found in vector store"
+        # Order results by chunk number
+        results["metadatas"] = sorted(
+            results["metadatas"], key=lambda x: x["chunk_number"].split("/")[0]
+        )
+        # Retreive the selected chunk content
+        index = int(chunk_number.split("/")[0])
+        deleted_content = results["documents"][index]
+        # Find and replace the selected chunk content in the file
+        with open(
+            os.path.join(config["configurable"]["repo_path"], file_path), "r"
+        ) as f:
+            file_content = f.read()
+            file_content = file_content.replace(deleted_content, "")
+        with open(
+            os.path.join(config["configurable"]["repo_path"], file_path), "w"
+        ) as f:
+            f.write(file_content)
+        return "File chunk deleted successfully"
+    except Exception as e:
+        return f"Error deleting chunk: {str(e)}"
 
 
 web_search = TavilySearchResults(max_results=2)
