@@ -2,6 +2,7 @@ from langchain_core.tools import tool
 from langchain_core.documents import Document
 import uuid
 import os
+import subprocess
 from langchain_openai.embeddings import OpenAIEmbeddings
 from langchain_core.vectorstores import InMemoryVectorStore
 from langchain_core.runnables import RunnableConfig
@@ -22,6 +23,24 @@ def save_recall_memory(memory: str, config: RunnableConfig) -> str:
     recall_vector_store.add_documents([document])
     recall_vector_store.dump(config["configurable"]["memory_store_path"])
     return memory
+
+
+@tool
+def execute_command_at_repo_root(command: str, config: RunnableConfig) -> str:
+    """Execute a command from the repository's root directory and return its output."""
+    try:
+        repo_root = config["configurable"]["repo_path"]
+        result = subprocess.run(
+            command,
+            cwd=repo_root,
+            shell=True,
+            check=True,
+            text=True,
+            capture_output=True,
+        )
+        return result.stdout
+    except subprocess.CalledProcessError as e:
+        return f"An error occurred: {e.stderr}"
 
 
 @tool

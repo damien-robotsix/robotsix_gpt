@@ -15,10 +15,10 @@ class DispatcherGraph(StateGraph):
     system_prompt: str = (
         "You are a supervisor agent tasked with managing a conversation the following workers agent:\n"
         "repo_worker: Can operate in the current repository.\n"
-        "specialist_on_langchain: A specialist on LangChain. Does not have access to the repository content. All context must be provided in the prompt.\n"
+        "specialist_on_langchain: A specialist on LangChain provides only insight on LangChain usage.\n"
         "To call a worker, use the call_worker tool.\n"
         "Consider that the workers don't have access to the full conversation history.\n"
-        "Hence, you must provide the necessary context for each worker in the prompt.\n"
+        "Hence, you must provide the necessary context for each worker in the prompt of each tool call.\n"
         "Each worker will perform a task and respond with their results and status."
         "You are responsible of anticipating the workers needs and routing the conversation accordingly.\n"
         "You can also use the other tools provided to help perform the initial query.\n"
@@ -45,13 +45,14 @@ class DispatcherGraph(StateGraph):
         messages = [
             {"role": "system", "content": self.system_prompt},
         ] + state["messages"]
-        print("DISPATCHER")
+        print("DISPATCHER INPUT*********************************************")
         for message in state["messages"]:
             message.pretty_print()
+        print("END DISPATCHER INPUT*****************************************")
         response = self.llm_with_tools.invoke(messages)
-        print("DISPATCHER RESPONSE")
+        print("DISPATCHER RESPONSE**************************************")
         response.pretty_print()
-        print("END DISPATCHER RESPONSE")
+        print("END DISPATCHER RESPONSE**********************************")
         if response.tool_calls:
             return Command(goto="tools", update={"messages": response})
         return Command(goto=END, update={"messages": response})

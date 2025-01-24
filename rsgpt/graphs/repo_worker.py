@@ -16,7 +16,9 @@ from ..tools import (
     modify_file_chunk,
     search_repo_by_path,
     generate_repo_tree,
+    execute_command_at_repo_root,
 )
+from .worker_tool import call_worker
 
 
 class RepoWorker(StateGraph):
@@ -30,6 +32,8 @@ class RepoWorker(StateGraph):
                 generate_repo_tree,
                 write_file,
                 modify_file_chunk,
+                execute_command_at_repo_root,
+                call_worker,
             ]
         )
         self.add_node("tools", tool_node)
@@ -48,7 +52,8 @@ class RepoWorker(StateGraph):
                 " You must solve as much as you can without asking for human input."
                 " When you use a tool, only provide the tool call, do not provide other information."
                 " When you have completed using the tools, make a comprehensive conclusion to provide "
-                "proper feedback to the user.",
+                "proper feedback to the user."
+                " You can call the specialist_on_langchain worker to help you with specific usage of Langchain tools.",
             ),
             ("placeholder", "{messages}"),
         ]
@@ -62,6 +67,7 @@ class RepoWorker(StateGraph):
             generate_repo_tree,
             write_file,
             modify_file_chunk,
+            execute_command_at_repo_root,
         ]
     )
 
