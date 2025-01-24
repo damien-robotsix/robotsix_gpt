@@ -160,7 +160,8 @@ class RepoWorker(StateGraph):
         if msg.tool_calls:
             return "tools"
 
-        print("REPO DIVER")
+        print("************************************************ REPO WORKER")
         for message in state["messages"]:
             message.pretty_print()
+        print("************************************************ END REPO WORKER")
         return END
