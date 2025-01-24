@@ -67,11 +67,11 @@ class DispatcherGraph(StateGraph):
                         "messages": [
                             (
                                 "assistant",
-                                "Calling worker: "
+                                "CALLING WORKER: "
                                 + response.tool_calls[0]["args"]["worker"],
                             ),
                             (
-                                "user",
+                                "assistant",
                                 response.tool_calls[0]["args"]["prompt"],
                             ),
                         ]
@@ -83,16 +83,28 @@ class DispatcherGraph(StateGraph):
                     "messages": response,
                 },
             )
-        return Command(goto=END)
+        return Command(goto=END, update={"messages": response})
 
     def repo_worker(self, state: DispatcherState, config: RunnableConfig):
-        response = self.repo_worker_g.invoke(state, config)
+        worker_prompt = state["messages"][-1].content
+        response = self.repo_worker_g.invoke(
+            {"messages": ("user", worker_prompt)}, config
+        )
+        response_message = response["messages"][-1].content
+        response_message = str("REPO WORKER: \n") + response_message
         return Command(
-            goto="dispatcher_agent", update={"messages": response["messages"][-1]}
+            goto="dispatcher_agent",
+            update={"messages": ("assistant", response_message)},
         )
 
     def specialist_on_langchain(self, state: DispatcherState, config: RunnableConfig):
-        response = self.specialist_on_langchain_g.invoke(state, config)
+        worker_prompt = state["messages"][-1].content
+        response = self.specialist_on_langchain_g.invoke(
+            {"messages": ("user", worker_prompt)}, config
+        )
+        response_message = response["messages"][-1].content
+        response_message = str("SPECIALIST ON LANGCHAIN: \n") + response_message
         return Command(
-            goto="dispatcher_agent", update={"messages": response["messages"][-1]}
+            goto="dispatcher_agent",
+            update={"messages": ("assistant", response_message)},
         )

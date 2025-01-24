@@ -30,62 +30,10 @@ pip install hatch
 hatch shell
 ```
 
+## 👤 Author
+
+Damien SIX - [damien@robotsix.net](mailto:damien@robotsix.net)
+
 ## 📄 License
 
 This project is licensed under the Apache License 2.0. See the [LICENSE](LICENSE) file for details.
-
-## 📦 Dependencies
-
-The project relies on several key packages:
-- `langgraph` - For graph-based processing
-- `langsmith` - Language model tooling
-- `langchain` and variants - For AI model integration
-- `tavily-python` - Search functionality
-- `GitPython` - Git repository handling
-
-## 🏗 Project Structure
-
-```
-rsgpt/
-├── main.py              # Main application entry point
-├── graphs/              # Graph-based processing components
-│   ├── dispatcher.py
-│   ├── repo_diver.py
-│   └── specialist_with_memory.py
-├── tools.py             # Repository interaction tools
-└── utils/
-    └── git.py          # Git utilities
-```
-
-## 🔧 Configuration
-
-The project uses several configuration files:
-- `compose.yml` - Container orchestration setup
-- `project.yml` - Project configuration and environment setup
-- `pyproject.toml` - Project metadata and dependencies
-
-## 💡 Usage
-
-To use RSGPT:
-1. Ensure all dependencies are installed as described in the installation section.
-2. Run the main script to analyze a repository:
-   ```bash
-   python main.py --repo-path /path/to/your/repo
-   ```
-   Adjust the `--repo-path` to the location of the repository you wish to analyze.
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## 👥 Authors
-
-- Initial work by [Your Name Here]
-
-## 🙏 Acknowledgments
-
-- Thanks to all contributors and maintainers
-- Built with [LangChain](https://github.com/hwchase17/langchain)
-
----
-For more information or to report issues, please visit the repository's issue tracker.
