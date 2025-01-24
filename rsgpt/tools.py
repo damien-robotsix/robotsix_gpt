@@ -77,10 +77,9 @@ def search_repo_by_path(
             documents["metadatas"][index]["chunk_number"]
             == f"{chunk_number}/{len(documents['ids'])}"
         ):
+            content = documents["documents"][index]
             return [
-                "{'content': documents['documents'][index],"
-                f"'chunk_number': '{chunk_number}/{chunk_max}'"
-                "}"
+                f"{{'content': {content},'chunk_number': '{chunk_number}/{chunk_max}'}}"
             ]
     return ["NO CHUNK FOUND"]
 
