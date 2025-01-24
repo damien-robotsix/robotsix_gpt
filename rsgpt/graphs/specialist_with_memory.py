@@ -12,7 +12,7 @@ class SpecialistWithMemoryState(MessagesState):
     recall_memories: list[str]
 
 
-class SpecialistWithMemoryGraph(StateGraph):
+class SpecialistWithMemory(StateGraph):
     def __init__(self, subject: str):
         super().__init__(SpecialistWithMemoryState)
         self.subject = subject

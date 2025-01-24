@@ -1,12 +1,10 @@
 from langchain_core.tools import tool
 from langchain_core.runnables import RunnableConfig
-from . import specialist_with_memory
-from . import repo_worker
+from .specialist_with_memory import SpecialistWithMemory
+from .repo_worker import RepoWorker
 
-repo_worker_g = repo_worker.RepoWorker().compile()
-specialist_on_langchain_g = specialist_with_memory.SpecialistWithMemoryGraph(
-    "langchain"
-).compile()
+repo_worker_g = RepoWorker().compile()
+specialist_on_langchain_g = SpecialistWithMemory("langchain").compile()
 
 
 @tool

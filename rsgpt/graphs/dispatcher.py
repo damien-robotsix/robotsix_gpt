@@ -15,7 +15,6 @@ class DispatcherGraph(StateGraph):
     system_prompt: str = (
         "You are a supervisor agent tasked with managing a conversation the following workers agent:\n"
         "repo_worker: Can operate in the current repository.\n"
-        "specialist_on_langchain: A specialist on LangChain provides only insight on LangChain usage.\n"
         "To call a worker, use the call_worker tool.\n"
         "Consider that the workers don't have access to the full conversation history.\n"
         "Hence, you must provide the necessary context for each worker in the prompt of each tool call.\n"

@@ -18,7 +18,6 @@ from ..tools import (
     generate_repo_tree,
     execute_command_at_repo_root,
 )
-from .worker_tool import call_worker
 
 
 class RepoWorker(StateGraph):
@@ -33,7 +32,6 @@ class RepoWorker(StateGraph):
                 write_file,
                 modify_file_chunk,
                 execute_command_at_repo_root,
-                call_worker,
             ]
         )
         self.add_node("tools", tool_node)
