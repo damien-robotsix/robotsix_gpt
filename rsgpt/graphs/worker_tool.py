@@ -12,12 +12,17 @@ specialist_on_langchain_g = SpecialistWithMemory("langchain").compile()
 @tool
 def call_worker(
     worker: str,
+    fake_user_message: str,
     config: RunnableConfig,
     messages: Annotated[list, InjectedState("messages")],
 ):
-    """Call a worker agent. Will route the messages to the worker agent and return the response."""
+    """Call a worker agent. Will route the messages to the worker agent and return the response.
+    You can fake an additional user message to the worker agent by providing the fake_user_message parameter.
+    The worker agent will receive the fake_user_message as the last message in the conversation.
+    """
     response = None
     input_messages = messages[:-1]
+    input_messages.append(("user", fake_user_message))
     if worker == "repo_worker":
         response = repo_worker_g.invoke({"messages": input_messages}, config)
     elif worker == "specialist_on_langchain":

@@ -82,6 +82,7 @@ class RepoWorker(StateGraph):
                 last_check_datetime = datetime.fromisoformat(f.read())
         # Check recursively for all files that have been modified since last check
         repo = Repo(repo_path)
+        repo.git.add(A=True)  # Stages all changes including untracked files
         repo_file_list = repo.git.ls_files().split("\n")
         modified_files = []
         for file in repo_file_list:
