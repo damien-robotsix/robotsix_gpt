@@ -46,31 +46,40 @@ def execute_command_at_repo_root(command: str, config: RunnableConfig) -> str:
 @tool
 def run_python_test_script(test_script_name: str, config: RunnableConfig) -> str:
     """
-    Execute a Python test script from the test folder and return its output.
+    Import and execute a Python test script from the test folder and return its output.
     """
+    import unittest
+    import importlib
+    import io
+    import sys
+
     try:
-        repo_root = config["configurable"]["repo_path"]
-        command = [
-            "python3",
-            "-m",
-            "unittest",
-            "discover",
-            "-s",
-            "test",
-            "-p",
-            test_script_name,
-        ]
-        result = subprocess.run(
-            command,
-            cwd=repo_root,
-            shell=True,
-            check=True,
-            text=True,
-            capture_output=True,
-        )
-        return result.stdout
-    except subprocess.CalledProcessError as e:
-        return f"An error occurred while running the test script: {e.stderr}"
+        # Take the base name of the test script
+        test_script_name = os.path.basename(test_script_name)
+
+        # Remove the '.py' extension to import as module
+        test_module_name = test_script_name.replace(".py", "")
+
+        test_module = importlib.import_module(".test", test_module_name)
+
+        # Create a test suite and add tests from the module
+        test_suite = unittest.defaultTestLoader.loadTestsFromModule(test_module)
+
+        # Capture the output
+        output = io.StringIO()
+        runner = unittest.TextTestRunner(stream=output, verbosity=2)
+        runner.run(test_suite)
+
+        # Fetch the output
+        result = output.getvalue()
+
+        # Clean up the system path
+        sys.path.pop(0)
+
+        return result
+
+    except Exception as e:
+        return f"An error occurred while running the test script: {str(e)}"
 
 
 @tool

@@ -126,12 +126,12 @@ class RepoWorker(StateGraph):
             if language:
                 text_splitter = RecursiveCharacterTextSplitter.from_language(
                     language=language,
-                    chunk_size=1000,
+                    chunk_size=2000,
                     chunk_overlap=200,
                 )
             else:
                 text_splitter = RecursiveCharacterTextSplitter(
-                    chunk_size=1000,
+                    chunk_size=2000,
                     chunk_overlap=200,
                 )
             with open(file_path, "r") as f:
