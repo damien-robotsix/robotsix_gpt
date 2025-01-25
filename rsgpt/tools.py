@@ -30,53 +30,40 @@ def execute_command_at_repo_root(command: str, config: RunnableConfig) -> str:
     """Execute a command from the repository's root directory and return its output."""
     try:
         repo_root = config["configurable"]["repo_path"]
-        result = subprocess.run(
+        process = subprocess.Popen(
             command,
             cwd=repo_root,
             shell=True,
-            check=True,
-            text=True,
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
         )
-        return result.stdout
+        stdout, stderr = process.communicate()
+        return {"stdout": stdout, "stderr": stderr}
     except subprocess.CalledProcessError as e:
         return f"An error occurred: {e.stderr}"
 
 
 @tool
-def run_python_test_script(test_script_name: str, config: RunnableConfig) -> str:
+def run_python_test_script(test_script_path: str, config: RunnableConfig) -> str:
     """
-    Import and execute a Python test script from the test folder and return its output.
-    """
-    import unittest
-    import importlib
-    import io
-    import sys
+    Execute a Python test script from the test folder and return its output.
+    Args:
 
+    test_script_path (str): Path to the test script from the repository's root directory.
+    """
+    repo_root = config["configurable"]["repo_path"]
+    test_script_path = os.path.join(repo_root, test_script_path)
     try:
-        # Take the base name of the test script
-        test_script_name = os.path.basename(test_script_name)
-
-        # Remove the '.py' extension to import as module
-        test_module_name = test_script_name.replace(".py", "")
-
-        test_module = importlib.import_module(".test", test_module_name)
-
-        # Create a test suite and add tests from the module
-        test_suite = unittest.defaultTestLoader.loadTestsFromModule(test_module)
-
-        # Capture the output
-        output = io.StringIO()
-        runner = unittest.TextTestRunner(stream=output, verbosity=2)
-        runner.run(test_suite)
-
-        # Fetch the output
-        result = output.getvalue()
-
-        # Clean up the system path
-        sys.path.pop(0)
-
-        return result
+        command = ["python", test_script_path]
+        process = subprocess.Popen(
+            command,
+            cwd=repo_root,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        stdout, stderr = process.communicate()
+        return {"stdout": stdout, "stderr": stderr}
 
     except Exception as e:
         return f"An error occurred while running the test script: {str(e)}"
