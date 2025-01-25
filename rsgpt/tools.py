@@ -58,7 +58,6 @@ def run_python_test_script(test_script_path: str, config: RunnableConfig) -> str
         process = subprocess.Popen(
             command,
             cwd=repo_root,
-            shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
