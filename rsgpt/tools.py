@@ -183,6 +183,7 @@ def write_file(file_path: str, file_content: str, config: RunnableConfig):
     return f"File written successfully to {full_path}"
 
 
+# TODO: Use int for chunk_number instead of str
 @tool
 def modify_file_chunk(
     file_path: str, chunk_number: str, new_content: str, config: RunnableConfig

@@ -120,6 +120,7 @@ class RepoWorker(StateGraph):
                 vector_store.delete(old_documents["ids"][index])
 
         for file_path in modified_files:
+            print(f"Processing file: {file_path}")
             extention = os.path.splitext(file_path)[1]
             language = extention_to_language.get(extention)
             text_splitter = None
