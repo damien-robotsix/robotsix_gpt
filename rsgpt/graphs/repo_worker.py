@@ -17,7 +17,8 @@ from ..tools import (
     search_repo_by_path,
     generate_repo_tree,
     execute_command_at_repo_root,
-    run_python_test_script,  # Added the new tool here
+    run_python_test_script,
+    call_worker,  # Include call_worker to access specialist
 )
 
 
@@ -34,6 +35,7 @@ class RepoWorker(StateGraph):
                 modify_file_chunk,
                 execute_command_at_repo_root,
                 run_python_test_script,
+                call_worker,  # Adding call_worker to the tool node for specialist access
             ]
         )
         self.add_node("tools", tool_node)
@@ -69,6 +71,7 @@ class RepoWorker(StateGraph):
             modify_file_chunk,
             execute_command_at_repo_root,
             run_python_test_script,
+            call_worker,  # Ensuring call_worker is part of the model tools
         ]
     )
 
