@@ -152,24 +152,25 @@ class RepoWorker(StateGraph):
         with open(last_check_path, "w") as f:
             f.write(datetime.now().isoformat())
 
+        print("************************************************ REPO WORKER")
         return {}
 
     def agent(self, state: MessagesState) -> dict:
         bound = self.prompt | self.model_with_tools
+        state["messages"][-1].pretty_print()
         prediction = bound.invoke(
             {
                 "messages": state["messages"],
             }
         )
+        prediction.pretty_print()
         return {"messages": [prediction]}
 
     def route_tools(self, state: MessagesState):
         msg = state["messages"][-1]
         if msg.tool_calls:
             return "tools"
-
-        print("************************************************ REPO WORKER")
-        for message in state["messages"]:
-            message.pretty_print()
-        print("************************************************ END REPO WORKER")
+        print(
+            "*********************************************************END REPO WORKER"
+        )
         return END

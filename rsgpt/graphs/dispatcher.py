@@ -42,14 +42,10 @@ class DispatcherGraph(StateGraph):
         messages = [
             {"role": "system", "content": self.system_prompt},
         ] + state["messages"]
-        print("DISPATCHER INPUT*********************************************")
-        for message in state["messages"]:
-            message.pretty_print()
-        print("END DISPATCHER INPUT*****************************************")
         response = self.llm_with_tools.invoke(messages)
-        print("DISPATCHER RESPONSE**************************************")
+        print("DISPATCHER**************************************")
         response.pretty_print()
-        print("END DISPATCHER RESPONSE**********************************")
+        print("END DISPATCHER**********************************")
         if response.tool_calls:
             return Command(goto="tools", update={"messages": response})
         return Command(goto=END, update={"messages": response})
