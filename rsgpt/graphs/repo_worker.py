@@ -18,8 +18,8 @@ from ..tools import (
     generate_repo_tree,
     execute_command_at_repo_root,
     run_python_test_script,
-    call_worker,  # Include call_worker to access specialist
 )
+from .worker_tool import call_worker
 
 
 class RepoWorker(StateGraph):

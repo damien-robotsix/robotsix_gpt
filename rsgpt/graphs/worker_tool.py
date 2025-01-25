@@ -3,9 +3,14 @@ from langchain_core.tools import tool
 from langchain_core.runnables import RunnableConfig
 from langgraph.prebuilt import InjectedState
 from .specialist_with_memory import SpecialistWithMemory
-from .repo_worker import RepoWorker
 
-repo_worker_g = RepoWorker().compile()
+repo_worker_g = None  # Initialize as None
+def initialize_repo_worker():
+    global repo_worker_g
+    if repo_worker_g is None:
+        from .repo_worker import RepoWorker
+        repo_worker_g = RepoWorker().compile()
+
 specialist_on_langchain_g = SpecialistWithMemory("langchain").compile()
 
 
@@ -24,6 +29,7 @@ def call_worker(
     input_messages = messages[:-1]
     input_messages.append(("user", fake_user_message))
     if worker == "repo_worker":
+        initialize_repo_worker()  # Ensure repo_worker_g is initialized
         response = repo_worker_g.invoke({"messages": input_messages}, config)
     elif worker == "specialist_on_langchain":
         response = specialist_on_langchain_g.invoke(
