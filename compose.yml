@@ -8,9 +8,8 @@ services:
     environment:
       - TERM=xterm-256color
       - TZ=Europe/Paris
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - TAVILY_API_KEY=${TAVILY_API_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
     network_mode: host
     volumes:
       # Saves copilot configuration
@@ -31,6 +30,17 @@ services:
       - /dev/snd
     pull_policy: always
 
+  ollama:
+    restart: unless-stopped
+    container_name: ollama
+    image: ollama/ollama:latest
+    ports:
+       - "11434:11434"
+    volumes:
+       - ollama:/root/.ollama
+
 volumes:
   copilot-config:
+    external: false
+  ollama:
     external: false

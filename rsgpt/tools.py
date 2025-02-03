@@ -3,7 +3,7 @@ from langchain_core.documents import Document
 import uuid
 import os
 import subprocess
-from langchain_openai.embeddings import OpenAIEmbeddings
+from langchain_ollama.embeddings import OllamaEmbeddings
 from langchain_core.vectorstores import InMemoryVectorStore
 from langchain_core.runnables import RunnableConfig
 from langchain_community.tools.tavily_search import TavilySearchResults
@@ -16,10 +16,10 @@ def save_recall_memory(memory: str, config: RunnableConfig) -> str:
     document = Document(page_content=memory, id=str(uuid.uuid4()))
     try:
         recall_vector_store = InMemoryVectorStore.load(
-            config["configurable"]["memory_store_path"], OpenAIEmbeddings()
+            config["configurable"]["memory_store_path"], OllamaEmbeddings("bge-m3")
         )
     except FileNotFoundError:
-        recall_vector_store = InMemoryVectorStore(OpenAIEmbeddings())
+        recall_vector_store = InMemoryVectorStore(OllamaEmbeddings("bge-m3"))
     recall_vector_store.add_documents([document])
     recall_vector_store.dump(config["configurable"]["memory_store_path"])
     return memory
@@ -73,11 +73,11 @@ def search_recall_memories(query: str, config: RunnableConfig) -> list[str]:
     """Search for memories in vectorstore based on query."""
     try:
         recall_vector_store = InMemoryVectorStore.load(
-            config["configurable"]["memory_store_path"], OpenAIEmbeddings()
+            config["configurable"]["memory_store_path"], OllamaEmbeddings("bge-m3")
         )
     except FileNotFoundError:
         print("No memories found.")
-        recall_vector_store = InMemoryVectorStore(OpenAIEmbeddings())
+        recall_vector_store = InMemoryVectorStore(OllamaEmbeddings("bge-m3"))
     documents = recall_vector_store.similarity_search(query, k=3)
     if not documents:
         return ["NO MEMORIES FOUND"]
@@ -89,7 +89,7 @@ def search_repo_content(query: str, config: RunnableConfig) -> list[str]:
     """Perform semantic search on repo content based on query."""
     vector_store = Chroma(
         collection_name="repo",
-        embedding_function=OpenAIEmbeddings(),
+        embedding_function=OllamaEmbeddings("bge-m3"),
         persist_directory=os.path.join(
             config["configurable"]["repo_path"], ".rsgpt", "chroma_db"
         ),
@@ -105,7 +105,7 @@ def search_repo_by_path(
     """Search for file content by path and chunk number (starting from 0) in the repository."""
     vector_store = Chroma(
         collection_name="repo",
-        embedding_function=OpenAIEmbeddings(),
+        embedding_function=OllamaEmbeddings("bge-m3"),
         persist_directory=os.path.join(
             config["configurable"]["repo_path"], ".rsgpt", "chroma_db"
         ),
@@ -198,7 +198,7 @@ def modify_file_chunk(
     try:
         vector_store = Chroma(
             collection_name="repo",
-            embedding_function=OpenAIEmbeddings(),
+            embedding_function=OllamaEmbeddings("bge-m3"),
             persist_directory=os.path.join(
                 config["configurable"]["repo_path"], ".rsgpt", "chroma_db"
             ),
@@ -240,7 +240,7 @@ def delete_file_chunk(file_path: str, chunk_number: str, config: RunnableConfig)
     try:
         vector_store = Chroma(
             collection_name="repo",
-            embedding_function=OpenAIEmbeddings(),
+            embedding_function=OllamaEmbeddings("bge-m3"),
             persist_directory=os.path.join(
                 config["configurable"]["repo_path"], ".rsgpt", "chroma_db"
             ),

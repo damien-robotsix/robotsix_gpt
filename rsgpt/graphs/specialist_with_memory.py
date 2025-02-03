@@ -4,8 +4,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableConfig
 from langchain_core.messages import get_buffer_string
 from ..tools import save_recall_memory, search_recall_memories, web_search
-from langchain_openai import ChatOpenAI
-import tiktoken
+from ..utils.llm import llm_base
 
 
 class SpecialistWithMemoryState(MessagesState):
@@ -16,7 +15,6 @@ class SpecialistWithMemory(StateGraph):
     def __init__(self, subject: str):
         super().__init__(SpecialistWithMemoryState)
         self.subject = subject
-        self.tokenizer = tiktoken.encoding_for_model("gpt-4o")
         self.add_node(self.load_memories)
         self.add_node(self.agent)
         tool_node = ToolNode(tools=[save_recall_memory, web_search]).with_config(
@@ -62,8 +60,7 @@ class SpecialistWithMemory(StateGraph):
         ]
     )
 
-    model: ChatOpenAI = ChatOpenAI(model_name="gpt-4o")
-    model_with_tools = model.bind_tools([save_recall_memory, web_search])
+    model_with_tools = llm_base.bind_tools([save_recall_memory, web_search])
 
     def agent(self, state: SpecialistWithMemoryState) -> SpecialistWithMemoryState:
         bound = self.prompt | self.model_with_tools
@@ -88,7 +85,6 @@ class SpecialistWithMemory(StateGraph):
             "/home/robotsix-docker/memory_store"
         )
         convo_str = get_buffer_string(state["messages"])
-        convo_str = self.tokenizer.decode(self.tokenizer.encode(convo_str)[:2048])
         recall_memories = search_recall_memories.invoke(convo_str, config)
         return {
             "recall_memories": recall_memories,

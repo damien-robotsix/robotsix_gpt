@@ -9,11 +9,11 @@ authors = [{ name = " Damien  SIX ", email = " damien@robotsix.net " }]
 dependencies = [
 	"langgraph",
 	"langsmith",
-	"langchain_anthropic",
-	"langchain_openai",
 	"tavily-python",
 	"langchain-community",
 	"langchain-chroma",
+	"langchain-ollama",
+	"langchain-openai",
 	"GitPython",
 ]
 

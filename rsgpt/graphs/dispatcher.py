@@ -1,10 +1,11 @@
 from langgraph.graph import MessagesState, StateGraph, START, END
-from langchain_openai import ChatOpenAI
 from langgraph.types import Command
 from langgraph.prebuilt import ToolNode
 from .worker_tool import (
     call_worker,
 )
+from langchain_ollama import ChatOllama
+from ..utils.llm import llm_base
 
 
 class DispatcherState(MessagesState):
@@ -23,8 +24,7 @@ class DispatcherGraph(StateGraph):
         "If the human initial querry is completed, make a short conclusion."
     )
 
-    llm = ChatOpenAI(model_name="gpt-4o")
-    llm_with_tools = llm.bind_tools(
+    llm_with_tools = llm_base.bind_tools(
         [
             call_worker,
         ]
@@ -39,6 +39,9 @@ class DispatcherGraph(StateGraph):
         self.add_edge("tools", "dispatcher_agent")
 
     def dispatcher_agent(self, state: DispatcherState):
+        print("DISPATCHER**************************************")
+        state["messages"][-1].pretty_print()
+        print("END DISPATCHER**********************************")
         messages = [
             {"role": "system", "content": self.system_prompt},
         ] + state["messages"]

@@ -1,7 +1,6 @@
 from langgraph.graph import MessagesState, StateGraph, START, END
 from langgraph.prebuilt import ToolNode
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_openai import ChatOpenAI
 from langchain_chroma import Chroma
 from langchain_openai.embeddings import OpenAIEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter, Language
@@ -19,7 +18,7 @@ from ..tools import (
     execute_command_at_repo_root,
     run_python_test_script,
 )
-from .worker_tool import call_worker
+from ..utils.llm import llm_base
 
 
 class RepoWorker(StateGraph):
@@ -61,8 +60,7 @@ class RepoWorker(StateGraph):
         ]
     )
 
-    model: ChatOpenAI = ChatOpenAI(model_name="gpt-4o")
-    model_with_tools = model.bind_tools(
+    model_with_tools = llm_base.bind_tools(
         [
             search_repo_content,
             search_repo_by_path,
