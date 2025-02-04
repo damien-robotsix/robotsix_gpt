@@ -18,7 +18,7 @@ from ..tools import (
     execute_command_at_repo_root,
     run_python_test_script,
 )
-from ..utils.llm import llm_base, llm_think
+from ..utils.llm import llm_base
 
 
 class RepoWorker(StateGraph):
@@ -56,7 +56,7 @@ class RepoWorker(StateGraph):
         ]
     )
 
-    model_with_tools = llm_think.bind_tools(
+    model_with_tools = llm_base.bind_tools(
         [
             search_repo_content,
             search_repo_by_path,

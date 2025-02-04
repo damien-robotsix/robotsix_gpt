@@ -172,19 +172,27 @@ def create_file(file_path: str, file_content: str, config: RunnableConfig) -> st
 
 
 @tool
-def write_file(file_path: str, file_content: str, config: RunnableConfig):
-    """Write file content to a file."""
+def write_file(file_path: str, file_content: str, append: bool, config: RunnableConfig):
+    """Write file content to a file, with the option to append or overwrite."""
     repo_path = config["configurable"]["repo_path"]
     full_path = os.path.join(repo_path, file_path)
-    # Check if the file exists
-    if os.path.exists(full_path):
-        return "File already exists. Use modify_file_chunk to update the file."
+    # If the file does not exist, switch to write mode
+    if not os.path.exists(full_path):
+        append = False
+    # If we are in append mode, and the file does not end with a newline, add one
+    current_content = ""
+    if append:
+        with open(full_path, "r") as f:
+            current_content = f.read()
+        if current_content and not current_content.endswith("\n"):
+            file_content = "\n" + file_content
+    mode = "a" if append else "w"
     try:
-        with open(full_path, "w") as f:
+        with open(full_path, mode) as f:
             f.write(file_content)
     except Exception as e:
         return f"Error writing file: {e}"
-    return f"File written successfully to {full_path}"
+    return f"File written successfully to {full_path} (appended: {append})"
 
 
 # TODO: Use int for chunk_number instead of str

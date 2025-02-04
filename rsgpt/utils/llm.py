@@ -41,8 +41,10 @@ class ChatDeepSeek(ChatOpenAI):
         )
 
     def bind_tools(self, tools: list[BaseTool]):
-        self.tools = tools
-        return self
+        # Copy self and bind the tools
+        new_self = self.copy()
+        new_self.tools = tools
+        return new_self
 
     def invoke(self, input, config: Optional[RunnableConfig] = None):
         tool_schemas = ""
