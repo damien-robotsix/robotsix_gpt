@@ -309,7 +309,22 @@ def call_worker(
     The worker agent will receive the fake_user_message as the last message in the conversation.
     """
     response = None
-    input_messages = messages[:-1]
+    input_messages = []
+    for message in messages[:-1]:
+        system = False
+        try:
+            if message["role"] == "system":
+                system = True
+        except:
+            pass
+        try:
+            if message.type == "system":
+                system = True
+        except:
+            pass
+        if not system:
+            input_messages.append(message)
+
     input_messages.append(("user", fake_user_message))
     if worker == "repo_worker":
         initialize_repo_worker()  # Ensure repo_worker_g is initialized

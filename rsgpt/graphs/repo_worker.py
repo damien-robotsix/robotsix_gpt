@@ -17,9 +17,8 @@ from ..tools import (
     generate_repo_tree,
     execute_command_at_repo_root,
     run_python_test_script,
-    call_worker,
 )
-from ..utils.llm import llm_base
+from ..utils.llm import llm_base, llm_think
 
 
 class RepoWorker(StateGraph):
@@ -35,7 +34,6 @@ class RepoWorker(StateGraph):
                 modify_file_chunk,
                 execute_command_at_repo_root,
                 run_python_test_script,
-                call_worker,  # Adding call_worker to the tool node for specialist access
             ]
         )
         self.add_node("tools", tool_node)
@@ -52,14 +50,13 @@ class RepoWorker(StateGraph):
                 " You are a helpful AI that assists developers with the knowledge of the repository content."
                 " You must solve the query in the context of the repository as much as you can without asking for human input."
                 " When you have completed your task, make a comprehensive conclusion to provide "
-                "proper feedback to the user."
-                " You can call the specialist_on_langchain worker to help you with specific usage of Langchain tools.",
+                "proper feedback to the user.",
             ),
             ("placeholder", "{messages}"),
         ]
     )
 
-    model_with_tools = llm_base.bind_tools(
+    model_with_tools = llm_think.bind_tools(
         [
             search_repo_content,
             search_repo_by_path,
@@ -68,7 +65,6 @@ class RepoWorker(StateGraph):
             modify_file_chunk,
             execute_command_at_repo_root,
             run_python_test_script,
-            call_worker,  # Ensuring call_worker is part of the model tools
         ]
     )
 

@@ -17,7 +17,7 @@ class DispatcherGraph(StateGraph):
         "repo_worker: Can operate in the current repository.\n"
         "To call a worker, use the call_worker tool.\n"
         "Each worker will perform a task and respond with their results and status."
-        "You are responsible of anticipating the workers needs and routing the conversation accordingly.\n"
+        "You are responsible for anticipating the workers needs and routing the conversation accordingly.\n"
         "You can also use the other tools provided to help perform the initial query.\n"
         "DO NOT ask for human input unless critical to the task.\n"
         "If the human initial querry is completed, make a short conclusion."
