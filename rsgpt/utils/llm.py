@@ -65,7 +65,7 @@ class ChatDeepSeek(ChatOpenAI):
             }
         )
         print("======================PROMPT=====================")
-        for message in prompt.messages: 
+        for message in prompt.messages:
             message.pretty_print()
         response = super().invoke(prompt, config)
         print("======================RESPONSE==================")
@@ -82,6 +82,8 @@ class ChatDeepSeek(ChatOpenAI):
                     if tool.name == tool_call["name"]:
                         tool._parse_input(tool_call["args"], tool_call["id"])
                         tool_args = tool_call["args"]
+                        if tool.name == "call_worker":
+                            tool_args["messages"] = messages
                         tool_response = tool.invoke(tool_args, config)
                         tool_message = ToolMessage(
                             content=tool_response,
