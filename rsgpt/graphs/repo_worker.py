@@ -19,7 +19,7 @@ from ..tools import (
     run_python_test_script,
     call_worker,
 )
-from ..utils.llm import llm_think
+from ..utils.llm import llm_base
 
 
 class RepoWorker(StateGraph):
@@ -50,10 +50,8 @@ class RepoWorker(StateGraph):
             (
                 "system",
                 " You are a helpful AI that assists developers with the knowledge of the repository content."
-                " You must use the tools provided to help the user with their queries."
-                " You must solve as much as you can without asking for human input."
-                " When you use a tool, only provide the tool call, do not provide other information."
-                " When you have completed using the tools, make a comprehensive conclusion to provide "
+                " You must solve the query in the context of the repository as much as you can without asking for human input."
+                " When you have completed your task, make a comprehensive conclusion to provide "
                 "proper feedback to the user."
                 " You can call the specialist_on_langchain worker to help you with specific usage of Langchain tools.",
             ),
@@ -61,7 +59,7 @@ class RepoWorker(StateGraph):
         ]
     )
 
-    model_with_tools = llm_think.bind_tools(
+    model_with_tools = llm_base.bind_tools(
         [
             search_repo_content,
             search_repo_by_path,

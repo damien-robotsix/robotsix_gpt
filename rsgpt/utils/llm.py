@@ -65,8 +65,8 @@ class ChatDeepSeek(ChatOpenAI):
             }
         )
         print("======================PROMPT=====================")
-        
-        prompt.messages.pretty_print()
+        for message in prompt.messages: 
+            message.pretty_print()
         response = super().invoke(prompt, config)
         print("======================RESPONSE==================")
         response.pretty_print()

@@ -109,7 +109,7 @@ def search_repo_by_path(
     """Search for file content by path and chunk number (starting from 0) in the repository."""
     vector_store = Chroma(
         collection_name="repo",
-        embedding_function=OllamaEmbeddings("bge-m3"),
+        embedding_function=OllamaEmbeddings(model="bge-m3"),
         persist_directory=os.path.join(
             config["configurable"]["repo_path"], ".rsgpt", "chroma_db"
         ),
@@ -320,6 +320,8 @@ def call_worker(
         )
     else:
         return "Worker not found, please choose between 'repo_worker' and 'specialist_on_langchain'"
+    print("WORKER FEEDBACK")
+    print(response["messages"][-1].content
     return response["messages"][-1].content
 
 
