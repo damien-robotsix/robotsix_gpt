@@ -8,6 +8,8 @@ from langchain_core.vectorstores import InMemoryVectorStore
 from langchain_core.runnables import RunnableConfig
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_chroma import Chroma
+from typing import Annotated
+from langgraph.prebuilt import InjectedState
 
 
 @tool
@@ -16,10 +18,11 @@ def save_recall_memory(memory: str, config: RunnableConfig) -> str:
     document = Document(page_content=memory, id=str(uuid.uuid4()))
     try:
         recall_vector_store = InMemoryVectorStore.load(
-            config["configurable"]["memory_store_path"], OllamaEmbeddings("bge-m3")
+            config["configurable"]["memory_store_path"],
+            OllamaEmbeddings(model="bge-m3"),
         )
     except FileNotFoundError:
-        recall_vector_store = InMemoryVectorStore(OllamaEmbeddings("bge-m3"))
+        recall_vector_store = InMemoryVectorStore(OllamaEmbeddings(model="bge-m3"))
     recall_vector_store.add_documents([document])
     recall_vector_store.dump(config["configurable"]["memory_store_path"])
     return memory
@@ -73,11 +76,12 @@ def search_recall_memories(query: str, config: RunnableConfig) -> list[str]:
     """Search for memories in vectorstore based on query."""
     try:
         recall_vector_store = InMemoryVectorStore.load(
-            config["configurable"]["memory_store_path"], OllamaEmbeddings("bge-m3")
+            config["configurable"]["memory_store_path"],
+            OllamaEmbeddings(model="bge-m3"),
         )
     except FileNotFoundError:
         print("No memories found.")
-        recall_vector_store = InMemoryVectorStore(OllamaEmbeddings("bge-m3"))
+        recall_vector_store = InMemoryVectorStore(OllamaEmbeddings(model="bge-m3"))
     documents = recall_vector_store.similarity_search(query, k=3)
     if not documents:
         return ["NO MEMORIES FOUND"]
@@ -89,7 +93,7 @@ def search_repo_content(query: str, config: RunnableConfig) -> list[str]:
     """Perform semantic search on repo content based on query."""
     vector_store = Chroma(
         collection_name="repo",
-        embedding_function=OllamaEmbeddings("bge-m3"),
+        embedding_function=OllamaEmbeddings(model="bge-m3"),
         persist_directory=os.path.join(
             config["configurable"]["repo_path"], ".rsgpt", "chroma_db"
         ),
@@ -198,7 +202,7 @@ def modify_file_chunk(
     try:
         vector_store = Chroma(
             collection_name="repo",
-            embedding_function=OllamaEmbeddings("bge-m3"),
+            embedding_function=OllamaEmbeddings(model="bge-m3"),
             persist_directory=os.path.join(
                 config["configurable"]["repo_path"], ".rsgpt", "chroma_db"
             ),
@@ -269,6 +273,54 @@ def delete_file_chunk(file_path: str, chunk_number: str, config: RunnableConfig)
         return "File chunk deleted successfully"
     except Exception as e:
         return f"Error deleting chunk: {str(e)}"
+
+
+repo_worker_g = None  # Initialize as None
+
+
+def initialize_repo_worker():
+    global repo_worker_g
+    if repo_worker_g is None:
+        from .graphs.repo_worker import RepoWorker
+
+        repo_worker_g = RepoWorker().compile()
+
+
+specialist_on_langchain_g = None  # Initialize as None
+
+
+def initialize_specialist_on_langchain():
+    global specialist_on_langchain_g
+    if specialist_on_langchain_g is None:
+        from .graphs.specialist_with_memory import SpecialistWithMemory
+
+        specialist_on_langchain_g = SpecialistWithMemory("langchain").compile()
+
+
+@tool
+def call_worker(
+    worker: str,
+    fake_user_message: str,
+    config: RunnableConfig,
+    messages: Annotated[list, InjectedState("messages")],
+):
+    """Call a worker agent. Will route the messages to the worker agent and return the response.
+    You can fake an additional user message to the worker agent by providing the fake_user_message parameter.
+    The worker agent will receive the fake_user_message as the last message in the conversation.
+    """
+    response = None
+    input_messages = messages[:-1]
+    input_messages.append(("user", fake_user_message))
+    if worker == "repo_worker":
+        initialize_repo_worker()  # Ensure repo_worker_g is initialized
+        response = repo_worker_g.invoke({"messages": input_messages}, config)
+    elif worker == "specialist_on_langchain":
+        response = specialist_on_langchain_g.invoke(
+            {"messages": input_messages}, config
+        )
+    else:
+        return "Worker not found, please choose between 'repo_worker' and 'specialist_on_langchain'"
+    return response["messages"][-1].content
 
 
 web_search = TavilySearchResults(max_results=2)

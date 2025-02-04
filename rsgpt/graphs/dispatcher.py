@@ -1,10 +1,9 @@
 from langgraph.graph import MessagesState, StateGraph, START, END
 from langgraph.types import Command
 from langgraph.prebuilt import ToolNode
-from .worker_tool import (
+from ..tools import (
     call_worker,
 )
-from langchain_ollama import ChatOllama
 from ..utils.llm import llm_base
 
 

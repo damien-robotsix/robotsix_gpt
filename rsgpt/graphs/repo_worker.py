@@ -1,8 +1,8 @@
 from langgraph.graph import MessagesState, StateGraph, START, END
 from langgraph.prebuilt import ToolNode
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_ollama.embeddings import OllamaEmbeddings
 from langchain_chroma import Chroma
-from langchain_openai.embeddings import OpenAIEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter, Language
 from langchain_core.documents import Document
 from langchain_core.runnables import RunnableConfig
@@ -17,8 +17,9 @@ from ..tools import (
     generate_repo_tree,
     execute_command_at_repo_root,
     run_python_test_script,
+    call_worker,
 )
-from ..utils.llm import llm_base
+from ..utils.llm import llm_think
 
 
 class RepoWorker(StateGraph):
@@ -60,7 +61,7 @@ class RepoWorker(StateGraph):
         ]
     )
 
-    model_with_tools = llm_base.bind_tools(
+    model_with_tools = llm_think.bind_tools(
         [
             search_repo_content,
             search_repo_by_path,
@@ -100,7 +101,7 @@ class RepoWorker(StateGraph):
         # Get the vectorstore
         vector_store = Chroma(
             collection_name="repo",
-            embedding_function=OpenAIEmbeddings(),
+            embedding_function=OllamaEmbeddings(model="bge-m3"),
             persist_directory=os.path.join(repo_path, ".rsgpt", "chroma_db"),
         )
 
