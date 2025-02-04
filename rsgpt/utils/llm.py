@@ -2,12 +2,13 @@ from langchain_openai import ChatOpenAI
 from typing import Optional
 from langchain_core.tools import BaseTool
 from langchain_core.runnables import RunnableConfig
-from langchain_core.messages import HumanMessage, SystemMessage, ToolCall, ToolMessage
+from langchain_core.messages import HumanMessage, ToolCall, ToolMessage
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
 import json
-from os import getenv
+from datetime import datetime
+from os import getenv, path
 
 
 class MultiToolCall(BaseModel):
@@ -36,6 +37,7 @@ class ChatDeepSeek(ChatOpenAI):
             openai_api_key=getenv("OPENROUTER_API_KEY"),
             openai_api_base="https://openrouter.ai/api/v1",
             model_name=model_name,
+            verbose=True,
         )
 
     def bind_tools(self, tools: list[BaseTool]):
@@ -62,7 +64,11 @@ class ChatDeepSeek(ChatOpenAI):
                 "tool_schemas": tool_schemas,
             }
         )
+        print("======================PROMPT=====================")
+        
+        prompt.messages.pretty_print()
         response = super().invoke(prompt, config)
+        print("======================RESPONSE==================")
         response.pretty_print()
         parser = PydanticOutputParser(pydantic_object=MultiToolCall)
         try:
@@ -85,7 +91,6 @@ class ChatDeepSeek(ChatOpenAI):
                         to_human_message = HumanMessage(
                             content=tool_message.model_dump_json(),
                         )
-                        to_human_message.pretty_print()
                         messages.append(to_human_message)
             return self.invoke(messages, config)
         else:

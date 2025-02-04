@@ -150,30 +150,23 @@ class RepoWorker(StateGraph):
                 }
                 vector_store.add_documents([chunk])
                 chunk_number += 1
-
         # Update the last check timestamp
         with open(last_check_path, "w") as f:
             f.write(datetime.now().isoformat())
 
-        print("************************************************ REPO WORKER")
         return {}
 
     def agent(self, state: MessagesState) -> dict:
         bound = self.prompt | self.model_with_tools
-        state["messages"][-1].pretty_print()
         prediction = bound.invoke(
             {
                 "messages": state["messages"],
             }
         )
-        prediction.pretty_print()
         return {"messages": [prediction]}
 
     def route_tools(self, state: MessagesState):
         msg = state["messages"][-1]
         if msg.tool_calls:
             return "tools"
-        print(
-            "*********************************************************END REPO WORKER"
-        )
         return END
