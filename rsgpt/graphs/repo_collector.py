@@ -1,17 +1,12 @@
 from langgraph.graph import MessagesState, StateGraph, START, END
 from langgraph.prebuilt import ToolNode
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnableConfig
 from ..utils.repository_loader import (
     load_repository as shared_load_repository,
 )  # New Import
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.documents import Document
-from langchain_core.runnables import RunnableConfig
-import os
-from datetime import datetime
 from ..tools import (
     search_repo_content,
-    write_file,
-    modify_file_chunk,
     search_repo_by_path,
     generate_repo_tree,
     execute_command_at_repo_root,
@@ -20,7 +15,7 @@ from ..tools import (
 from ..utils.llm import llm_base
 
 
-class RepoWorker(StateGraph):
+class RepoCollector(StateGraph):
     def __init__(self):
         super().__init__(MessagesState)
         self.add_node(self.agent)
@@ -29,8 +24,6 @@ class RepoWorker(StateGraph):
                 search_repo_content,
                 search_repo_by_path,
                 generate_repo_tree,
-                write_file,
-                modify_file_chunk,
                 execute_command_at_repo_root,
                 run_python_test_script,
             ]
@@ -46,10 +39,9 @@ class RepoWorker(StateGraph):
         [
             (
                 "system",
-                " You are a helpful AI that assists developers with the knowledge of the repository content."
-                " You must solve the query in the context of the repository as much as you can without asking for human input."
-                " When you have completed your task, make a comprehensive conclusion to provide "
-                "proper feedback to the user.",
+                " You are a helpful AI that collects repository elements necessary for tasks."
+                " Your operations are strictly read-only and aimed at collecting information that would allow another agent to perform tasks."
+                " Ensure detailed and well-structured data collection without modifying any content.",
             ),
             ("placeholder", "{messages}"),
         ]
@@ -60,8 +52,6 @@ class RepoWorker(StateGraph):
             search_repo_content,
             search_repo_by_path,
             generate_repo_tree,
-            write_file,
-            modify_file_chunk,
             execute_command_at_repo_root,
             run_python_test_script,
         ]

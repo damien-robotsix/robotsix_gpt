@@ -305,6 +305,12 @@ def initialize_specialist_on_langchain():
         specialist_on_langchain_g = SpecialistWithMemory("langchain").compile()
 
 
+def initialize_repo_collector():
+    from .graphs.repo_collector import RepoCollector
+
+    return RepoCollector().compile()
+
+
 @tool
 def call_worker(
     worker: str,
@@ -341,6 +347,9 @@ def call_worker(
         response = specialist_on_langchain_g.invoke(
             {"messages": input_messages}, config
         )
+    elif worker == "repo_collector":
+        repo_collector = initialize_repo_collector()
+        response = repo_collector.invoke({"messages": input_messages}, config)
     else:
         return "Worker not found, please choose between 'repo_worker' and 'specialist_on_langchain'"
     return response["messages"][-1].content
