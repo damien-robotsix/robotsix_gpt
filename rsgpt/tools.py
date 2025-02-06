@@ -197,7 +197,7 @@ def modify_file_chunk(
     file_path: str, chunk_number: int, new_content: str, config: RunnableConfig
 ) -> str:
     """
-    Modify a specific chunk of a file.
+    Modify a specific chunk of a file. The full content of the chunk will be replaced with the new content.
     Args:
         file_path (str): Path to the file containing the chunk
         chunk_number (int): Chunk number index to be modified
