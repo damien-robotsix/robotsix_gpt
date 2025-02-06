@@ -85,7 +85,8 @@ def load_repository(repo_path: str):
         for chunk in chunks:
             chunk.metadata = {
                 "file_path": file_path,
-                "chunk_number": f"{chunk_number}/{chunk_total}",
+                "chunk_number": chunk_number,
+                "max_chunk_number": chunk_total,
             }
             vector_store.add_documents([chunk])
             chunk_number += 1

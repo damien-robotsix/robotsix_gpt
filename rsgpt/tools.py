@@ -119,15 +119,12 @@ def search_repo_by_path(
         return ["NO FILE FOUND"]
     chunk_max = len(documents["ids"]) - 1
     if chunk_number > chunk_max:
-        return [f"NO CHUNK FOUND, max chunk number is {chunk_max}"]
-    for index in range(chunk_max + 1):
-        if (
-            documents["metadatas"][index]["chunk_number"]
-            == f"{chunk_number}/{chunk_max}"
-        ):
+        return [f"NO CHUNK FOUND, max_chunk_number is {chunk_max}"]
+    for index in range(len(documents["metadatas"])):
+        if documents["metadatas"][index]["chunk_number"] == chunk_number:
             content = documents["documents"][index]
             return [
-                f"{{'content': {content},'chunk_number': '{chunk_number}/{chunk_max}'}}"
+                f"{{'content': {content}, 'chunk_number': {chunk_number}, 'max_chunk_number': {chunk_max}}}"
             ]
     return ["NO CHUNK FOUND"]
 
@@ -195,16 +192,15 @@ def write_file(file_path: str, file_content: str, append: bool, config: Runnable
     return f"File written successfully to {full_path} (appended: {append})"
 
 
-# TODO: Use int for chunk_number instead of str
 @tool
 def modify_file_chunk(
-    file_path: str, chunk_number: str, new_content: str, config: RunnableConfig
+    file_path: str, chunk_number: int, new_content: str, config: RunnableConfig
 ) -> str:
     """
     Modify a specific chunk of a file.
     Args:
         file_path (str): Path to the file containing the chunk
-        chunk_number (str): Chunk number in format "index/total"
+        chunk_number (int): Chunk number index to be modified
         new_content (str): New content for the chunk
     """
     try:
@@ -221,11 +217,10 @@ def modify_file_chunk(
             return "File not found in vector store"
         # Order results by chunk number
         results["metadatas"] = sorted(
-            results["metadatas"], key=lambda x: x["chunk_number"].split("/")[0]
+            results["metadatas"], key=lambda x: x["chunk_number"]
         )
-        # Retreive the selected chunk content
-        index = int(chunk_number.split("/")[0])
-        modified_content = results["documents"][index]
+        # Retrieve the selected chunk content
+        modified_content = results["documents"][chunk_number]
         # Find and replace the selected chunk content in the file
         with open(
             os.path.join(config["configurable"]["repo_path"], file_path), "r"
@@ -241,18 +236,17 @@ def modify_file_chunk(
         return f"Error modifying chunk: {str(e)}"
 
 
-@tool
-def delete_file_chunk(file_path: str, chunk_number: str, config: RunnableConfig) -> str:
+def delete_file_chunk(file_path: str, chunk_number: int, config: RunnableConfig) -> str:
     """
     Delete a specific chunk of a file.
     Args:
         file_path (str): Path to the file containing the chunk
-        chunk_number (str): Chunk number in format "index/total"
+        chunk_number (int): Chunk number index to be deleted
     """
     try:
         vector_store = Chroma(
             collection_name="repo",
-            embedding_function=OllamaEmbeddings("bge-m3"),
+            embedding_function=OllamaEmbeddings(model="bge-m3"),
             persist_directory=os.path.join(
                 config["configurable"]["repo_path"], ".rsgpt", "chroma_db"
             ),
@@ -261,23 +255,28 @@ def delete_file_chunk(file_path: str, chunk_number: str, config: RunnableConfig)
         results = vector_store.get(where={"file_path": file_path})
         if not results["ids"]:
             return "File not found in vector store"
+
         # Order results by chunk number
         results["metadatas"] = sorted(
-            results["metadatas"], key=lambda x: x["chunk_number"].split("/")[0]
+            results["metadatas"], key=lambda x: x["chunk_number"]
         )
-        # Retreive the selected chunk content
-        index = int(chunk_number.split("/")[0])
-        deleted_content = results["documents"][index]
-        # Find and replace the selected chunk content in the file
+
+        # Retrieve the selected chunk content
+        deleted_content = results["documents"][chunk_number]
+
+        # Find and remove the selected chunk content in the file
         with open(
             os.path.join(config["configurable"]["repo_path"], file_path), "r"
         ) as f:
             file_content = f.read()
-            file_content = file_content.replace(deleted_content, "")
+
+        file_content = file_content.replace(deleted_content, "")
+
         with open(
             os.path.join(config["configurable"]["repo_path"], file_path), "w"
         ) as f:
             f.write(file_content)
+
         return "File chunk deleted successfully"
     except Exception as e:
         return f"Error deleting chunk: {str(e)}"
