@@ -343,8 +343,6 @@ def call_worker(
         )
     else:
         return "Worker not found, please choose between 'repo_worker' and 'specialist_on_langchain'"
-    print("WORKER FEEDBACK")
-    print(response["messages"][-1].content)
     return response["messages"][-1].content
 
 
