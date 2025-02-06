@@ -1,14 +1,18 @@
 from langgraph.graph import MessagesState, StateGraph, START, END
 from langgraph.types import Command
-from langgraph.prebuilt import ToolNode
 from ..tools import (
     call_worker,
 )
 from ..utils.llm import llm_base
+from pydantic import BaseModel, Field
+
+
+class Steps(BaseModel):
+    steps: list[str] = Field(description="Steps to follow to answer the user query")
 
 
 class DispatcherState(MessagesState):
-    pass
+    steps: Steps
 
 
 class DispatcherGraph(StateGraph):
@@ -22,6 +26,12 @@ class DispatcherGraph(StateGraph):
         "DO NOT ask for human input unless critical to the task.\n"
         "If the human initial querry is completed, make a short conclusion."
     )
+    step_generator_prompt: str = (
+        "You are an AI assistant. Your role is to generate a comprehensive step by step approach to the "
+        "initial user query. The steps provided must ensure that the user request is fully completed. "
+        "If you need additional information on the user request you can prompt the user for it. "
+        "You can also use the tools at your disposal. You final output MUST be a json structure as follow:\n"
+    )
 
     llm_with_tools = llm_base.bind_tools(
         [
@@ -32,16 +42,13 @@ class DispatcherGraph(StateGraph):
     def __init__(self):
         super().__init__(DispatcherState)
         self.tools = [call_worker]
-        self.add_node("tools", ToolNode(tools=self.tools))
         self.add_node(self.dispatcher_agent)
         self.add_edge(START, "dispatcher_agent")
-        self.add_edge("tools", "dispatcher_agent")
+        self.add_edge("dispatcher_agent", END)
 
     def dispatcher_agent(self, state: DispatcherState):
         messages = [
             {"role": "system", "content": self.system_prompt},
         ] + state["messages"]
         response = self.llm_with_tools.invoke(messages)
-        if response.tool_calls:
-            return Command(goto="tools", update={"messages": response})
-        return Command(goto=END, update={"messages": response})
+        return response

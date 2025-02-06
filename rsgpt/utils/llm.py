@@ -2,13 +2,12 @@ from langchain_openai import ChatOpenAI
 from typing import Optional
 from langchain_core.tools import BaseTool
 from langchain_core.runnables import RunnableConfig
-from langchain_core.messages import HumanMessage, ToolCall, ToolMessage
+from langchain_core.messages import ToolCall, ToolMessage, AIMessage
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
 import json
-from datetime import datetime
-from os import getenv, path
+from os import getenv
 
 
 class MultiToolCall(BaseModel):
@@ -22,7 +21,7 @@ class ChatDeepSeek(ChatOpenAI):
             (
                 "system",
                 "You can use the following tools: {tool_names}\n"
-                "Each tool will perform a task and respond with their results and status. "
+                "Each tool will perform a task and respond with their results and status. You can do as many tool calls as you want autonomously to answer the user query. "
                 "To call tools, you should provide only the tool calls json schema in the message without any additional information. The schema is provided below.\n"
                 "{tool_call_schema}\n"
                 "The tool arguments schema for each tool is provided below.\n"
@@ -92,10 +91,10 @@ class ChatDeepSeek(ChatOpenAI):
                             tool_name=tool.name,
                             tool_call_id=tool_call["id"],
                         )
-                        to_human_message = HumanMessage(
+                        to_assistant_message = AIMessage(
                             content=tool_message.model_dump_json(),
                         )
-                        messages.append(to_human_message)
+                        messages.append(to_assistant_message)
             return self.invoke(messages, config)
         else:
             return response

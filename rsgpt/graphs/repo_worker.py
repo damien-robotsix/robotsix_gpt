@@ -1,5 +1,4 @@
 from langgraph.graph import MessagesState, StateGraph, START, END
-from langgraph.prebuilt import ToolNode
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_ollama.embeddings import OllamaEmbeddings
 from langchain_chroma import Chroma
@@ -25,31 +24,21 @@ class RepoWorker(StateGraph):
     def __init__(self):
         super().__init__(MessagesState)
         self.add_node(self.agent)
-        tool_node = ToolNode(
-            tools=[
-                search_repo_content,
-                search_repo_by_path,
-                generate_repo_tree,
-                write_file,
-                modify_file_chunk,
-                execute_command_at_repo_root,
-                run_python_test_script,
-            ]
-        )
-        self.add_node("tools", tool_node)
         self.add_node(self.load_repository)
-        self.add_conditional_edges("agent", self.route_tools, ["tools", END])
-        self.add_edge("tools", "agent")
         self.add_edge(START, "load_repository")
         self.add_edge("load_repository", "agent")
+        self.add_edge("agent", END)
 
     prompt: ChatPromptTemplate = ChatPromptTemplate.from_messages(
         [
             (
                 "system",
-                " You are a helpful AI that assists developers with the knowledge of the repository content."
-                " You must solve the query in the context of the repository as much as you can without asking for human input."
-                " When you have completed your task, make a comprehensive conclusion to provide "
+                "You are a helpful AI that assists developers with the knowledge of the repository content. "
+                "You must solve the query as much as you can without asking for human input. "
+                "You must always look into the repo content to answer the query in the context of the repository. "
+                "Use generate_repo_tree to find files and search_repo_by_path to get their content. "
+                "You MUST FULLY COMPLETE the task BEFORE giving any feedback to the user. "
+                "When you have completed your task, make a comprehensive conclusion to provide "
                 "proper feedback to the user.",
             ),
             ("placeholder", "{messages}"),
@@ -158,9 +147,3 @@ class RepoWorker(StateGraph):
             }
         )
         return {"messages": [prediction]}
-
-    def route_tools(self, state: MessagesState):
-        msg = state["messages"][-1]
-        if msg.tool_calls:
-            return "tools"
-        return END
