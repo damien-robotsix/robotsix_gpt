@@ -195,7 +195,9 @@ def write_file(file_path: str, file_content: str, append: bool, config: Runnable
 
 class ChunkRange(BaseModel):
     start_chunk: int = Field(description="First chunk in the range")
-    stop_chunk: int = Field(description="Last chunk in the range")
+    stop_chunk: int = Field(
+        description="Last chunk in the range. Included in the range."
+    )
 
 
 @tool
@@ -206,7 +208,7 @@ def modify_file_chunk(
     Modify a series of consecutive chunks in a file. The full content of the chunks in the range will be replaced with the new content.
     Args:
         file_path (str): Path to the file containing the chunks
-        chunk_range (range): Range of chunk indices to be modified. range(2, 5) will replace chunks 2, 3, and 4 with the new content.
+        chunk_range (range): Range of chunk indices to be modified.
         new_content (str): New content to replace the chunks
     """
     try:
@@ -221,7 +223,7 @@ def modify_file_chunk(
         results = vector_store.get(where={"file_path": file_path})
         if not results["ids"]:
             return "File not found in vector store"
-        ck_range = range(chunk_range.start_chunk, chunk_range.stop_chunk)
+        ck_range = range(chunk_range.start_chunk, chunk_range.stop_chunk + 1)
         if len(results["documents"]) <= ck_range[-1]:
             return (
                 f"End of chunk range is over maximum chunk {len(results['documents'])}"
