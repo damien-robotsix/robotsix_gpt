@@ -1,5 +1,6 @@
 from langgraph.graph import MessagesState
+from langchain_core.messages import AnyMessage
 
 
 class WorkerState(MessagesState):
-    final_output: list
+    final_messages: list[AnyMessage]

@@ -363,7 +363,9 @@ def call_worker(
     input_messages.append(("user", fake_user_message))
     if worker == "repo_worker":
         initialize_repo_worker()  # Ensure repo_worker_g is initialized
-        response = repo_worker_g.invoke({"messages": input_messages}, config)
+        response = repo_worker_g.invoke(
+            {"messages": input_messages, "final_messages": []}, config
+        )
     elif worker == "specialist_on_langchain":
         initialize_specialist_on_langchain()
         response = specialist_on_langchain_g.invoke(
@@ -374,7 +376,7 @@ def call_worker(
         response = repo_collector.invoke({"messages": input_messages}, config)
     else:
         return "Worker not found, please choose between 'repo_worker' and 'specialist_on_langchain'"
-    return response["final_output"]
+    return response["final_messages"]
 
 
 web_search = TavilySearchResults(max_results=2)

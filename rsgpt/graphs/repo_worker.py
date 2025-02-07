@@ -37,10 +37,14 @@ class RepoWorker(StateGraph):
         )
         self.add_node("tools", tool_node)
         self.add_node(self.load_repository)
-        self.add_conditional_edges("agent", self.route_tools, ["tools", END])
+        self.add_node("process_output", self.process_output)
+        self.add_conditional_edges(
+            "agent", self.route_tools, ["tools", "process_output"]
+        )
         self.add_edge("tools", "agent")
         self.add_edge(START, "load_repository")
         self.add_edge("load_repository", "agent")
+        self.add_edge("process_output", END)
 
     prompt: ChatPromptTemplate = ChatPromptTemplate.from_messages(
         [
@@ -85,5 +89,8 @@ class RepoWorker(StateGraph):
         msg = state["messages"][-1]
         if msg.tool_calls:
             return "tools"
-        state["final_output"] = [state["messages"][-1]]
-        return "final_state"
+        return "process_output"
+
+    def process_output(self, state: WorkerState):
+        state["final_messages"] = [state["messages"][-1]]
+        return state

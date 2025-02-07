@@ -31,10 +31,14 @@ class RepoCollector(StateGraph):
         )
         self.add_node("tools", tool_node)
         self.add_node(self.load_repository)
-        self.add_conditional_edges("agent", self.route_tools, ["tools", END])
+        self.add_node("handle_final_messages", self.handle_final_messages)
+        self.add_conditional_edges(
+            "agent", self.route_tools, ["tools", "handle_final_messages"]
+        )
         self.add_edge("tools", "agent")
         self.add_edge(START, "load_repository")
         self.add_edge("load_repository", "agent")
+        self.add_edge("handle_final_messages", END)
 
     prompt: ChatPromptTemplate = ChatPromptTemplate.from_messages(
         [
@@ -74,5 +78,8 @@ class RepoCollector(StateGraph):
         msg = state["messages"][-1]
         if msg.tool_calls:
             return "tools"
-        state["final_output"] = [state["messages"]]
-        return END
+        return "handle_final_messages"
+
+    def handle_final_messages(self, state: WorkerState):
+        state["final_messages"] = [state["messages"][-1]]
+        return state
