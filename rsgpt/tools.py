@@ -374,7 +374,7 @@ def call_worker(
         response = repo_collector.invoke({"messages": input_messages}, config)
     else:
         return "Worker not found, please choose between 'repo_worker' and 'specialist_on_langchain'"
-    return response["messages"][-1].content
+    return response["final_output"]
 
 
 web_search = TavilySearchResults(max_results=2)

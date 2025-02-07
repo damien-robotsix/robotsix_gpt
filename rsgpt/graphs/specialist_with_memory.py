@@ -21,10 +21,16 @@ class SpecialistWithMemory(StateGraph):
             {"memory_store_path": "/home/robotsix-docker/memory_store"}
         )
         self.add_node("tools", tool_node)
+        # Adding a cleanup node to handle final steps before termination
+        self.add_node("cleanup_messages", self.cleanup_messages)
+        # Defining edges and routes, ensuring proper ordering and cleanup termination
         self.add_edge(START, "load_memories")
         self.add_edge("load_memories", "agent")
-        self.add_conditional_edges("agent", self.route_tools, ["tools", END])
+        self.add_conditional_edges(
+            "agent", self.route_tools, ["tools", "cleanup_messages"]
+        )
         self.add_edge("tools", "agent")
+        self.add_edge("cleanup_messages", END)
 
     prompt: ChatPromptTemplate = ChatPromptTemplate.from_messages(
         [
@@ -78,9 +84,7 @@ class SpecialistWithMemory(StateGraph):
         )
         return {"messages": [prediction]}
 
-    def load_memories(
-        self, state: SpecialistWithMemoryState, config: RunnableConfig
-    ) -> SpecialistWithMemoryState:
+    def load_memories(self, state: SpecialistWithMemoryState, config: RunnableConfig):
         config["configurable"]["memory_store_path"] = (
             "/home/robotsix-docker/memory_store"
         )
@@ -90,11 +94,14 @@ class SpecialistWithMemory(StateGraph):
             "recall_memories": recall_memories,
         }
 
+    def cleanup_messages(self, state: SpecialistWithMemoryState):
+        if state["messages"]:
+            last_message = state["messages"][-1]
+            state["messages"] = [last_message]
+        return state
+
     def route_tools(self, state: SpecialistWithMemoryState):
         msg = state["messages"][-1]
         if msg.tool_calls:
             return "tools"
-
-        for message in state["messages"]:
-            message.pretty_print()
-        return END
+        return "cleanup_messages"

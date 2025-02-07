@@ -1,4 +1,5 @@
-from langgraph.graph import MessagesState, StateGraph, START, END
+from langgraph.graph import StateGraph, START, END
+from .custom_states import WorkerState
 from langgraph.prebuilt import ToolNode
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableConfig
@@ -17,7 +18,7 @@ from ..utils.llm import llm_base
 
 class RepoCollector(StateGraph):
     def __init__(self):
-        super().__init__(MessagesState)
+        super().__init__(WorkerState)
         self.add_node(self.agent)
         tool_node = ToolNode(
             tools=[
@@ -57,10 +58,10 @@ class RepoCollector(StateGraph):
         ]
     )
 
-    def load_repository(self, _: MessagesState, config: RunnableConfig) -> dict:
+    def load_repository(self, _: WorkerState, config: RunnableConfig) -> dict:
         return shared_load_repository(config["configurable"]["repo_path"])
 
-    def agent(self, state: MessagesState) -> dict:
+    def agent(self, state: WorkerState) -> dict:
         bound = self.prompt | self.model_with_tools
         prediction = bound.invoke(
             {
@@ -69,8 +70,9 @@ class RepoCollector(StateGraph):
         )
         return {"messages": [prediction]}
 
-    def route_tools(self, state: MessagesState):
+    def route_tools(self, state: WorkerState):
         msg = state["messages"][-1]
         if msg.tool_calls:
             return "tools"
+        state["final_output"] = [state["messages"]]
         return END
