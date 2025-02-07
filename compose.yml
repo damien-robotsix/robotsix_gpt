@@ -1,0 +1,46 @@
+services:
+  dev:
+    restart: unless-stopped
+    image: docker.robotsix.net/dev-docker:latest
+    container_name: robotsix-dev-ai
+    tty: true
+    stdin_open: true
+    environment:
+      - TERM=xterm-256color
+      - TZ=Europe/Paris
+      - TAVILY_API_KEY=${TAVILY_API_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+    network_mode: host
+    volumes:
+      # Saves copilot configuration
+      - copilot-config:/home/robotsix-docker/.config/github-copilot
+      # Change this to mount your project directory
+      - .:/home/robotsix-docker/robotsix_gpt
+      # Git configuration
+      - ~/.gitconfig:/home/robotsix-docker/.gitconfig:ro
+      # Tmuxinator configuration
+      - ./project.yml:/home/robotsix-docker/.tmuxinator/project.yml:ro
+      # SSH keys
+      - ~/.ssh:/home/robotsix-docker/.ssh:ro
+      - /dev/snd:/dev/snd
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    entrypoint: ["/bin/zsh", "-c", "tmuxinator start project"]
+    devices:
+      # Sound devices
+      - /dev/snd
+    pull_policy: always
+
+  ollama:
+    restart: unless-stopped
+    container_name: ollama
+    image: ollama/ollama:latest
+    ports:
+       - "11434:11434"
+    volumes:
+       - ollama:/root/.ollama
+
+volumes:
+  copilot-config:
+    external: false
+  ollama:
+    external: false

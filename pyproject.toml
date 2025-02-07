@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "rsgpt"
+version = "0.0.0"
+authors = [{ name = " Damien  SIX ", email = " damien@robotsix.net " }]
+dependencies = [
+	"langgraph",
+	"langsmith",
+	"tavily-python",
+	"langchain-community",
+	"langchain-chroma",
+	"langchain-ollama",
+	"langchain-openai",
+	"GitPython",
+]
+
+[project.scripts]
+rsgpt = "rsgpt:main.main"
