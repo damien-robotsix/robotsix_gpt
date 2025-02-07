@@ -46,6 +46,7 @@ class RepoCollector(StateGraph):
                 "system",
                 " You are a helpful AI that collects repository elements necessary for tasks."
                 " Your operations are strictly read-only and aimed at collecting information that would allow another agent to perform tasks."
+                " You can use generate_repo_tree if you are looking for a file. "
                 " Ensure detailed and well-structured data collection without modifying any content.",
             ),
             ("placeholder", "{messages}"),
