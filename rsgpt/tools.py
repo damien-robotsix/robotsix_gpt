@@ -10,7 +10,6 @@ from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_chroma import Chroma
 from typing import Annotated
 from langgraph.prebuilt import InjectedState
-from pydantic import BaseModel, Field
 
 
 @tool
@@ -120,12 +119,12 @@ def search_repo_by_path(
         return ["NO FILE FOUND"]
     chunk_max = len(documents["ids"]) - 1
     if chunk_number > chunk_max:
-        return [f"NO CHUNK FOUND, max_chunk_number is {chunk_max}"]
+        return [f"NO CHUNK FOUND, last_chunk_number is {chunk_max}"]
     for index in range(len(documents["metadatas"])):
         if documents["metadatas"][index]["chunk_number"] == chunk_number:
             content = documents["documents"][index]
             return [
-                f"{{'content': {content}, 'chunk_number': {chunk_number}, 'max_chunk_number': {chunk_max}}}"
+                f"{{'content': {content}, 'chunk_number': {chunk_number}, 'last_chunk_number': {chunk_max}}}"
             ]
     return ["NO CHUNK FOUND"]
 
@@ -193,13 +192,6 @@ def write_file(file_path: str, file_content: str, append: bool, config: Runnable
     return f"File written successfully to {full_path} (appended: {append})"
 
 
-class ChunkRange(BaseModel):
-    start_chunk: int = Field(description="First chunk in the range")
-    stop_chunk: int = Field(
-        description="Last chunk in the range. Included in the range."
-    )
-
-
 @tool
 def delete_file_chunk(file_path: str, chunk_number: int, config: RunnableConfig) -> str:
     """
@@ -249,16 +241,20 @@ def delete_file_chunk(file_path: str, chunk_number: int, config: RunnableConfig)
 
 @tool
 def modify_file_chunk(
-    file_path: str, chunk_range: ChunkRange, new_content: str, config: RunnableConfig
+    file_path: str, chunks: list[int], new_content: str, config: RunnableConfig
 ) -> str:
     """
     Modify a series of consecutive chunks in a file. The full content of the chunks in the range will be replaced with the new content.
     Args:
-        file_path (str): Path to the file containing the chunks
-        chunk_range (range): Range of chunk indices to be modified.
-        new_content (str): New content to replace the chunks
+        file_path: Path to the file containing the chunks
+        chunks: list of the chunks to replace, must be consecutive chunks
+        new_content: New content to replace the chunks
     """
     try:
+        # Check that all chunks are consecutive
+        if not all([chunks[i] + 1 == chunks[i + 1] for i in range(len(chunks) - 1)]):
+            return "Chunks must be consecutive"
+
         vector_store = Chroma(
             collection_name="repo",
             embedding_function=OllamaEmbeddings(model="bge-m3"),
@@ -266,11 +262,12 @@ def modify_file_chunk(
                 config["configurable"]["repo_path"], ".rsgpt", "chroma_db"
             ),
         )
+
         # Retrieve all chunks for the file
         results = vector_store.get(where={"file_path": file_path})
         if not results["ids"]:
             return "File not found in vector store"
-        ck_range = range(chunk_range.start_chunk, chunk_range.stop_chunk + 1)
+        ck_range = range(chunks[0], chunks[-1] + 1)
         if len(results["documents"]) <= ck_range[-1]:
             return (
                 f"End of chunk range is over maximum chunk {len(results['documents'])}"
