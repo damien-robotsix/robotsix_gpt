@@ -81,7 +81,7 @@ def load_repository(repo_path: str):
 
         chunks = text_splitter.split_documents([document])
         chunk_number = 0
-        chunk_total = len(chunks) - 1
+        chunk_total = len(chunks)
         for chunk in chunks:
             chunk.metadata = {
                 "file_path": file_path,
