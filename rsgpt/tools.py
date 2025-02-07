@@ -10,6 +10,7 @@ from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_chroma import Chroma
 from typing import Annotated
 from langgraph.prebuilt import InjectedState
+from pydantic import BaseModel, Field
 
 
 @tool
@@ -192,16 +193,21 @@ def write_file(file_path: str, file_content: str, append: bool, config: Runnable
     return f"File written successfully to {full_path} (appended: {append})"
 
 
+class ChunkRange(BaseModel):
+    start_chunk: int = Field(description="First chunk in the range")
+    stop_chunk: int = Field(description="Last chunk in the range")
+
+
 @tool
 def modify_file_chunk(
-    file_path: str, chunk_number: int, new_content: str, config: RunnableConfig
+    file_path: str, chunk_range: ChunkRange, new_content: str, config: RunnableConfig
 ) -> str:
     """
-    Modify a specific chunk of a file. The full content of the chunk will be replaced with the new content.
+    Modify a series of consecutive chunks in a file. The full content of the chunks in the range will be replaced with the new content.
     Args:
-        file_path (str): Path to the file containing the chunk
-        chunk_number (int): Chunk number index to be modified
-        new_content (str): New content for the chunk
+        file_path (str): Path to the file containing the chunks
+        chunk_range (range): Range of chunk indices to be modified. range(2, 5) will replace chunks 2, 3, and 4 with the new content.
+        new_content (str): New content to replace the chunks
     """
     try:
         vector_store = Chroma(
@@ -215,25 +221,35 @@ def modify_file_chunk(
         results = vector_store.get(where={"file_path": file_path})
         if not results["ids"]:
             return "File not found in vector store"
+        ck_range = range(chunk_range.start_chunk, chunk_range.stop_chunk)
+        if len(results["documents"]) <= ck_range[-1]:
+            return (
+                f"End of chunk range is over maximum chunk {len(results['documents'])}"
+            )
+
         # Order results by chunk number
         results["metadatas"] = sorted(
             results["metadatas"], key=lambda x: x["chunk_number"]
         )
-        # Retrieve the selected chunk content
-        modified_content = results["documents"][chunk_number]
-        # Find and replace the selected chunk content in the file
+
+        # Modify chunks with new content
         with open(
             os.path.join(config["configurable"]["repo_path"], file_path), "r"
         ) as f:
             file_content = f.read()
-            file_content = file_content.replace(modified_content, new_content)
+            old_chunk_content = ""
+            for chunk_idx in ck_range:
+                old_chunk_content += results["documents"][chunk_idx]
+            file_content = file_content.replace(old_chunk_content, new_content)
+
         with open(
             os.path.join(config["configurable"]["repo_path"], file_path), "w"
         ) as f:
             f.write(file_content)
-        return "File chunk modified successfully"
+
+        return "File chunks modified successfully"
     except Exception as e:
-        return f"Error modifying chunk: {str(e)}"
+        return f"Error modifying chunks: {str(e)}"
 
 
 def delete_file_chunk(file_path: str, chunk_number: int, config: RunnableConfig) -> str:
