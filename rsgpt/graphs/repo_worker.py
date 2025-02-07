@@ -4,10 +4,7 @@ from ..utils.repository_loader import (
     load_repository as shared_load_repository,
 )  # New Import
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.documents import Document
 from langchain_core.runnables import RunnableConfig
-import os
-from datetime import datetime
 from ..tools import (
     search_repo_content,
     write_file,
@@ -16,6 +13,7 @@ from ..tools import (
     generate_repo_tree,
     execute_command_at_repo_root,
     run_python_test_script,
+    call_worker
 )
 from ..utils.llm import llm_base
 
@@ -33,6 +31,7 @@ class RepoWorker(StateGraph):
                 modify_file_chunk,
                 execute_command_at_repo_root,
                 run_python_test_script,
+                call_worker
             ]
         )
         self.add_node("tools", tool_node)
@@ -49,7 +48,8 @@ class RepoWorker(StateGraph):
                 " You are a helpful AI that assists developers with the knowledge of the repository content."
                 " You must solve the query in the context of the repository as much as you can without asking for human input."
                 " When you have completed your task, make a comprehensive conclusion to provide "
-                "proper feedback to the user.",
+                "proper feedback to the user. "
+                'You can call the worker specialist_on_langchain to get help on langchain framework usage. '
             ),
             ("placeholder", "{messages}"),
         ]
@@ -64,6 +64,7 @@ class RepoWorker(StateGraph):
             modify_file_chunk,
             execute_command_at_repo_root,
             run_python_test_script,
+            call_worker
         ]
     )
 

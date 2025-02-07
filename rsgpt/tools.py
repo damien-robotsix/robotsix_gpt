@@ -201,59 +201,6 @@ class ChunkRange(BaseModel):
 
 
 @tool
-def modify_file_chunk(
-    file_path: str, chunk_range: ChunkRange, new_content: str, config: RunnableConfig
-) -> str:
-    """
-    Modify a series of consecutive chunks in a file. The full content of the chunks in the range will be replaced with the new content.
-    Args:
-        file_path (str): Path to the file containing the chunks
-        chunk_range (range): Range of chunk indices to be modified.
-        new_content (str): New content to replace the chunks
-    """
-    try:
-        vector_store = Chroma(
-            collection_name="repo",
-            embedding_function=OllamaEmbeddings(model="bge-m3"),
-            persist_directory=os.path.join(
-                config["configurable"]["repo_path"], ".rsgpt", "chroma_db"
-            ),
-        )
-        # Retrieve all chunks for the file
-        results = vector_store.get(where={"file_path": file_path})
-        if not results["ids"]:
-            return "File not found in vector store"
-        ck_range = range(chunk_range.start_chunk, chunk_range.stop_chunk + 1)
-        if len(results["documents"]) <= ck_range[-1]:
-            return (
-                f"End of chunk range is over maximum chunk {len(results['documents'])}"
-            )
-
-        # Order results by chunk number
-        results["metadatas"] = sorted(
-            results["metadatas"], key=lambda x: x["chunk_number"]
-        )
-
-        # Modify chunks with new content
-        with open(
-            os.path.join(config["configurable"]["repo_path"], file_path), "r"
-        ) as f:
-            file_content = f.read()
-            old_chunk_content = ""
-            for chunk_idx in ck_range:
-                old_chunk_content += results["documents"][chunk_idx]
-            file_content = file_content.replace(old_chunk_content, new_content)
-
-        with open(
-            os.path.join(config["configurable"]["repo_path"], file_path), "w"
-        ) as f:
-            f.write(file_content)
-
-        return "File chunks modified successfully"
-    except Exception as e:
-        return f"Error modifying chunks: {str(e)}"
-
-
 def delete_file_chunk(file_path: str, chunk_number: int, config: RunnableConfig) -> str:
     """
     Delete a specific chunk of a file.
@@ -298,6 +245,63 @@ def delete_file_chunk(file_path: str, chunk_number: int, config: RunnableConfig)
         return "File chunk deleted successfully"
     except Exception as e:
         return f"Error deleting chunk: {str(e)}"
+
+
+@tool
+def modify_file_chunk(
+    file_path: str, chunk_range: ChunkRange, new_content: str, config: RunnableConfig
+) -> str:
+    """
+    Modify a series of consecutive chunks in a file. The full content of the chunks in the range will be replaced with the new content.
+    Args:
+        file_path (str): Path to the file containing the chunks
+        chunk_range (range): Range of chunk indices to be modified.
+        new_content (str): New content to replace the chunks
+    """
+    try:
+        vector_store = Chroma(
+            collection_name="repo",
+            embedding_function=OllamaEmbeddings(model="bge-m3"),
+            persist_directory=os.path.join(
+                config["configurable"]["repo_path"], ".rsgpt", "chroma_db"
+            ),
+        )
+        # Retrieve all chunks for the file
+        results = vector_store.get(where={"file_path": file_path})
+        if not results["ids"]:
+            return "File not found in vector store"
+        ck_range = range(chunk_range.start_chunk, chunk_range.stop_chunk + 1)
+        if len(results["documents"]) <= ck_range[-1]:
+            return (
+                f"End of chunk range is over maximum chunk {len(results['documents'])}"
+            )
+
+        # Order results by chunk number
+        results["metadatas"] = sorted(
+            results["metadatas"], key=lambda x: x["chunk_number"]
+        )
+
+        # Modify the first chunk with the new content and delete the rest
+        with open(
+            os.path.join(config["configurable"]["repo_path"], file_path), "r"
+        ) as f:
+            file_content = f.read()
+            old_chunk_content = ""
+            old_chunk_content = results["documents"][ck_range[0]]
+            file_content = file_content.replace(old_chunk_content, new_content)
+
+        for chunk_index in ck_range[1:]:
+            old_chunk_content = results["documents"][chunk_index]
+            file_content = file_content.replace(old_chunk_content, "")
+
+        with open(
+            os.path.join(config["configurable"]["repo_path"], file_path), "w"
+        ) as f:
+            f.write(file_content)
+
+        return "File chunks modified successfully"
+    except Exception as e:
+        return f"Error modifying chunks: {str(e)}"
 
 
 repo_worker_g = None  # Initialize as None
@@ -361,6 +365,7 @@ def call_worker(
         initialize_repo_worker()  # Ensure repo_worker_g is initialized
         response = repo_worker_g.invoke({"messages": input_messages}, config)
     elif worker == "specialist_on_langchain":
+        initialize_specialist_on_langchain()
         response = specialist_on_langchain_g.invoke(
             {"messages": input_messages}, config
         )

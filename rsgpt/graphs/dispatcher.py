@@ -16,6 +16,7 @@ class DispatcherGraph(StateGraph):
         "You are a supervisor agent tasked with managing a conversation the following workers agent:\n"
         "repo_collector: Can collect information from the current repository.\n"
         "repo_worker: Can operate in the current repository.\n"
+        "specialist_on_langchain: Can provide help on langchain framework usage.\n"
         "Proceed step by step, ensuring that the workers are called in the correct order.\n"
         "To call a worker, use the call_worker tool.\n"
         "Each worker will perform a task and respond with their results and status."
