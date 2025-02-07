@@ -1,13 +1,14 @@
-from langgraph.graph import MessagesState, StateGraph, START, END
+from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableConfig
 from langchain_core.messages import get_buffer_string
 from ..tools import save_recall_memory, search_recall_memories, web_search
 from ..utils.llm import llm_base
+from .custom_states import WorkerState
 
 
-class SpecialistWithMemoryState(MessagesState):
+class SpecialistWithMemoryState(WorkerState):
     recall_memories: list[str]
 
 
@@ -21,16 +22,15 @@ class SpecialistWithMemory(StateGraph):
             {"memory_store_path": "/home/robotsix-docker/memory_store"}
         )
         self.add_node("tools", tool_node)
-        # Adding a cleanup node to handle final steps before termination
-        self.add_node("cleanup_messages", self.cleanup_messages)
+        self.add_node("process_output", self.process_output)
         # Defining edges and routes, ensuring proper ordering and cleanup termination
         self.add_edge(START, "load_memories")
         self.add_edge("load_memories", "agent")
         self.add_conditional_edges(
-            "agent", self.route_tools, ["tools", "cleanup_messages"]
+            "agent", self.route_tools, ["tools", "process_output"]
         )
         self.add_edge("tools", "agent")
-        self.add_edge("cleanup_messages", END)
+        self.add_edge("process_output", END)
 
     prompt: ChatPromptTemplate = ChatPromptTemplate.from_messages(
         [
@@ -68,6 +68,12 @@ class SpecialistWithMemory(StateGraph):
 
     model_with_tools = llm_base.bind_tools([save_recall_memory, web_search])
 
+    def process_output(
+        self, state: SpecialistWithMemoryState
+    ) -> SpecialistWithMemoryState:
+        state["final_messages"] = [state["messages"][-1]]
+        return state
+
     def agent(self, state: SpecialistWithMemoryState) -> SpecialistWithMemoryState:
         bound = self.prompt | self.model_with_tools
         recall_memories = (
@@ -94,14 +100,8 @@ class SpecialistWithMemory(StateGraph):
             "recall_memories": recall_memories,
         }
 
-    def cleanup_messages(self, state: SpecialistWithMemoryState):
-        if state["messages"]:
-            last_message = state["messages"][-1]
-            state["messages"] = [last_message]
-        return state
-
     def route_tools(self, state: SpecialistWithMemoryState):
         msg = state["messages"][-1]
         if msg.tool_calls:
             return "tools"
-        return "cleanup_messages"
+        return "process_output"

@@ -81,5 +81,5 @@ class RepoCollector(StateGraph):
         return "handle_final_messages"
 
     def handle_final_messages(self, state: WorkerState):
-        state["final_messages"] = [state["messages"][-1]]
+        state["final_messages"] = state["messages"]
         return state
