@@ -5,5 +5,5 @@ windows:
   - editor:
       layout: 77f7,229x57,0,0{75x57,0,0,0,153x57,76,0,2}
       panes:
-        - pip install hatch && clear
+        - pip install .
         - nvim
