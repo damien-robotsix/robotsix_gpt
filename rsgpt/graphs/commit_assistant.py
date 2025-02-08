@@ -1,7 +1,7 @@
 from langgraph.graph import StateGraph, START, END
 from ..tools import execute_command_at_repo_root
 from langchain.prompts import ChatPromptTemplate
-from .custom_states import WorkerState
+from .graphs_common import WorkerState
 from ..utils.llm import llm_base
 
 

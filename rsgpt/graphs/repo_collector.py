@@ -1,5 +1,5 @@
 from langgraph.graph import StateGraph, START, END
-from .custom_states import WorkerState
+from .graphs_common import WorkerState
 from langgraph.prebuilt import ToolNode
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableConfig

@@ -1,5 +1,5 @@
 from langgraph.graph import StateGraph, START, END
-from .custom_states import WorkerState
+from .graphs_common import WorkerState
 from langgraph.prebuilt import ToolNode
 from ..utils.repository_loader import (
     load_repository as shared_load_repository,

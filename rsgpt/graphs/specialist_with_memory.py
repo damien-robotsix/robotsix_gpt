@@ -5,7 +5,7 @@ from langchain_core.runnables import RunnableConfig
 from langchain_core.messages import get_buffer_string
 from ..tools import save_recall_memory, search_recall_memories, web_search
 from ..utils.llm import llm_base
-from .custom_states import WorkerState
+from .graphs_common import WorkerState
 
 
 class SpecialistWithMemoryState(WorkerState):
