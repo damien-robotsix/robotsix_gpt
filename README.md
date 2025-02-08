@@ -30,6 +30,30 @@ pip install hatch
 hatch shell
 ```
 
+## 🧑‍💻 CLI Usage
+
+RSGPT can be used through the following commands:
+
+### `rsgpt`
+
+This command starts an interactive session using the RSGPT tool. It allows you to provide inputs interactively to analyze and process repository data.
+
+Usage:
+```bash
+rsgpt
+```
+You will be prompted to provide inputs interactively, and the tool will process repository-specific data based on your queries.
+
+### `rsgpt --commit`
+
+This command invokes the Commit Assistant mode of RSGPT. It helps in analyzing repository changes and generating commit messages programmatically.
+
+Usage:
+```bash
+rsgpt --commit
+```
+RSGPT will analyze the current repository's changes (e.g., Git diff) and assist in creating a commit message based on the modifications.
+
 ## 👤 Author
 
 Damien SIX - [damien@robotsix.net](mailto:damien@robotsix.net)
