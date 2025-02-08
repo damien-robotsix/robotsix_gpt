@@ -1,4 +1,4 @@
-from rsgpt.tools import modify_file_chunk, ChunkRange
+from rsgpt.tools import modify_file_chunk
 from rsgpt.utils.git import get_repo_root
 from rsgpt.utils.repository_loader import load_repository
 import shutil
@@ -44,4 +44,3 @@ def test_modify_multiple_chunks():
 
 if __name__ == "__main__":
     test_modify_multiple_chunks()
-

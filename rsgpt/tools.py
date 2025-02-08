@@ -323,6 +323,18 @@ def initialize_specialist_on_langchain():
         specialist_on_langchain_g = SpecialistWithMemory("langchain").compile()
 
 
+# Add initialization for deeper think worker
+deeperthink_worker_g = None
+
+
+def initialize_deeperthink_worker():
+    global deeperthink_worker_g
+    if deeperthink_worker_g is None:
+        from .graphs.deeper_think_worker import DeeperThinkWorker
+
+        deeperthink_worker_g = DeeperThinkWorker().compile()
+
+
 def initialize_repo_collector():
     from .graphs.repo_collector import RepoCollector
 
@@ -371,8 +383,11 @@ def call_worker(
     elif worker == "repo_collector":
         repo_collector = initialize_repo_collector()
         response = repo_collector.invoke({"messages": input_messages}, config)
+    elif worker == "deeper_think_worker":
+        initialize_deeperthink_worker()
+        response = deeperthink_worker_g.invoke({"messages": input_messages}, config)
     else:
-        return "Worker not found, please choose between 'repo_worker' and 'specialist_on_langchain'"
+        return "Worker not found, please choose between 'repo_worker', 'specialist_on_langchain', 'repo_collector', or 'deeper_think_worker'"
     return response["final_messages"]
 
 

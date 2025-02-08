@@ -26,7 +26,9 @@ def main():
         while True:
             user_input = input("User: ")
             messages["messages"].append(("user", user_input))
-            messages = graph.invoke(messages, {"repo_path": repo_root})
+            messages = graph.invoke(
+                messages, {"repo_path": repo_root, "recursion_limit": 100}
+            )
             messages["messages"][-1].pretty_print()
 
 
