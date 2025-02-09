@@ -5,6 +5,7 @@ from langchain_core.runnables import RunnableConfig
 from langchain_core.messages import get_buffer_string
 from ..tools import save_recall_memory, search_recall_memories, web_search
 from ..utils.llm import llm_base
+import os
 from .graphs_common import WorkerState
 
 
@@ -13,14 +14,11 @@ class SpecialistWithMemoryState(WorkerState):
 
 
 class SpecialistWithMemory(StateGraph):
-    def __init__(self, subject: str):
+    def __init__(self):
         super().__init__(SpecialistWithMemoryState)
-        self.subject = subject
         self.add_node(self.load_memories)
         self.add_node(self.agent)
-        tool_node = ToolNode(tools=[save_recall_memory, web_search]).with_config(
-            {"memory_store_path": "/home/robotsix-docker/memory_store"}
-        )
+        tool_node = ToolNode(tools=[save_recall_memory, web_search])
         self.add_node("tools", tool_node)
         self.add_node("process_output", self.process_output)
         # Defining edges and routes, ensuring proper ordering and cleanup termination
@@ -74,7 +72,9 @@ class SpecialistWithMemory(StateGraph):
         state["final_messages"] = [state["messages"][-1]]
         return state
 
-    def agent(self, state: SpecialistWithMemoryState) -> SpecialistWithMemoryState:
+    def agent(
+        self, state: SpecialistWithMemoryState, config: RunnableConfig
+    ) -> SpecialistWithMemoryState:
         bound = self.prompt | self.model_with_tools
         recall_memories = (
             "<recall_memories>\n"
@@ -85,15 +85,12 @@ class SpecialistWithMemory(StateGraph):
             {
                 "messages": state["messages"],
                 "recall_memories": recall_memories,
-                "subject": self.subject,
+                "subject": config["configurable"]["specialist_subject"],
             }
         )
         return {"messages": [prediction]}
 
     def load_memories(self, state: SpecialistWithMemoryState, config: RunnableConfig):
-        config["configurable"]["memory_store_path"] = (
-            "/home/robotsix-docker/memory_store"
-        )
         convo_str = get_buffer_string(state["messages"])
         recall_memories = search_recall_memories.invoke(convo_str, config)
         return {

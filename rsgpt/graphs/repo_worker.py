@@ -33,7 +33,6 @@ class RepoWorker(StateGraph):
                 modify_file_chunk,
                 execute_command_at_repo_root,
                 run_python_test_script,
-                call_worker,
                 ast_editor.rename_functions,  # Adding rename function tool
                 ast_editor.replace_function_body,  # Adding replace body tool
             ]
@@ -56,8 +55,7 @@ class RepoWorker(StateGraph):
                 " You are a helpful AI that assists developers with the knowledge of the repository content."
                 " You must solve the query in the context of the repository as much as you can without asking for human input."
                 " When you have completed your task, make a comprehensive conclusion to provide "
-                "proper feedback to the user. "
-                "You can call the worker specialist_on_langchain to get help on langchain framework usage. ",
+                "proper feedback to the user. ",
             ),
             ("placeholder", "{messages}"),
         ]
@@ -72,7 +70,6 @@ class RepoWorker(StateGraph):
             modify_file_chunk,
             execute_command_at_repo_root,
             run_python_test_script,
-            call_worker,
             ast_editor.rename_functions,  # Include AST-based rename functions
             ast_editor.replace_function_body,  # Include function body replacement
         ]
@@ -99,4 +96,3 @@ class RepoWorker(StateGraph):
     def process_output(self, state: WorkerState):
         state["final_messages"] = [state["messages"][-1]]
         return state
-

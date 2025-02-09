@@ -16,6 +16,7 @@ from langgraph.prebuilt import InjectedState
 def save_recall_memory(memory: str, config: RunnableConfig) -> str:
     """Save memory to vectorstore for later semantic retrieval."""
     document = Document(page_content=memory, id=str(uuid.uuid4()))
+    print(f"Saving memory in {config['configurable']['memory_store_path']}")
     try:
         recall_vector_store = InMemoryVectorStore.load(
             config["configurable"]["memory_store_path"],
@@ -312,15 +313,15 @@ def initialize_repo_worker():
         repo_worker_g = RepoWorker().compile()
 
 
-specialist_on_langchain_g = None  # Initialize as None
+specialist_g = None  # Initialize as None
 
 
-def initialize_specialist_on_langchain():
-    global specialist_on_langchain_g
-    if specialist_on_langchain_g is None:
+def initialize_specialist():
+    global specialist_g
+    if specialist_g is None:
         from .graphs.specialist_with_memory import SpecialistWithMemory
 
-        specialist_on_langchain_g = SpecialistWithMemory("langchain").compile()
+        specialist_g = SpecialistWithMemory().compile()
 
 
 # Add initialization for deeper think worker
@@ -375,11 +376,9 @@ def call_worker(
         response = repo_worker_g.invoke(
             {"messages": input_messages, "final_messages": []}, config
         )
-    elif worker == "specialist_on_langchain":
-        initialize_specialist_on_langchain()
-        response = specialist_on_langchain_g.invoke(
-            {"messages": input_messages}, config
-        )
+    elif worker == "specialist":
+        initialize_specialist()
+        response = specialist_g.invoke({"messages": input_messages}, config)
     elif worker == "repo_collector":
         repo_collector = initialize_repo_collector()
         response = repo_collector.invoke({"messages": input_messages}, config)
@@ -387,7 +386,7 @@ def call_worker(
         initialize_deeperthink_worker()
         response = deeperthink_worker_g.invoke({"messages": input_messages}, config)
     else:
-        return "Worker not found, please choose between 'repo_worker', 'specialist_on_langchain', 'repo_collector', or 'deeper_think_worker'"
+        return "Worker not found, please choose between 'repo_worker', 'specialist', 'repo_collector', or 'deeper_think_worker'"
     return response["final_messages"]
 
 
