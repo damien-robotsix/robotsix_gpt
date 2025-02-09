@@ -16,6 +16,7 @@ class DispatcherGraph(StateGraph):
         [
             (
                 "You are a supervisor agent tasked with managing a conversation the following workers agent:\n"
+                "ALWAYS call one worker at a time.\n"
                 "repo_collector: Can collect information from the current repository.\n"
                 "repo_worker: Can operate in the current repository.\n"
                 "deeper_think_worker: Can provide deeper insights on the conversation.\n"
