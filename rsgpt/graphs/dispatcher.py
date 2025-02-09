@@ -3,9 +3,7 @@ from langgraph.graph import MessagesState, StateGraph, START, END
 from langgraph.types import Command
 from langchain_core.runnables import RunnableConfig
 from langgraph.prebuilt import ToolNode
-from ..tools import (
-    call_worker,
-)
+from ..tools import call_worker, execute_command_at_repo_root
 from ..utils.llm import llm_base
 
 
@@ -33,11 +31,7 @@ class DispatcherGraph(StateGraph):
         ]
     )
 
-    llm_with_tools = llm_base.bind_tools(
-        [
-            call_worker,
-        ]
-    )
+    llm_with_tools = llm_base.bind_tools([call_worker, execute_command_at_repo_root])
 
     def __init__(self):
         super().__init__(DispatcherState)
