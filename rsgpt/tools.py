@@ -390,4 +390,9 @@ def call_worker(
     return response["final_messages"]
 
 
-web_search = TavilySearchResults(max_results=2)
+web_search = TavilySearchResults(
+    max_results=5,
+    search_depth="advanced",
+    include_answer=True,
+    include_raw_content=True,
+)
